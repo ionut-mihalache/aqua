@@ -43,8 +43,9 @@ void initService() {
     Memory.triggerPageFaults(installShdata, sizeof(struct InstallSharedData),
                              AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE);
 
-    rc = close(installShdFd);
-    DIE(rc != 0, "Could not close installShdFd");
+    SharedMemoryObject.close(installShdFd);
+    // rc = close(installShdFd);
+    // DIE(rc != 0, "Could not close installShdFd");
 
     rc = pthread_spin_init(&installShdata->m_InstallMZoneLk,
                            PTHREAD_PROCESS_SHARED);
@@ -146,8 +147,9 @@ spin_lock_unlock:
         sf_GetServiceOff(freeByteIdx));
     DIE(installInfo == MAP_FAILED, "Could not map service information");
 
-    rc = close(installShmFd);
-    DIE(rc != 0, "Could not close installShmFd");
+    SharedMemoryObject.close(installShmFd);
+    // rc = close(installShmFd);
+    // DIE(rc != 0, "Could not close installShmFd");
 
     installInfo->m_ProcId = getpid();
     installInfo->m_Available = true;

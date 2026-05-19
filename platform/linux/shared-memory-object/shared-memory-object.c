@@ -61,6 +61,10 @@ static mode_t mapMode(aqua_file_mode_t p_Mode) {
     return flags;
 }
 
+static aqua_void_t sf_Close(aqua_file_handle_t p_Handle) {
+    close(p_Handle);
+}
+
 static aqua_file_handle_t sf_Create(const char *p_Name,
                                     aqua_file_flags_t p_Flags,
                                     aqua_file_mode_t p_Mode, aqua_off_t p_Size,
@@ -115,9 +119,12 @@ end:
     return -1;
 }
 
-static aqua_void_t sf_Destroy() {}
+static aqua_void_t sf_Destroy(const char *p_Name) {
+    shm_unlink(p_Name);
+}
 
 struct AQUA_SharedMemoryObject SharedMemoryObject = {
     .create = sf_Create,
+    .close = sf_Close,
     .destroy = sf_Destroy,
 };

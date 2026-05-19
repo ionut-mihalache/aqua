@@ -312,8 +312,9 @@ configureServiceReturnInformation(struct ServiceReturnInfo *p_ReturnInfo,
 
     p_ConnectInfo->m_Connections[connectionIdx].m_ReturnQMapSize = qSize;
 
-    rc = close(returnQFd);
-    DIE(rc != 0, "Could not close returnQFd");
+    SharedMemoryObject.close(returnQFd);
+    // rc = close(returnQFd);
+    // DIE(rc != 0, "Could not close returnQFd");
 
     struct ConnectResponseInformation *requestResponseQ = Allocator.memmap(
         NULL,
@@ -323,9 +324,11 @@ configureServiceReturnInformation(struct ServiceReturnInfo *p_ReturnInfo,
     DIE(requestResponseQ == MAP_FAILED,
         "Could not map request response queue memory");
 
-    rc = close(requestResponseQFd);
-    DIE(rc != 0,
-        "Could not close request response queue shared object file descriptor");
+    SharedMemoryObject.close(requestResponseQFd);
+    // rc = close(requestResponseQFd);
+    // DIE(rc != 0,
+    //     "Could not close request response queue shared object file
+    //     descriptor");
 
     p_ConnectInfo->m_Connections[connectionIdx].m_ReturnQPushIdx = 0;
     p_ConnectInfo->m_Connections[connectionIdx].m_ReturnQPopIdx = 0;

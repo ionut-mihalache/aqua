@@ -230,8 +230,9 @@ configureServiceCallInformation(struct ServiceCallInfo *p_CallInfo,
     // triggerKernelPageInit(callQ, qSize, qProt);
     Memory.triggerPageFaults(callQ, qSize, qProt);
 
-    rc = close(callQFd);
-    DIE(rc != 0, "Could not close callQFd");
+    SharedMemoryObject.close(callQFd);
+    // rc = close(callQFd);
+    // DIE(rc != 0, "Could not close callQFd");
 
     p_CallInfo->m_ReceiveCallFn = s_QPop;
     p_CallInfo->m_Q.m_Data = callQ;

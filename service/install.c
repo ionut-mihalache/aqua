@@ -155,13 +155,15 @@ s_ReceiveDisconnectRequest(struct ServiceConnectInfo *p_ConnectInfo) {
     DIE(rc < 0, "Could not unmap return queue");
     p_ConnectInfo->m_Connections[connId].m_ReturnQ = NULL;
 
-    rc =
-        shm_unlink(p_ConnectInfo->m_Connections[connId].m_RequestResponseQName);
-    DIE(rc != 0,
-        "Could not unlink request response queue shared memory object");
+    SharedMemoryObject.destroy(p_ConnectInfo->m_Connections[connId].m_RequestResponseQName);
+    // rc =
+    //     shm_unlink(p_ConnectInfo->m_Connections[connId].m_RequestResponseQName);
+    // DIE(rc != 0,
+    //     "Could not unlink request response queue shared memory object");
 
-    rc = shm_unlink(p_ConnectInfo->m_Connections[connId].m_ReturnQName);
-    DIE(rc != 0, "Could no unlink return queue shared memory object");
+    SharedMemoryObject.destroy(p_ConnectInfo->m_Connections[connId].m_ReturnQName);
+    // rc = shm_unlink(p_ConnectInfo->m_Connections[connId].m_ReturnQName);
+    // DIE(rc != 0, "Could no unlink return queue shared memory object");
 
     // pthread_spin_lock(p_ConnectInfo->m_ConnectLock);
     Sync.mutexLock(p_ConnectInfo->m_ConnectLock);
@@ -207,8 +209,9 @@ configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnectInfo,
                              CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
                              AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE);
 
-    rc = close(connectQFd);
-    DIE(rc != 0, "Could not close connectQFd");
+    SharedMemoryObject.close(connectQFd);
+    // rc = close(connectQFd);
+    // DIE(rc != 0, "Could not close connectQFd");
 
     disconnectQFd = SharedMemoryObject.create(
         p_InstallInfo->m_DisconnectQName, AQUA_FILE_PERM_RDWR,
@@ -229,8 +232,9 @@ configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnectInfo,
                              CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
                              AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE);
 
-    rc = close(disconnectQFd);
-    DIE(rc != 0, "Could not close disconnectQFd");
+    SharedMemoryObject.close(disconnectQFd);
+    // rc = close(disconnectQFd);
+    // DIE(rc != 0, "Could not close disconnectQFd");
 
     p_ConnectInfo->m_ReceiveConnectRequest = s_ReceiveConnectRequest;
     p_ConnectInfo->m_ConnectQ.m_Data = connectQ;

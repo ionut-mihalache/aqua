@@ -38,7 +38,8 @@ struct AQUA_SharedMemoryObject {
     aqua_file_handle_t (*create)(const char *name, aqua_file_flags_t flags,
                                  aqua_file_mode_t mode, aqua_off_t size,
                                  aqua_bool_t unlink);
-    aqua_void_t (*destroy)();
+    aqua_void_t (*close)(aqua_file_handle_t handle);
+    aqua_void_t (*destroy)(const char *name);
 };
 
 extern struct AQUA_Memory Memory;

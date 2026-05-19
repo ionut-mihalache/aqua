@@ -258,8 +258,9 @@ static int32_t s_ProcessConnectionRequest(
                                  sizeof(struct ConnectResponseInformation),
                              AQUA_MEM_PROT_READ);
 
-    rc = close(requestResponseQFd);
-    DIE(rc != 0, "Could not close requestResponseQFd");
+    SharedMemoryObject.close(requestResponseQFd);
+    // rc = close(requestResponseQFd);
+    // DIE(rc != 0, "Could not close requestResponseQFd");
 
     switch (p_ConnectInformation->m_QType) {
     case SMBQ:
@@ -349,8 +350,9 @@ static int32_t s_ProcessConnectionRequest(
     // triggerKernelPageInit(returnQ, qSize, qProt);
     Memory.triggerPageFaults(returnQ, qSize, qProt);
 
-    rc = close(returnQFd);
-    DIE(rc != 0, "Could not close returnQFd");
+    SharedMemoryObject.close(requestResponseQFd);
+    // rc = close(returnQFd);
+    // DIE(rc != 0, "Could not close returnQFd");
 
     p_ConnectInfo->m_Connections[p_ConnId].m_RequestResponseQPushIdx = 0;
     p_ConnectInfo->m_Connections[p_ConnId].m_RequestResponseQPopIdx = 0;
@@ -484,8 +486,9 @@ configureClientConnectInformation(struct ClientConnectInfo *p_ConnectInfo,
         0);
     DIE(connectQ == MAP_FAILED, "Could not map connectQ");
 
-    rc = close(connectQFd);
-    DIE(rc != 0, "Could not close connectQFd");
+    SharedMemoryObject.close(connectQFd);
+    // rc = close(connectQFd);
+    // DIE(rc != 0, "Could not close connectQFd");
 
     disconnectQFd = SharedMemoryObject.create(
         p_InstallInfo->m_DisconnectQName, AQUA_FILE_PERM_RDWR,
@@ -500,8 +503,9 @@ configureClientConnectInformation(struct ClientConnectInfo *p_ConnectInfo,
         disconnectQFd, 0);
     DIE(disconnectQ == MAP_FAILED, "Could not map disconnect queue memory");
 
-    rc = close(disconnectQFd);
-    DIE(rc != 0, "Could not close disconnectQFd");
+    SharedMemoryObject.close(disconnectQFd);
+    // rc = close(disconnectQFd);
+    // DIE(rc != 0, "Could not close disconnectQFd");
 
     p_ConnectInfo->m_SendConnectRequest = s_SendConnectRequest;
     p_ConnectInfo->m_Connections = p_InstallInfo->m_Connections;

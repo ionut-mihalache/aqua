@@ -262,8 +262,9 @@ configureClientCallInformation(struct ClientCallInfo *p_CallInfo,
 
     createQ(&callQ, qSize, qProt, callQFd);
 
-    rc = close(callQFd);
-    DIE(rc != 0, "Could not close callQFd");
+    SharedMemoryObject.close(callQFd);
+    // rc = close(callQFd);
+    // DIE(rc != 0, "Could not close callQFd");
 
     p_CallInfo->m_CallFn = s_QPush;
 
