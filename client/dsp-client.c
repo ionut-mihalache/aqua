@@ -13,7 +13,6 @@
 #include "commons.h"
 #include "dsp-client.h"
 #include "log.h"
-#include "macros.h"
 #include "platform.h"
 #include "system-values.h"
 

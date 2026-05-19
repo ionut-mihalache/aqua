@@ -14,7 +14,6 @@
 #include "dsp.h"
 #include "install.h"
 #include "log.h"
-#include "macros.h"
 #include "platform.h"
 #include "system-values.h"
 

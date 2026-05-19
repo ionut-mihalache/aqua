@@ -7,6 +7,7 @@
 #include "client-call.h"
 #include "aqua-types.h"
 #include "commons.h"
+#include "log.h"
 #include "macros.h"
 #include "platform.h"
 #include "system-values.h"

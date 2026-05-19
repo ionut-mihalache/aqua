@@ -7,6 +7,7 @@
 #include "client-connect.h"
 #include "commons.h"
 #include "dsp.h"
+#include "log.h"
 #include "macros.h"
 #include "platform.h"
 #include "system-values.h"

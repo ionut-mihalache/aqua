@@ -2,12 +2,9 @@
 
 #include "commons.h"
 
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
 #include <sys/mman.h>
 
-#include "macros/macros.h"
+#include "log.h"
 #include "platform-types.h"
 #include "platform.h"
 #include "system-values.h"

@@ -6,7 +6,20 @@
 #ifndef DSP_LOG_H
 #define DSP_LOG_H
 
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
+
+#define DIE(assertion, call_description)                                       \
+    do {                                                                       \
+        if (assertion) {                                                       \
+            fprintf(stderr, "%s (%d): %s - %s\n", __FILE__, __LINE__,          \
+                    call_description, strerror(errno));                        \
+            exit(EXIT_FAILURE);                                                \
+        }                                                                      \
+    } while (0)
 
 #ifdef __COMPILE_MODE_DEBUG__
 #define LOGF(...)                                                              \

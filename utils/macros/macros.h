@@ -6,9 +6,6 @@
 #ifndef DSP_MACROS_H
 #define DSP_MACROS_H
 
-#include <errno.h>
-#include <stdlib.h>
-
 #define CHOOSE_MACRO(p_Macro, ...) p_Macro
 #define CHOOSE_MACRO1(p_1, p_Macro, ...) CHOOSE_MACRO(p_Macro, __VA_ARGS__)
 #define CHOOSE_MACRO2(p_1, p_2, p_Macro, ...)                                  \
@@ -32,15 +29,6 @@
                        p_Macro, ...)                                           \
     CHOOSE_MACRO9(p_2, p_3, p_4, p_5, p_6, p_7, p_8, p_9, p_10, p_Macro,       \
                   __VA_ARGS__)
-
-#define DIE(assertion, call_description)                                       \
-    do {                                                                       \
-        if (assertion) {                                                       \
-            fprintf(stderr, "%s (%d): %s - %s\n", __FILE__, __LINE__,          \
-                    call_description, strerror(errno));                        \
-            exit(EXIT_FAILURE);                                                \
-        }                                                                      \
-    } while (0)
 
 #define max(a, b)                                                              \
     ({                                                                         \

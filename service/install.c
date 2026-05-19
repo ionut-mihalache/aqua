@@ -6,6 +6,7 @@
 #include "commons.h"
 #include "install.h"
 #include "dsp.h"
+#include "log.h"
 #include "macros.h"
 #include "platform.h"
 #include "return.h"
@@ -155,13 +156,15 @@ s_ReceiveDisconnectRequest(struct ServiceConnectInfo *p_ConnectInfo) {
     DIE(rc < 0, "Could not unmap return queue");
     p_ConnectInfo->m_Connections[connId].m_ReturnQ = NULL;
 
-    SharedMemoryObject.destroy(p_ConnectInfo->m_Connections[connId].m_RequestResponseQName);
+    SharedMemoryObject.destroy(
+        p_ConnectInfo->m_Connections[connId].m_RequestResponseQName);
     // rc =
     //     shm_unlink(p_ConnectInfo->m_Connections[connId].m_RequestResponseQName);
     // DIE(rc != 0,
     //     "Could not unlink request response queue shared memory object");
 
-    SharedMemoryObject.destroy(p_ConnectInfo->m_Connections[connId].m_ReturnQName);
+    SharedMemoryObject.destroy(
+        p_ConnectInfo->m_Connections[connId].m_ReturnQName);
     // rc = shm_unlink(p_ConnectInfo->m_Connections[connId].m_ReturnQName);
     // DIE(rc != 0, "Could no unlink return queue shared memory object");
 

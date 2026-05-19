@@ -5,19 +5,8 @@
 
 #include "aqua-sync.h"
 #include "aqua-types.h"
-#include <fcntl.h>
 #include <pthread.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <sys/user.h>
 #include <unistd.h>
-
-#define AQUA_ALIGN_UP(x, align) (((x) + ((align) - 1)) & ~((align) - 1))
-#define AQUA_SLOT_PADDING(type, align)                                         \
-    (AQUA_ALIGN_UP(sizeof(type), align) - sizeof(type))
-#define AQUA_MMAP_GRANULARITY 65536 // 64KB
 
 #define SHMEM_PATH "/shared_memory"
 #define CONNECT_REQS "/conn-reqs"
