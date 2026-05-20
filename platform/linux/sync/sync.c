@@ -31,6 +31,15 @@ static aqua_void_t createMutex(aqua_mutex_t *p_Mutex, const char *p_Name) {
     pthread_mutexattr_destroy(&attr);
 }
 
+static aqua_void_t createSpinLock(aqua_spinlock_t *p_SpinLock,
+                                  const char *p_Name) {
+    (void)p_Name;
+
+    pthread_spinlock_t *spinLock = (pthread_spinlock_t *)p_SpinLock->memory;
+
+    pthread_spin_init(spinLock, PTHREAD_PROCESS_SHARED);
+}
+
 static aqua_void_t createCond(aqua_cond_t *p_Cond, const char *p_Name) {
     (void)p_Name;
 
@@ -75,10 +84,22 @@ static aqua_void_t mutexLock(aqua_mutex_t *p_Mutex) {
     pthread_mutex_lock(mutex);
 }
 
+static aqua_void_t spinLock(aqua_spinlock_t *p_SpinLock) {
+    pthread_spinlock_t *spinLock = (pthread_spinlock_t *)p_SpinLock->memory;
+
+    pthread_spin_lock(spinLock);
+}
+
 static aqua_void_t mutexUnlock(aqua_mutex_t *p_Mutex) {
     pthread_mutex_t *mutex = (pthread_mutex_t *)p_Mutex->memory;
 
     pthread_mutex_unlock(mutex);
+}
+
+static aqua_void_t spinUnlock(aqua_spinlock_t *p_SpinLock) {
+    pthread_spinlock_t *spinLock = (pthread_spinlock_t *)p_SpinLock->memory;
+
+    pthread_spin_unlock(spinLock);
 }
 
 static aqua_void_t condWait(aqua_cond_t *p_Cond, aqua_mutex_t *p_Mutex) {
@@ -96,6 +117,7 @@ static aqua_void_t condBroadcast(aqua_cond_t *p_Cond) {
 
 struct AQUA_Sync Sync = {
     .createMutex = createMutex,
+    .createSpinLock = createSpinLock,
     .createCond = createCond,
     .createSemaphore = createSemaphore,
     .destroyMutex = destroyMutex,
@@ -103,7 +125,9 @@ struct AQUA_Sync Sync = {
     .destroySemaphore = destroySemaphore,
 
     .mutexLock = mutexLock,
+    .spinLock = spinLock,
     .mutexUnlock = mutexUnlock,
+    .spinUnlock = spinUnlock,
 
     .condWait = condWait,
     .condBroadcast = condBroadcast,

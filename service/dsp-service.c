@@ -17,7 +17,7 @@
 static struct InstallSharedData *installShdata = NULL;
 
 void initService() {
-    int rc;
+    // int rc;
     aqua_err_t err;
     aqua_file_handle_t installShdFd;
 
@@ -45,9 +45,10 @@ void initService() {
     // rc = close(installShdFd);
     // DIE(rc != 0, "Could not close installShdFd");
 
-    rc = pthread_spin_init(&installShdata->m_InstallMZoneLk,
-                           PTHREAD_PROCESS_SHARED);
-    DIE(rc != 0, "Could not init install shared spinlock");
+    Sync.createSpinLock(&installShdata->m_InstallMZoneLk, "");
+    // rc = pthread_spin_init(&installShdata->m_InstallMZoneLk,
+    //                        PTHREAD_PROCESS_SHARED);
+    // DIE(rc != 0, "Could not init install shared spinlock");
 }
 
 static aqua_size_t sf_GetInstallArenaSize() {
@@ -107,7 +108,8 @@ void dspInstall(struct ServiceConnectInfo *p_ConnectInfo,
     uint8_t *freeBytePtr = NULL;
     uint32_t freeByteIdx = 0;
 
-    pthread_spin_lock(&installShdata->m_InstallMZoneLk);
+    // pthread_spin_lock(&installShdata->m_InstallMZoneLk);
+    Sync.spinLock(&installShdata->m_InstallMZoneLk);
     for (uint8_t i = 0; i < bytesnr; ++i) {
         freeBytePtr = &installMemZone->m_InstallMap[i];
 
@@ -133,7 +135,8 @@ check_free_index:
     *freeBytePtr = (*freeBytePtr) | (1 << freeIdx);
 
 spin_lock_unlock:
-    pthread_spin_unlock(&installShdata->m_InstallMZoneLk);
+    // pthread_spin_unlock(&installShdata->m_InstallMZoneLk);
+    Sync.spinUnlock(&installShdata->m_InstallMZoneLk);
 
     rc = Allocator.memunmap(installMemZone, sizeof(struct InstallInfo));
     DIE(rc != 0, "Could not unmap install memory zone");

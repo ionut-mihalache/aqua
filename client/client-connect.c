@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-#include <pthread.h>
 #include <string.h>
 
 #include "client-connect.h"

@@ -6,8 +6,6 @@
 #include "aqua-sync.h"
 #include "aqua-types.h"
 #include "platform-types.h"
-#include <pthread.h>
-// #include <unistd.h>
 
 #define SHMEM_PATH "/shared_memory"
 #define CONNECT_REQS "/conn-reqs"

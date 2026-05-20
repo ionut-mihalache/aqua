@@ -8,6 +8,7 @@
 #include "aqua-types.h"
 
 #define AQUA_MUTEX_MEM_SIZE 64
+#define AQUA_SPINLOCK_MEM_SIZE 64
 #define AQUA_COND_MEM_SIZE 64
 #define AQUA_SEM_MEM_SIZE 64
 
@@ -18,6 +19,14 @@ typedef struct aqua_mutex {
             memory[AQUA_MUTEX_MEM_SIZE]; // used for storing generic information
     };
 } aqua_mutex_t;
+
+typedef struct aqua_spinlock {
+    union {
+        max_align_t __align;
+        aqua_u8_t memory[AQUA_SPINLOCK_MEM_SIZE]; // used for storing generic
+                                                  // information
+    };
+} aqua_spinlock_t;
 
 typedef struct aqua_cond {
     union {

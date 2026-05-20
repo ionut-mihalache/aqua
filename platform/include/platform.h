@@ -24,6 +24,7 @@ struct AQUA_Allocator {
 
 struct AQUA_Sync {
     aqua_void_t (*createMutex)(aqua_mutex_t *mutex, const char *name);
+    aqua_void_t (*createSpinLock)(aqua_spinlock_t *spinLock, const char *name);
     aqua_void_t (*createCond)(aqua_cond_t *cond, const char *name);
     aqua_void_t (*createSemaphore)(aqua_sem_t *sem, const char *name);
     aqua_void_t (*destroyMutex)(aqua_mutex_t *mutex);
@@ -31,7 +32,9 @@ struct AQUA_Sync {
     aqua_void_t (*destroySemaphore)(aqua_sem_t *sem);
 
     aqua_void_t (*mutexLock)(aqua_mutex_t *mutex);
+    aqua_void_t (*spinLock)(aqua_spinlock_t *spinLock);
     aqua_void_t (*mutexUnlock)(aqua_mutex_t *mutex);
+    aqua_void_t (*spinUnlock)(aqua_spinlock_t *spinUnlock);
     aqua_void_t (*condWait)(aqua_cond_t *cond, aqua_mutex_t *mutex);
     aqua_void_t (*condBroadcast)(aqua_cond_t *cond);
 };
