@@ -153,7 +153,7 @@ spin_lock_unlock:
     // rc = close(installShmFd);
     // DIE(rc != 0, "Could not close installShmFd");
 
-    installInfo->m_ProcId = getpid();
+    installInfo->m_ProcId = Process.getPid();
     installInfo->m_Available = true;
     uint64_t strIdLen = strlen(p_StrId);
     if (strIdLen > STRING_ID_MAX_LENGTH - 1) {

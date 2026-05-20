@@ -5,8 +5,9 @@
 
 #include "aqua-sync.h"
 #include "aqua-types.h"
+#include "platform-types.h"
 #include <pthread.h>
-#include <unistd.h>
+// #include <unistd.h>
 
 #define SHMEM_PATH "/shared_memory"
 #define CONNECT_REQS "/conn-reqs"
@@ -139,7 +140,7 @@ struct InstallInformation {
 
     enum QType m_CallQType;
 
-    pid_t m_ProcId;
+    aqua_pid_t m_ProcId;
     uint8_t m_Available;
 };
 

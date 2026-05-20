@@ -33,6 +33,7 @@ if (UNIX AND NOT APPLE)
                 platform/linux/alloc/alloc.c
                 platform/linux/sync/sync.c
                 platform/linux/shared-memory-object/shared-memory-object.c
+                platform/linux/process/process.c
         )
 elseif(WIN32)
         set(PLATFORM_SOURCES

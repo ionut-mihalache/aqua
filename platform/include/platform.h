@@ -44,9 +44,14 @@ struct AQUA_SharedMemoryObject {
     aqua_void_t (*destroy)(const char *name);
 };
 
+struct AQUA_Process {
+    aqua_pid_t (*getPid)();
+};
+
 extern struct AQUA_Memory Memory;
 extern struct AQUA_Allocator Allocator;
 extern struct AQUA_Sync Sync;
 extern struct AQUA_SharedMemoryObject SharedMemoryObject;
+extern struct AQUA_Process Process;
 
 #endif // __AQUA_PLATFORM_H_
