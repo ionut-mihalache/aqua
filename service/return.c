@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 #include <string.h>
-#include <sys/mman.h>
 
 #include "commons.h"
 #include "dsp.h"
@@ -214,6 +213,7 @@ configureServiceReturnInformation(struct ServiceReturnInfo *p_ReturnInfo,
     mode_t qMode;
     size_t qSize;
     void *returnQ;
+    aqua_err_t err;
 
     connectionIdx = p_Request->m_ConnectionIdx;
 
@@ -316,12 +316,13 @@ configureServiceReturnInformation(struct ServiceReturnInfo *p_ReturnInfo,
     // rc = close(returnQFd);
     // DIE(rc != 0, "Could not close returnQFd");
 
-    struct ConnectResponseInformation *requestResponseQ = Allocator.memmap(
-        NULL,
-        p_Request->m_ResponseQSize * sizeof(struct ConnectResponseInformation),
-        AQUA_MEM_PROT_WRITE | AQUA_MEM_PROT_READ, AQUA_MEM_SHARED,
-        requestResponseQFd, 0);
-    DIE(requestResponseQ == MAP_FAILED,
+    struct ConnectResponseInformation *requestResponseQ = NULL;
+    err = Allocator.memmap((aqua_void_ptr_t *)&requestResponseQ, NULL,
+                           p_Request->m_ResponseQSize *
+                               sizeof(struct ConnectResponseInformation),
+                           AQUA_MEM_PROT_WRITE | AQUA_MEM_PROT_READ,
+                           AQUA_MEM_SHARED, requestResponseQFd, 0);
+    DIE(err == AQUA_MEM_MAP_FAILED,
         "Could not map request response queue memory");
 
     SharedMemoryObject.close(requestResponseQFd);

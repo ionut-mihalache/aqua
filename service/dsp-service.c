@@ -4,9 +4,6 @@
 
 #include <stdbool.h>
 #include <string.h>
-#include <sys/ipc.h>
-#include <sys/mman.h>
-#include <sys/shm.h>
 
 #include "aqua-types.h"
 #include "call.h"
@@ -21,6 +18,7 @@ static struct InstallSharedData *installShdata = NULL;
 
 void initService() {
     int rc;
+    aqua_err_t err;
     aqua_file_handle_t installShdFd;
 
     installShdFd = SharedMemoryObject.create(
@@ -31,10 +29,11 @@ void initService() {
         sizeof(struct InstallSharedData), true);
     DIE(installShdFd < 0, "Could not create install shared memory object");
 
-    installShdata = Allocator.memmap(0, sizeof(struct InstallSharedData),
-                                     AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE,
-                                     AQUA_MEM_SHARED, installShdFd, 0);
-    DIE(installShdata == MAP_FAILED || installShdata == NULL,
+    err = Allocator.memmap((aqua_void_ptr_t *)&installShdata, NULL,
+                           sizeof(struct InstallSharedData),
+                           AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE,
+                           AQUA_MEM_SHARED, installShdFd, 0);
+    DIE(err == AQUA_MEM_MAP_FAILED || installShdata == NULL,
         "Could not mmap install shared data object");
 
     // triggerKernelPageInit(installShdata, sizeof(struct InstallSharedData),
@@ -79,6 +78,7 @@ void dspInstall(struct ServiceConnectInfo *p_ConnectInfo,
                 struct ServiceCallInfo *p_CallInfo, const char *p_StrId,
                 const char *p_Version, int p_CallQType) {
     int rc;
+    aqua_err_t err;
     aqua_file_handle_t installShmFd;
     uint8_t bytesnr = SERVICES_NUMBER >> 3;
 
@@ -95,11 +95,13 @@ void dspInstall(struct ServiceConnectInfo *p_ConnectInfo,
     DIE(installShmFd < 0,
         "Could not open install memory zone shared memory object");
 
-    struct InstallInfo *installMemZone =
-        Allocator.memmap(installShdata, installArenaSize,
-                         AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE,
-                         AQUA_MEM_SHARED, installShmFd, 0);
-    DIE(installMemZone == MAP_FAILED, "Could not mmap install memory zone");
+    struct InstallInfo *installMemZone = NULL;
+
+    err = Allocator.memmap((aqua_void_ptr_t *)&installMemZone, installShdata,
+                           installArenaSize,
+                           AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE,
+                           AQUA_MEM_SHARED, installShmFd, 0);
+    DIE(err == AQUA_MEM_MAP_FAILED, "Could not mmap install memory zone");
 
     int32_t freeIdx = -1;
     uint8_t *freeBytePtr = NULL;
@@ -139,12 +141,13 @@ spin_lock_unlock:
     /**
      * Map only the information of the service
      */
-    struct InstallInformation *installInfo = Allocator.memmap(
-        NULL,
+    struct InstallInformation *installInfo = NULL;
+    err = Allocator.memmap(
+        (aqua_void_ptr_t *)&installInfo, NULL,
         alignUp(sizeof(struct InstallInformation), Memory.getMapGranularity()),
         AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE, AQUA_MEM_SHARED, installShmFd,
         sf_GetServiceOff(freeByteIdx));
-    DIE(installInfo == MAP_FAILED, "Could not map service information");
+    DIE(err == AQUA_MEM_MAP_FAILED, "Could not map service information");
 
     SharedMemoryObject.close(installShmFd);
     // rc = close(installShmFd);

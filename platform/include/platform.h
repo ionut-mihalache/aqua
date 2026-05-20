@@ -10,13 +10,15 @@
 struct AQUA_Memory {
     aqua_size_t (*getPageSize)();
     aqua_size_t (*getMapGranularity)();
-    aqua_void_t (*triggerPageFaults)(aqua_void_t *addr, aqua_size_t size, aqua_mem_perm_t perm);
+    aqua_void_t (*triggerPageFaults)(aqua_void_t *addr, aqua_size_t size,
+                                     aqua_mem_perm_t perm);
 };
 
 struct AQUA_Allocator {
-    aqua_void_ptr_t (*memmap)(aqua_void_ptr_t addr, aqua_size_t len,
-                              aqua_mem_prot_t prot, aqua_mem_flags_t flags,
-                              aqua_file_handle_t handle, aqua_off_t off);
+    aqua_err_t (*memmap)(aqua_void_ptr_t *result_addr,
+                         aqua_void_ptr_t start_addr, aqua_size_t len,
+                         aqua_mem_prot_t prot, aqua_mem_flags_t flags,
+                         aqua_file_handle_t handle, aqua_off_t off);
     aqua_int_t (*memunmap)(aqua_void_ptr_t addr, aqua_size_t len);
 };
 

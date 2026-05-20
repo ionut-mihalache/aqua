@@ -2,9 +2,9 @@
 
 #include <pthread.h>
 #include <string.h>
-#include <sys/mman.h>
 
 #include "client-connect.h"
+#include "aqua-types.h"
 #include "commons.h"
 #include "dsp.h"
 #include "log.h"
@@ -192,6 +192,7 @@ static int32_t s_ProcessConnectionRequest(
     struct ClientConnectInfo *p_ConnectInfo,
     struct ClientConnectRequestInformation *p_ConnectInformation) {
     int requestResponseQFd;
+    aqua_err_t err;
     int returnQFd;
     int32_t rc = 0;
     int qFlag;
@@ -242,12 +243,13 @@ static int32_t s_ProcessConnectionRequest(
         true);
     DIE(requestResponseQFd < 0, "Could not create shared memory object");
 
-    struct ConnectResponseInformation *requestResponseQ = Allocator.memmap(
-        NULL,
-        p_ConnectInformation->m_ResponseQSize *
-            sizeof(struct ConnectResponseInformation),
-        AQUA_MEM_PROT_READ, AQUA_MEM_SHARED, requestResponseQFd, 0);
-    DIE(requestResponseQ == MAP_FAILED,
+    struct ConnectResponseInformation *requestResponseQ;
+    err = Allocator.memmap((aqua_void_ptr_t *)&requestResponseQ, NULL,
+                           p_ConnectInformation->m_ResponseQSize *
+                               sizeof(struct ConnectResponseInformation),
+                           AQUA_MEM_PROT_READ, AQUA_MEM_SHARED,
+                           requestResponseQFd, 0);
+    DIE(err == AQUA_MEM_MAP_FAILED,
         "Could not map request response queue memory");
 
     // triggerKernelPageInit(requestResponseQ,
@@ -472,6 +474,7 @@ int32_t
 configureClientConnectInformation(struct ClientConnectInfo *p_ConnectInfo,
                                   struct InstallInformation *p_InstallInfo) {
     int32_t rc = 0;
+    aqua_err_t err;
     int connectQFd, disconnectQFd;
 
     connectQFd = SharedMemoryObject.create(
@@ -481,11 +484,12 @@ configureClientConnectInformation(struct ClientConnectInfo *p_ConnectInfo,
             AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE,
         CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest), false);
 
-    struct ConnectRequest *connectQ = Allocator.memmap(
-        NULL, CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
-        AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE, AQUA_MEM_SHARED, connectQFd,
-        0);
-    DIE(connectQ == MAP_FAILED, "Could not map connectQ");
+    struct ConnectRequest *connectQ = NULL;
+    err = Allocator.memmap((aqua_void_ptr_t *)&connectQ, NULL,
+                           CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
+                           AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE,
+                           AQUA_MEM_SHARED, connectQFd, 0);
+    DIE(err == AQUA_MEM_MAP_FAILED, "Could not map connectQ");
 
     SharedMemoryObject.close(connectQFd);
     // rc = close(connectQFd);
@@ -498,11 +502,12 @@ configureClientConnectInformation(struct ClientConnectInfo *p_ConnectInfo,
             AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE,
         CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest), false);
 
-    struct ConnectRequest *disconnectQ = Allocator.memmap(
-        NULL, CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
-        AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE, AQUA_MEM_SHARED,
-        disconnectQFd, 0);
-    DIE(disconnectQ == MAP_FAILED, "Could not map disconnect queue memory");
+    struct ConnectRequest *disconnectQ = NULL;
+    err = Allocator.memmap((aqua_void_ptr_t *)&disconnectQ, NULL,
+                           CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
+                           AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE,
+                           AQUA_MEM_SHARED, disconnectQFd, 0);
+    DIE(err == AQUA_MEM_MAP_FAILED, "Could not map disconnect queue memory");
 
     SharedMemoryObject.close(disconnectQFd);
     // rc = close(disconnectQFd);

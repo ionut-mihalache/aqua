@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-#include <stdbool.h>
 #include <string.h>
-#include <sys/shm.h>
-#include <sys/mman.h>
 
 #include "aqua-types.h"
 #include "dsp.h"
@@ -150,6 +147,7 @@ void dspConnect(struct ClientConnectInfo *p_ConnectInfo,
                 struct ClientCallInfo *p_CallInfo, const char *p_ServiceStrId) {
     int rc;
     aqua_file_handle_t installShmFd;
+    aqua_err_t err;
     struct InstallInformation *installInfo;
     uint8_t connected = false;
     uint16_t i;
@@ -165,11 +163,13 @@ void dspConnect(struct ClientConnectInfo *p_ConnectInfo,
     DIE(installShmFd < 0,
         "Could not open install memory zone shared memory object");
 
-    struct InstallInfo *installMemZone = Allocator.memmap(
-        NULL, installArenaSize, AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE,
-        AQUA_MEM_SHARED, installShmFd, 0);
+    struct InstallInfo *installMemZone = NULL;
+    err = Allocator.memmap((aqua_void_ptr_t *)&installMemZone, NULL,
+                           installArenaSize,
+                           AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE,
+                           AQUA_MEM_SHARED, installShmFd, 0);
 
-    DIE(installMemZone == MAP_FAILED, "Could not mmap install memory zone");
+    DIE(err == AQUA_MEM_MAP_FAILED, "Could not mmap install memory zone");
 
     for (i = 0; i < SERVICES_NUMBER; ++i) {
         installInfo = sf_GetService(installMemZone, i);
@@ -197,12 +197,12 @@ void dspConnect(struct ClientConnectInfo *p_ConnectInfo,
     /**
      * Map only the information of the service
      */
-    installInfo = Allocator.memmap(
-        NULL,
+    err = Allocator.memmap(
+        (aqua_void_ptr_t *)&installInfo, NULL,
         alignUp(sizeof(struct InstallInformation), Memory.getMapGranularity()),
         AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE, AQUA_MEM_SHARED, installShmFd,
         sf_GetServiceOff(i));
-    DIE(installInfo == MAP_FAILED, "Could not map service information");
+    DIE(err == AQUA_MEM_MAP_FAILED, "Could not map service information");
 
     configureClientConnectInformation(p_ConnectInfo, installInfo);
     configureClientCallInformation(p_CallInfo, installInfo);

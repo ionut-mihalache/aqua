@@ -2,8 +2,7 @@
 
 #include "commons.h"
 
-#include <sys/mman.h>
-
+#include "aqua-types.h"
 #include "log.h"
 #include "platform-types.h"
 #include "platform.h"
@@ -14,7 +13,8 @@ aqua_size_t alignUp(aqua_size_t p_Base, aqua_size_t p_Alignment) {
 }
 
 void createQ(void **p_QPtrRes, aqua_size_t p_Size, int p_Prot, int p_Fd) {
-    *p_QPtrRes =
-        Allocator.memmap(NULL, p_Size, p_Prot, AQUA_MEM_SHARED, p_Fd, 0);
-    DIE(*p_QPtrRes == MAP_FAILED, "Could not map return queue memory");
+    aqua_err_t err;
+    err = Allocator.memmap(p_QPtrRes, NULL, p_Size, p_Prot, AQUA_MEM_SHARED,
+                           p_Fd, 0);
+    DIE(err == AQUA_MEM_MAP_FAILED, "Could not map return queue memory");
 }

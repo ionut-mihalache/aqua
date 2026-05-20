@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-#include <fcntl.h>
 #include <string.h>
-#include <sys/mman.h>
 
 #include "client-call.h"
 #include "aqua-types.h"

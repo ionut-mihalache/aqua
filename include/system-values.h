@@ -22,6 +22,11 @@ enum {
 };
 
 enum {
+    AQUA_NO_ERROR = 0,
+    AQUA_MEM_MAP_FAILED = 1u << 0,
+};
+
+enum {
     AQUA_FILE_MODE_USER_READ = 1u << 0,
     AQUA_FILE_MODE_USER_WRITE = 1u << 1,
     AQUA_FILE_MODE_GROUP_READ = 1u << 2,

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 #include <string.h>
-#include <sys/mman.h>
 
 #include "call.h"
 #include "commons.h"

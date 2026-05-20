@@ -44,15 +44,21 @@ static int mapFlags(aqua_mem_flags_t p_Flags) {
     return flags;
 }
 
-static aqua_void_ptr_t memmap(aqua_void_ptr_t p_Addr, aqua_size_t p_Len,
-                              aqua_mem_prot_t p_Prot, aqua_mem_flags_t p_Flags,
-                              aqua_file_handle_t p_Fd, aqua_off_t p_Off) {
+static aqua_err_t memmap(aqua_void_ptr_t *p_ResultAddr,
+                         aqua_void_ptr_t p_StartAddr, aqua_size_t p_Len,
+                         aqua_mem_prot_t p_Prot, aqua_mem_flags_t p_Flags,
+                         aqua_file_handle_t p_Fd, aqua_off_t p_Off) {
     int prot = mapProt(p_Prot);
     int flags = mapFlags(p_Flags);
 
-    void *ptr = mmap(p_Addr, p_Len, prot, flags, p_Fd, p_Off);
+    void *ptr = mmap(p_StartAddr, p_Len, prot, flags, p_Fd, p_Off);
+    if (ptr == MAP_FAILED) {
+        return AQUA_MEM_MAP_FAILED;
+    }
 
-    return ptr;
+    *p_ResultAddr = ptr;
+
+    return AQUA_NO_ERROR;
 }
 
 static aqua_int_t memunmap(aqua_void_ptr_t p_Addr, aqua_size_t p_Len) {

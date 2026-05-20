@@ -27,6 +27,7 @@ typedef aqua_u8_t aqua_file_flags_t;
 typedef aqua_u32_t aqua_file_mode_t;
 typedef aqua_u16_t aqua_mem_perm_t;
 typedef aqua_u8_t aqua_bool_t;
+typedef aqua_u16_t aqua_err_t;
 
 typedef int aqua_file_handle_t;
 
