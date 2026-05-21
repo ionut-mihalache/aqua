@@ -24,6 +24,7 @@ enum {
 enum {
     AQUA_NO_ERROR = 0,
     AQUA_MEM_MAP_FAILED = 1u << 0,
+    AQUA_SHM_OBJ_CLOSE_FAILED = 1u << 1,
 };
 
 enum {

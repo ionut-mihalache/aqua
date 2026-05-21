@@ -260,9 +260,8 @@ static int32_t s_ProcessConnectionRequest(
                                  sizeof(struct ConnectResponseInformation),
                              AQUA_MEM_PROT_READ);
 
-    SharedMemoryObject.close(requestResponseQFd);
-    // rc = close(requestResponseQFd);
-    // DIE(rc != 0, "Could not close requestResponseQFd");
+    err = SharedMemoryObject.close(requestResponseQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close requestResponseQFd");
 
     switch (p_ConnectInformation->m_QType) {
     case SMBQ:
@@ -352,9 +351,8 @@ static int32_t s_ProcessConnectionRequest(
     // triggerKernelPageInit(returnQ, qSize, qProt);
     Memory.triggerPageFaults(returnQ, qSize, qProt);
 
-    SharedMemoryObject.close(requestResponseQFd);
-    // rc = close(returnQFd);
-    // DIE(rc != 0, "Could not close returnQFd");
+    err = SharedMemoryObject.close(requestResponseQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close returnQFd");
 
     p_ConnectInfo->m_Connections[p_ConnId].m_RequestResponseQPushIdx = 0;
     p_ConnectInfo->m_Connections[p_ConnId].m_RequestResponseQPopIdx = 0;
@@ -490,9 +488,8 @@ configureClientConnectInformation(struct ClientConnectInfo *p_ConnectInfo,
                            AQUA_MEM_SHARED, connectQFd, 0);
     DIE(err == AQUA_MEM_MAP_FAILED, "Could not map connectQ");
 
-    SharedMemoryObject.close(connectQFd);
-    // rc = close(connectQFd);
-    // DIE(rc != 0, "Could not close connectQFd");
+    err = SharedMemoryObject.close(connectQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close connectQFd");
 
     disconnectQFd = SharedMemoryObject.create(
         p_InstallInfo->m_DisconnectQName, AQUA_FILE_PERM_RDWR,
@@ -508,9 +505,8 @@ configureClientConnectInformation(struct ClientConnectInfo *p_ConnectInfo,
                            AQUA_MEM_SHARED, disconnectQFd, 0);
     DIE(err == AQUA_MEM_MAP_FAILED, "Could not map disconnect queue memory");
 
-    SharedMemoryObject.close(disconnectQFd);
-    // rc = close(disconnectQFd);
-    // DIE(rc != 0, "Could not close disconnectQFd");
+    err = SharedMemoryObject.close(disconnectQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close disconnectQFd");
 
     p_ConnectInfo->m_SendConnectRequest = s_SendConnectRequest;
     p_ConnectInfo->m_Connections = p_InstallInfo->m_Connections;

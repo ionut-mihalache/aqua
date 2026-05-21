@@ -312,9 +312,8 @@ configureServiceReturnInformation(struct ServiceReturnInfo *p_ReturnInfo,
 
     p_ConnectInfo->m_Connections[connectionIdx].m_ReturnQMapSize = qSize;
 
-    SharedMemoryObject.close(returnQFd);
-    // rc = close(returnQFd);
-    // DIE(rc != 0, "Could not close returnQFd");
+    err = SharedMemoryObject.close(returnQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close returnQFd");
 
     struct ConnectResponseInformation *requestResponseQ = NULL;
     err = Allocator.memmap((aqua_void_ptr_t *)&requestResponseQ, NULL,
@@ -325,11 +324,9 @@ configureServiceReturnInformation(struct ServiceReturnInfo *p_ReturnInfo,
     DIE(err == AQUA_MEM_MAP_FAILED,
         "Could not map request response queue memory");
 
-    SharedMemoryObject.close(requestResponseQFd);
-    // rc = close(requestResponseQFd);
-    // DIE(rc != 0,
-    //     "Could not close request response queue shared object file
-    //     descriptor");
+    err = SharedMemoryObject.close(requestResponseQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED,
+        "Could not close request response queue shared object file descriptor");
 
     p_ConnectInfo->m_Connections[connectionIdx].m_ReturnQPushIdx = 0;
     p_ConnectInfo->m_Connections[connectionIdx].m_ReturnQPopIdx = 0;

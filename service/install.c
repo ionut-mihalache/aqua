@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+#include "aqua-types.h"
 #include "commons.h"
 #include "install.h"
 #include "dsp.h"
@@ -181,6 +182,7 @@ s_ReceiveDisconnectRequest(struct ServiceConnectInfo *p_ConnectInfo) {
 int32_t
 configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnectInfo,
                                    struct InstallInformation *p_InstallInfo) {
+    aqua_err_t err;
     int32_t rc = 0;
     int connectQFd, disconnectQFd;
 
@@ -211,9 +213,8 @@ configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnectInfo,
                              CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
                              AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE);
 
-    SharedMemoryObject.close(connectQFd);
-    // rc = close(connectQFd);
-    // DIE(rc != 0, "Could not close connectQFd");
+    err = SharedMemoryObject.close(connectQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close connectQFd");
 
     disconnectQFd = SharedMemoryObject.create(
         p_InstallInfo->m_DisconnectQName, AQUA_FILE_PERM_RDWR,
@@ -234,9 +235,8 @@ configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnectInfo,
                              CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
                              AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE);
 
-    SharedMemoryObject.close(disconnectQFd);
-    // rc = close(disconnectQFd);
-    // DIE(rc != 0, "Could not close disconnectQFd");
+    err = SharedMemoryObject.close(disconnectQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close disconnectQFd");
 
     p_ConnectInfo->m_ReceiveConnectRequest = s_ReceiveConnectRequest;
     p_ConnectInfo->m_ConnectQ.m_Data = connectQ;

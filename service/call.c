@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "call.h"
+#include "aqua-types.h"
 #include "commons.h"
 #include "log.h"
 #include "macros.h"
@@ -134,6 +135,7 @@ static int32_t s_QPop(struct CommunicationInfo *p_CInfo) {
 int32_t
 configureServiceCallInformation(struct ServiceCallInfo *p_CallInfo,
                                 struct InstallInformation *p_InstallInfo) {
+    aqua_err_t err;
     int32_t rc = 0;
     int callQFd;
     int qFlag;
@@ -230,9 +232,8 @@ configureServiceCallInformation(struct ServiceCallInfo *p_CallInfo,
     // triggerKernelPageInit(callQ, qSize, qProt);
     Memory.triggerPageFaults(callQ, qSize, qProt);
 
-    SharedMemoryObject.close(callQFd);
-    // rc = close(callQFd);
-    // DIE(rc != 0, "Could not close callQFd");
+    err = SharedMemoryObject.close(callQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close callQFd");
 
     p_CallInfo->m_ReceiveCallFn = s_QPop;
     p_CallInfo->m_Q.m_Data = callQ;

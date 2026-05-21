@@ -61,8 +61,16 @@ static mode_t mapMode(aqua_file_mode_t p_Mode) {
     return flags;
 }
 
-static aqua_void_t sf_Close(aqua_file_handle_t p_Handle) {
-    close(p_Handle);
+static aqua_err_t sf_Close(aqua_file_handle_t p_Handle) {
+    int rc;
+    aqua_err_t err = AQUA_NO_ERROR;
+
+    rc = close(p_Handle);
+    if (rc < 0) {
+        err = AQUA_SHM_OBJ_CLOSE_FAILED;
+    }
+
+    return err;
 }
 
 static aqua_file_handle_t sf_Create(const char *p_Name,

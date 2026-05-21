@@ -169,6 +169,7 @@ int32_t
 configureClientCallInformation(struct ClientCallInfo *p_CallInfo,
                                struct InstallInformation *p_InstallInfo) {
     int32_t rc = 0;
+    aqua_err_t err;
     aqua_file_handle_t callQFd;
     int qFlag;
     int qProt;
@@ -261,9 +262,8 @@ configureClientCallInformation(struct ClientCallInfo *p_CallInfo,
 
     createQ(&callQ, qSize, qProt, callQFd);
 
-    SharedMemoryObject.close(callQFd);
-    // rc = close(callQFd);
-    // DIE(rc != 0, "Could not close callQFd");
+    err = SharedMemoryObject.close(callQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close callQFd");
 
     p_CallInfo->m_CallFn = s_QPush;
 
