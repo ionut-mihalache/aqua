@@ -21,7 +21,7 @@
         }                                                                      \
     } while (0)
 
-#ifdef __COMPILE_MODE_DEBUG__
+#ifdef __AQUA_DEBUG__
 #define LOGF(...)                                                              \
     do {                                                                       \
         time_t t = time(NULL);                                                 \

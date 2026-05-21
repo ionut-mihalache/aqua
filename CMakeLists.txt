@@ -7,8 +7,6 @@ project(dsp-library C)
 set(CMAKE_C_STANDARD 23)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_C_COMPILER clang)
-# set(CMAKE_C_COMPILER gcc)
 
 set(LIB_VERSION "0.0.2")
 set(LIB_NAME dsp)
@@ -75,21 +73,34 @@ if (UNIX AND NOT APPLE)
         PRIVATE
                 platform/linux/include
         )
+
+        target_compile_options(${LIB_NAME} PRIVATE
+                -Wall
+                -Wextra
+                -Werror
+                $<$<CONFIG:Debug>:-O0>
+                $<$<CONFIG:Debug>:-g3>
+                $<$<CONFIG:Release>:-O3>
+        )
+
+        target_compile_definitions(${LIB_NAME} PRIVATE
+                _GNU_SOURCE
+        )
 elseif(WIN32)
         target_include_directories(${LIB_NAME}
         PRIVATE
                 platform/windows/include
         )
+        target_compile_options(${LIB_NAME} PRIVATE
+                # TODO: Add proper compile options
+        )
+
+        target_compile_definitions(${LIB_NAME} PRIVATE
+        )
 endif()
 
-
-target_compile_options(${LIB_NAME} PRIVATE
-        -Wall -Wextra -Werror -O3
-)
-
 target_compile_definitions(${LIB_NAME} PRIVATE
-        __COMPILE_MODE_DEBUG__
-        _GNU_SOURCE
+        $<$<CONFIG:Debug>:__AQUA_DEBUG__>
 )
 
 add_custom_command(
