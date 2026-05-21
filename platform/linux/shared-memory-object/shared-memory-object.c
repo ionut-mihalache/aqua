@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "aqua-types.h"
+#include "log.h"
 #include "platform.h"
 #include "system-values.h"
 
@@ -77,7 +78,7 @@ static aqua_file_handle_t sf_Create(const char *p_Name,
                                     aqua_file_flags_t p_Flags,
                                     aqua_file_mode_t p_Mode, aqua_off_t p_Size,
                                     aqua_bool_t p_Unlink) {
-    // int rc;
+    int rc;
     int shmFd;
     uint8_t shouldTruncate = true;
     int flags = mapFlags(p_Flags);
@@ -111,13 +112,8 @@ static aqua_file_handle_t sf_Create(const char *p_Name,
     // Get the number of bytes for the bit map
     // The information that we need is an array of pointers to the information
     // that we need
-    ftruncate(shmFd, p_Size);
-    // if (rc < 0) {
-    //     ELOGF("There was an error with ftruncate: %s(%d).\n",
-    //     strerror(errno),
-    //           errno);
-    // }
-    // DIE(rc != 0, "Could not truncate shared memory object");
+    rc = ftruncate(shmFd, p_Size);
+    DIE(rc != 0, "Could not truncate shared memory object");
 
     umask(oldMask);
 
