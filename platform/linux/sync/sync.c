@@ -10,6 +10,9 @@
 _Static_assert(sizeof(pthread_mutex_t) <= AQUA_MUTEX_MEM_SIZE,
                "AQUA_MUTEX_MEM_SIZE too small");
 
+_Static_assert(sizeof(pthread_spinlock_t) <= AQUA_SPINLOCK_MEM_SIZE,
+               "AQUA_SPINLOCK_MEM_SIZE too small");
+
 _Static_assert(sizeof(pthread_cond_t) <= AQUA_COND_MEM_SIZE,
                "AQUA_COND_MEM_SIZE too small");
 
