@@ -5,6 +5,7 @@
 
 #include "aqua-sync.h"
 #include "dsp.h"
+#include "platform-types.h"
 
 struct ClientCallInfo {
     struct DSPQueue m_Q;
@@ -44,28 +45,33 @@ struct ClientConnectInfo {
                                        struct ConnectResponseInformation *);
 };
 
-AQUA_API_EXPORT void sendConnectRequest(struct ClientReturnInfo *p_ReturnInfo,
-                        struct ClientConnectInfo *p_ConnectInfo,
-                        struct ClientConnectRequestInformation *p_RequestInfo);
-AQUA_API_EXPORT void sendDisconnectRequest(
-    struct ClientConnectInfo *p_ConnectInfo,
-    struct ConnectResponseInformation *p_requestResponseInfo);
+AQUA_API_EXPORT void
+sendConnectRequest(struct ClientReturnInfo *p_ReturnInfo,
+                   struct ClientConnectInfo *p_ConnectInfo,
+                   struct ClientConnectRequestInformation *p_RequestInfo);
+AQUA_API_EXPORT void
+sendDisconnectRequest(struct ClientConnectInfo *p_ConnectInfo,
+                      struct ConnectResponseInformation *p_requestResponseInfo);
 
-AQUA_API_EXPORT void callFn(struct ClientCallInfo *p_CallInfo, void *p_CallData);
+AQUA_API_EXPORT void callFn(struct ClientCallInfo *p_CallInfo,
+                            void *p_CallData);
 
-AQUA_API_EXPORT void returnFn(void *p_ReturnData, struct ClientReturnInfo *p_ReturnInfo);
+AQUA_API_EXPORT void returnFn(void *p_ReturnData,
+                              struct ClientReturnInfo *p_ReturnInfo);
 
-AQUA_API_EXPORT int32_t setCallData(int p_Type, void *p_CallInfo, uint8_t *p_Data,
-                    uint32_t p_Size);
+AQUA_API_EXPORT int32_t setCallData(int p_Type, void *p_CallInfo,
+                                    uint8_t *p_Data, uint32_t p_Size);
 
 AQUA_API_EXPORT void dspConnect(struct ClientConnectInfo *p_ConnectInfo,
-                struct ClientCallInfo *p_CallInfo, const char *p_ServiceStrId);
+                                struct ClientCallInfo *p_CallInfo,
+                                const char *p_ServiceStrId);
 
-AQUA_API_EXPORT void retriveInitInformation(struct ClientConnectInfo *p_ConnectInfo,
-                            struct ClientCallInfo *p_CallInfo,
-                            const char *p_ServiceStrId);
+AQUA_API_EXPORT void
+retriveInitInformation(struct ClientConnectInfo *p_ConnectInfo,
+                       struct ClientCallInfo *p_CallInfo,
+                       const char *p_ServiceStrId);
 
-struct ConnectResponseInformation *
+AQUA_API_EXPORT struct ConnectResponseInformation *
 getConnectResponse(struct ClientReturnInfo *p_ReturnInfo);
 
 #endif // __DSP_CLIENT_H
