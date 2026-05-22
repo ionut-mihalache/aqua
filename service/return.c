@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+#include "aqua-types.h"
 #include "commons.h"
 #include "dsp.h"
 #include "log.h"
@@ -205,12 +206,12 @@ configureServiceReturnInformation(struct ServiceReturnInfo *p_ReturnInfo,
                                   struct ServiceConnectInfo *p_ConnectInfo,
                                   struct ConnectRequest *p_Request) {
     int32_t rc = 0;
-    int returnQFd;
-    int requestResponseQFd;
+    aqua_file_handle_t returnQFd;
+    aqua_file_handle_t requestResponseQFd;
     uint32_t connectionIdx;
-    int qFlag;
-    int qProt;
-    mode_t qMode;
+    aqua_file_flags_t qFlag;
+    aqua_mem_prot_t qProt;
+    aqua_file_mode_t qMode;
     size_t qSize;
     void *returnQ;
     aqua_err_t err;

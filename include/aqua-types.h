@@ -29,6 +29,4 @@ typedef aqua_u16_t aqua_mem_perm_t;
 typedef aqua_u8_t aqua_bool_t;
 typedef aqua_u16_t aqua_err_t;
 
-typedef int aqua_file_handle_t;
-
 #endif // __AQUA_TYPES_H_

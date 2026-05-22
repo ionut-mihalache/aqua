@@ -7,6 +7,7 @@
 #ifndef DSP_COMMONS_H
 #define DSP_COMMONS_H
 
+#include "aqua-types.h"
 #include "platform-types.h"
 #define _FILE_OFFSET_BITS 64
 
@@ -16,6 +17,7 @@
 
 aqua_size_t alignUp(aqua_size_t base, aqua_size_t alignment);
 
-void createQ(void **ptrRes, aqua_size_t size, int prot, int fd);
+void createQ(void **ptrRes, aqua_size_t size, aqua_mem_prot_t prot,
+             aqua_file_handle_t fd);
 
 #endif // DSP_COMMONS_H

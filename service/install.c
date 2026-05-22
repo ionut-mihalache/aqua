@@ -184,7 +184,7 @@ configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnectInfo,
                                    struct InstallInformation *p_InstallInfo) {
     aqua_err_t err;
     int32_t rc = 0;
-    int connectQFd, disconnectQFd;
+    aqua_file_handle_t connectQFd, disconnectQFd;
 
     p_InstallInfo->m_ConnectQPushIdx = 0;
     p_InstallInfo->m_ConnectQPopIdx = 0;

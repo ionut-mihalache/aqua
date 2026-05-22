@@ -105,7 +105,7 @@ void dspInstall(struct ServiceConnectInfo *p_ConnectInfo,
 
     int32_t freeIdx = -1;
     uint8_t *freeBytePtr = NULL;
-    uint32_t freeByteIdx = 0;
+    uint16_t freeByteIdx = 0;
 
     // pthread_spin_lock(&installShdata->m_InstallMZoneLk);
     Sync.spinLock(&installShdata->m_InstallMZoneLk);

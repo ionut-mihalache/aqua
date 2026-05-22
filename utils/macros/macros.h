@@ -30,20 +30,6 @@
     CHOOSE_MACRO9(p_2, p_3, p_4, p_5, p_6, p_7, p_8, p_9, p_10, p_Macro,       \
                   __VA_ARGS__)
 
-#define max(a, b)                                                              \
-    ({                                                                         \
-        __typeof__(a) _a = (a);                                                \
-        __typeof__(b) _b = (b);                                                \
-        _a >= _b ? _a : _b;                                                    \
-    })
-
-#define min(a, b)                                                              \
-    ({                                                                         \
-        __typeof__(a) _a = (a);                                                \
-        __typeof__(b) _b = (b);                                                \
-        _a <= _b ? _a : _b;                                                    \
-    })
-
 #define QPUSH(p_Queue, p_QMaxSize, p_Code)                                     \
     do {                                                                       \
         Sync.mutexLock((p_Queue)->m_Metadata.m_Lock);                          \

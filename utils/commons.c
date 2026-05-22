@@ -12,7 +12,7 @@ aqua_size_t alignUp(aqua_size_t p_Base, aqua_size_t p_Alignment) {
     return (p_Base + p_Alignment - 1) & ~(p_Alignment - 1);
 }
 
-void createQ(void **p_QPtrRes, aqua_size_t p_Size, int p_Prot, int p_Fd) {
+void createQ(void **p_QPtrRes, aqua_size_t p_Size, aqua_mem_prot_t p_Prot, aqua_file_handle_t p_Fd) {
     aqua_err_t err;
     err = Allocator.memmap(p_QPtrRes, NULL, p_Size, p_Prot, AQUA_MEM_SHARED,
                            p_Fd, 0);

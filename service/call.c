@@ -7,6 +7,7 @@
 #include "commons.h"
 #include "log.h"
 #include "macros.h"
+#include "platform-types.h"
 #include "platform.h"
 #include "system-values.h"
 
@@ -137,10 +138,10 @@ configureServiceCallInformation(struct ServiceCallInfo *p_CallInfo,
                                 struct InstallInformation *p_InstallInfo) {
     aqua_err_t err;
     int32_t rc = 0;
-    int callQFd;
-    int qFlag;
-    int qProt;
-    mode_t qMode;
+    aqua_file_handle_t callQFd;
+    aqua_file_flags_t qFlag;
+    aqua_mem_prot_t qProt;
+    aqua_file_mode_t qMode;
     size_t qSize;
     void *callQ;
 

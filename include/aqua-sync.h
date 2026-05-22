@@ -3,7 +3,7 @@
 #ifndef __AQUA_SYNC_H_
 #define __AQUA_SYNC_H_
 
-#include <stddef.h>
+#include <stdalign.h>
 
 #include "aqua-types.h"
 
@@ -14,32 +14,29 @@
 
 typedef struct aqua_mutex {
     union {
-        max_align_t __align;
-        aqua_u8_t
+        alignas(16) aqua_u8_t
             memory[AQUA_MUTEX_MEM_SIZE]; // used for storing generic information
     };
 } aqua_mutex_t;
 
 typedef struct aqua_spinlock {
     union {
-        max_align_t __align;
-        aqua_u8_t memory[AQUA_SPINLOCK_MEM_SIZE]; // used for storing generic
-                                                  // information
+        alignas(
+            16) aqua_u8_t memory[AQUA_SPINLOCK_MEM_SIZE]; // used for storing
+                                                          // generic information
     };
 } aqua_spinlock_t;
 
 typedef struct aqua_cond {
     union {
-        max_align_t __align;
-        aqua_u8_t
+        alignas(16) aqua_u8_t
             memory[AQUA_COND_MEM_SIZE]; // used for storing generic information
     };
 } aqua_cond_t;
 
 typedef struct aqua_sem {
     union {
-        max_align_t __align;
-        aqua_u8_t
+        alignas(16) aqua_u8_t
             memory[AQUA_SEM_MEM_SIZE]; // used for storing generic information
     };
 } aqua_sem_t;

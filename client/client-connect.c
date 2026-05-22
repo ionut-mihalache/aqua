@@ -8,6 +8,7 @@
 #include "dsp.h"
 #include "log.h"
 #include "macros.h"
+#include "platform-types.h"
 #include "platform.h"
 #include "system-values.h"
 
@@ -190,13 +191,13 @@ static int32_t s_ProcessConnectionRequest(
     struct ConnectRequest *p_ConnectRequest,
     struct ClientConnectInfo *p_ConnectInfo,
     struct ClientConnectRequestInformation *p_ConnectInformation) {
-    int requestResponseQFd;
+    aqua_file_handle_t requestResponseQFd;
     aqua_err_t err;
-    int returnQFd;
+    aqua_file_handle_t returnQFd;
     int32_t rc = 0;
-    int qFlag;
-    int qProt;
-    mode_t qMode;
+    aqua_file_flags_t qFlag;
+    aqua_mem_prot_t qProt;
+    aqua_file_mode_t qMode;
     size_t qSize;
     void *returnQ;
 
@@ -472,7 +473,7 @@ configureClientConnectInformation(struct ClientConnectInfo *p_ConnectInfo,
                                   struct InstallInformation *p_InstallInfo) {
     int32_t rc = 0;
     aqua_err_t err;
-    int connectQFd, disconnectQFd;
+    aqua_file_handle_t connectQFd, disconnectQFd;
 
     connectQFd = SharedMemoryObject.create(
         p_InstallInfo->m_ConnectQName, AQUA_FILE_PERM_RDWR,

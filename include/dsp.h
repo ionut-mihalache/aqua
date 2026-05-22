@@ -3,6 +3,8 @@
 #ifndef __DSP_H_
 #define __DSP_H_
 
+#include <stdbool.h>
+
 #include "aqua-sync.h"
 #include "aqua-types.h"
 #include "platform-types.h"

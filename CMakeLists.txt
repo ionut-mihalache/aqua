@@ -39,6 +39,7 @@ elseif(WIN32)
                 platform/windows/alloc/alloc.c
                 platform/windows/sync/sync.c
                 platform/windows/shared-memory-object/shared-memory-object.c
+                platform/windows/process/process.c
         )
 endif()
 
@@ -46,6 +47,12 @@ add_library(${LIB_NAME} SHARED
         ${CORE_SOURCES}
         ${PLATFORM_SOURCES}
 )
+
+if (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(${LIB_NAME} PRIVATE
+                -fvisibility=hidden
+        )
+endif()
 
 set_target_properties(${LIB_NAME} PROPERTIES
         VERSION ${LIB_VERSION}
@@ -78,8 +85,10 @@ if (UNIX AND NOT APPLE)
                 -Wall
                 -Wextra
                 -Werror
+
                 $<$<CONFIG:Debug>:-O0>
                 $<$<CONFIG:Debug>:-g3>
+
                 $<$<CONFIG:Release>:-O3>
         )
 
@@ -92,23 +101,20 @@ elseif(WIN32)
                 platform/windows/include
         )
         target_compile_options(${LIB_NAME} PRIVATE
-                # TODO: Add proper compile options
+                /W4
+                /WX
+
+                $<$<CONFIG:Debug>:/Od>
+                $<$<CONFIG:Debug>:/Zi>
+
+                $<$<CONFIG:Release>:/O2>
         )
 
         target_compile_definitions(${LIB_NAME} PRIVATE
+                _CRT_SECURE_NO_WARNINGS
         )
 endif()
 
 target_compile_definitions(${LIB_NAME} PRIVATE
         $<$<CONFIG:Debug>:__AQUA_DEBUG__>
-)
-
-add_custom_command(
-        TARGET ${LIB_NAME}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        lib/$<TARGET_FILE_NAME:${LIB_NAME}>
-        ${CMAKE_BINARY_DIR}/libdsp.so
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMENT "Creating libdsp.so in build root"
 )

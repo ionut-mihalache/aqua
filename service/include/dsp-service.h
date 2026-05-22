@@ -4,6 +4,7 @@
 #define __DSP_SERVICE_H
 
 #include "aqua-sync.h"
+#include "platform-types.h"
 #include "dsp.h"
 
 #define INSTALL_SHD "/install-shared-data"
@@ -45,11 +46,11 @@ struct ServiceConnectInfo {
 
 void initService();
 
-void dspInstall(struct ServiceConnectInfo *p_ConnectInfo,
+AQUA_API_EXPORT void dspInstall(struct ServiceConnectInfo *p_ConnectInfo,
                 struct ServiceCallInfo *p_CallInfo, const char *p_StrId,
                 const char *p_Version, int p_CallQType);
 
-void receiveCall(void *, struct ServiceCallInfo *);
-void sendReturn(struct ServiceReturnInfo *, void *);
+AQUA_API_EXPORT void receiveCall(void *, struct ServiceCallInfo *);
+AQUA_API_EXPORT void sendReturn(struct ServiceReturnInfo *, void *);
 
 #endif // __DSP_SERVICE_H
