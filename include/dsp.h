@@ -10,6 +10,10 @@
 #include <sys/user.h>
 #include <unistd.h>
 
+#ifndef PAGE_SIZE
+#define PAGE_SIZE 4096
+#endif
+
 #define SHMEM_PATH "/shared_memory"
 #define CONNECT_REQS "/conn-reqs"
 #define INSTALL_MZONE "/install-zone"

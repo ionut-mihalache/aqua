@@ -1,7 +1,7 @@
 # CC=gcc
 CC=clang
 LINTER_DEFINES=-D_GNU_SOURCE
-DEBUG_DEFINES=-D__COMPILE_MODE_DEBUG__
+# DEBUG_DEFINES=-D__COMPILE_MODE_DEBUG__
 INCLUDES=-Iutils -Iutils/macros -Iutils/hashmap -Iutils/exit -Iutils/log -Iinclude -Iservice/include -Iclient/include
 OPTIONS=-Wall -Wextra -Werror
 OPTIMIZATIONS=-O3
@@ -113,3 +113,8 @@ clean:
 # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/ubuntu/dsp-library
 # sudo mkdir -p /shared-mem
 # sudo mount -t tmpfs -o size=512M tmpfs /shared-mem
+
+# cmake -S . -B target/ffi/build -DBUILD_EXAMPLES=ON
+# cmake --build target/ffi/build -j$(nproc)
+# ./target/ffi/build/examples/c/publish_subscribe_benchmark/example_c_publish_subscribe_subscriber_benchmark
+# ./target/ffi/build/examples/c/publish_subscribe_benchmark/example_c_publish_subscribe_publisher_benchmark

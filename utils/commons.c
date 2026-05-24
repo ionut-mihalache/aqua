@@ -12,6 +12,10 @@
 #include "log/log.h"
 #include "macros/macros.h"
 
+#ifndef PAGE_SIZE
+#define PAGE_SIZE 4096
+#endif
+
 int createShmObject(const char *p_Name, int p_Oflag, mode_t p_Mode,
                     loff_t p_Size, uint8_t p_Unlink) {
     int rc;
