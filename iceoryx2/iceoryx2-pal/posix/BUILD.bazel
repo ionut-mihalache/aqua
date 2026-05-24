@@ -1,0 +1,95 @@
+# Copyright (c) 2024 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache Software License 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0, or the MIT license
+# which is available at https://opensource.org/licenses/MIT.
+#
+# SPDX-License-Identifier: Apache-2.0 OR MIT
+
+package(default_visibility = ["//visibility:public"])
+
+load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test_suite")
+load("@rules_rust_bindgen//:defs.bzl", "rust_bindgen_library")
+load("@bazel_skylib//lib:selects.bzl", "selects")
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+)
+
+# Generate the binding lib
+cc_library(
+    name = "iceoryx2-pal-posix-c-lib",
+    srcs = [
+        "src/c/socket_macros.c",
+    ],
+    hdrs = glob(["src/c/**"]),
+    strip_include_prefix = "src/c",
+    linkstatic = True,
+    visibility = ["//visibility:public"],
+)
+
+rust_bindgen_library(
+    name = "iceoryx2-pal-posix-bindgen",
+    header = "src/c/posix.h",
+    cc_lib = ":iceoryx2-pal-posix-c-lib",
+    bindgen_flags = [
+        "--use-core",
+        "--rust-target", "1.85.0",
+        "--blocklist-type", "max_align_t",
+        # ignore warnings in the bindgen generated code
+        "--raw-line=#![allow(warnings)]",
+        "--raw-line=#![allow(clippy::all)]",
+    ],
+)
+
+# Create the actual crate
+rust_library(
+    name = "iceoryx2-pal-posix",
+    srcs = glob(["src/**/*.rs"]),
+    crate_features = select({
+        "//:cfg_feature_std": [
+            "std",
+        ],
+        "//conditions:default": [],
+    }),
+    rustc_flags = select({
+        "@platforms//os:linux":   ["--cfg=bazel_build", "--cfg=platform_binding=\"libc\""],
+        "@platforms//os:android": ["--cfg=bazel_build", "--cfg=platform_binding=\"libc\""],
+        "@platforms//os:vxworks": ["--cfg=bazel_build", "--cfg=platform_binding=\"libc\""],
+        "@platforms//os:macos":   ["--cfg=bazel_build", "--cfg=platform_binding=\"bindgen\""],
+        "@platforms//os:windows": ["--cfg=bazel_build", "--cfg=platform_binding=\"bindgen\""],
+        "@platforms//os:freebsd": ["--cfg=bazel_build", "--cfg=platform_binding=\"bindgen\""],
+        "@platforms//os:qnx":     ["--cfg=bazel_build", "--cfg=platform_binding=\"bindgen\""],
+    }),
+    deps = [
+        "//iceoryx2-pal/concurrency-sync:iceoryx2-pal-concurrency-sync",
+        "//iceoryx2-pal/configuration:iceoryx2-pal-configuration",
+        "//iceoryx2-bb/concurrency:iceoryx2-bb-concurrency",
+    ] + select({
+        "@platforms//os:linux":   ["@crate_index//:libc"],
+        "@platforms//os:android": ["@crate_index//:libc"],
+        "@platforms//os:vxworks": ["@crate_index//:libc"],
+        "@platforms//os:macos":   [":iceoryx2-pal-posix-bindgen"],
+        "@platforms//os:windows": [":iceoryx2-pal-posix-bindgen"],
+        "@platforms//os:freebsd": [":iceoryx2-pal-posix-bindgen"],
+        "@platforms//os:qnx":     [":iceoryx2-pal-posix-bindgen"],
+    }),
+)
+
+rust_test_suite(
+    name = "iceoryx2-pal-posix-tests",
+    srcs = glob(["tests/**/*.rs"]),
+    crate_features = ["std"],
+    deps = [
+        ":iceoryx2-pal-posix",
+    ],
+    proc_macro_deps = [
+        "@crate_index//:generic-tests",
+    ],
+)

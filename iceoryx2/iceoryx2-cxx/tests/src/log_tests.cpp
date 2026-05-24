@@ -1,0 +1,138 @@
+// Copyright (c) 2024 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Apache Software License 2.0 which is available at
+// https://www.apache.org/licenses/LICENSE-2.0, or the MIT license
+// which is available at https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
+#include "iox2/bb/static_string.hpp"
+#include "iox2/bb/static_vector.hpp"
+#include "iox2/log.hpp"
+#include "iox2/log_level.hpp"
+
+#include "test.hpp"
+
+namespace {
+using namespace iox2;
+constexpr uint64_t TEST_LOGGER_CAPACITY = 10;
+constexpr uint64_t STRING_CAPACITY = 64;
+class Entry {
+  private:
+    LogLevel m_log_level;
+    iox2::bb::StaticString<STRING_CAPACITY> m_origin;
+    iox2::bb::StaticString<STRING_CAPACITY> m_message;
+
+  public:
+    Entry() = delete;
+    Entry(LogLevel log_level, const char* origin, const char* message)
+        : m_log_level { log_level }
+        , m_origin { *iox2::bb::StaticString<STRING_CAPACITY>::from_utf8_null_terminated_unchecked(origin) }
+        , m_message { *iox2::bb::StaticString<STRING_CAPACITY>::from_utf8_null_terminated_unchecked(message) } {
+    }
+
+    auto is_equal(LogLevel log_level, const char* origin, const char* message) -> bool {
+        return m_log_level == log_level
+               && m_origin == *iox2::bb::StaticString<STRING_CAPACITY>::from_utf8_null_terminated_unchecked(origin)
+               && m_message == *iox2::bb::StaticString<STRING_CAPACITY>::from_utf8_null_terminated_unchecked(message);
+    }
+};
+
+
+class TestLogger : public Log {
+  public:
+    static auto get_instance() -> TestLogger& {
+        static TestLogger INSTANCE;
+        return INSTANCE;
+    }
+
+    void log(LogLevel log_level, const char* origin, const char* message) override {
+        if (m_log_buffer.size() < TEST_LOGGER_CAPACITY) {
+            m_log_buffer.try_emplace_back(log_level, origin, message);
+        }
+    }
+
+    auto get_log_buffer() -> iox2::bb::StaticVector<Entry, TEST_LOGGER_CAPACITY> {
+        auto buffer = m_log_buffer;
+        m_log_buffer.clear();
+        return buffer;
+    }
+
+  private:
+    iox2::bb::StaticVector<Entry, TEST_LOGGER_CAPACITY> m_log_buffer;
+};
+
+TEST(Log, custom_logger_works) {
+    set_log_level(LogLevel::Trace);
+    ASSERT_TRUE(set_logger(TestLogger::get_instance()));
+
+    log(LogLevel::Trace, "hello", "world");
+    log(LogLevel::Debug, "goodbye", "hypnotoad");
+    log(LogLevel::Info, "Who is looking for freedom?", "The Hoff!");
+    log(LogLevel::Warn, "Bluemchen", "Bassface");
+    log(LogLevel::Error, "Bluemchen should record a single with", "The almighty Hypnotoad");
+    log(LogLevel::Fatal, "It is the end", "my beloved toad.");
+
+    auto log_buffer = TestLogger::get_instance().get_log_buffer();
+
+    ASSERT_THAT(log_buffer.size(), Eq(6));
+
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) indices are guaranteed to be valid
+    ASSERT_TRUE(log_buffer.unchecked_access()[0].is_equal(LogLevel::Trace, "hello", "world"));
+    ASSERT_TRUE(log_buffer.unchecked_access()[1].is_equal(LogLevel::Debug, "goodbye", "hypnotoad"));
+    ASSERT_TRUE(log_buffer.unchecked_access()[2].is_equal(LogLevel::Info, "Who is looking for freedom?", "The Hoff!"));
+    ASSERT_TRUE(log_buffer.unchecked_access()[3].is_equal(LogLevel::Warn, "Bluemchen", "Bassface"));
+    ASSERT_TRUE(log_buffer.unchecked_access()[4].is_equal(
+        LogLevel::Error, "Bluemchen should record a single with", "The almighty Hypnotoad"));
+    ASSERT_TRUE(log_buffer.unchecked_access()[5].is_equal(LogLevel::Fatal, "It is the end", "my beloved toad."));
+    // NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+}
+
+TEST(Log, can_set_and_get_log_level) {
+    set_log_level(LogLevel::Trace);
+    EXPECT_EQ(get_log_level(), LogLevel::Trace);
+
+    set_log_level(LogLevel::Debug);
+    EXPECT_EQ(get_log_level(), LogLevel::Debug);
+
+    set_log_level(LogLevel::Info);
+    EXPECT_EQ(get_log_level(), LogLevel::Info);
+
+    set_log_level(LogLevel::Warn);
+    EXPECT_EQ(get_log_level(), LogLevel::Warn);
+
+    set_log_level(LogLevel::Error);
+    EXPECT_EQ(get_log_level(), LogLevel::Error);
+
+    set_log_level(LogLevel::Fatal);
+    EXPECT_EQ(get_log_level(), LogLevel::Fatal);
+}
+
+TEST(Log, can_set_and_get_log_level_from_env) {
+    set_log_level_from_env_or_default();
+    EXPECT_EQ(get_log_level(), LogLevel::Info);
+
+    set_log_level_from_env_or(LogLevel::Trace);
+    EXPECT_EQ(get_log_level(), LogLevel::Trace);
+
+    set_log_level_from_env_or(LogLevel::Debug);
+    EXPECT_EQ(get_log_level(), LogLevel::Debug);
+
+    set_log_level_from_env_or(LogLevel::Info);
+    EXPECT_EQ(get_log_level(), LogLevel::Info);
+
+    set_log_level_from_env_or(LogLevel::Warn);
+    EXPECT_EQ(get_log_level(), LogLevel::Warn);
+
+    set_log_level_from_env_or(LogLevel::Error);
+    EXPECT_EQ(get_log_level(), LogLevel::Error);
+
+    set_log_level_from_env_or(LogLevel::Fatal);
+    EXPECT_EQ(get_log_level(), LogLevel::Fatal);
+}
+
+} // namespace

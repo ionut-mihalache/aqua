@@ -1,0 +1,95 @@
+// Copyright (c) 2023 by Apex.AI Inc. All rights reserved.
+// Copyright (c) 2024 by ekxide IO GmbH. All rights reserved.
+// Copyright (c) 2025 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Apache Software License 2.0 which is available at
+// https://www.apache.org/licenses/LICENSE-2.0, or the MIT license
+// which is available at https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
+#ifndef IOX2_BB_DETAIL_ASSERTIONS_HPP
+#define IOX2_BB_DETAIL_ASSERTIONS_HPP
+
+#include "iox2/legacy/error_reporting/configuration.hpp"
+#include "iox2/legacy/error_reporting/error_forwarding.hpp"
+
+#include "iox2/bb/detail/source_location.hpp"
+
+// ***
+// * Define public assertion API
+// ***
+
+// NOLINTBEGIN(cppcoreguidelines-macro-usage) source location requires macros
+
+// The following macros are statements (not expressions).
+// This is important, as it enforces correct use to some degree.
+// For example they cannot be used as function arguments and must be terminated with a ';'.
+//
+// Note: once source location becomes available without macro usage this could (and arguably should)
+// be transformed into a function API.
+
+/// @brief calls panic handler and does not return
+/// @param message message to be forwarded
+/// @note could actually throw if desired without breaking control flow asssumptions
+#define IOX2_PANIC(message) iox2::legacy::er::forwardPanic(iox2::bb::detail::SourceLocation::current(), message)
+
+//************************************************************************************************
+//* For documentation of intent, defensive programming and debugging
+//*
+//* There are no error codes/errors required here on purpose, as it would make the use cumbersome.
+//* Instead a special internal error type is used.
+//************************************************************************************************
+
+/// @brief Only for internal usage
+#define IOX2_ASSERT_INTERNAL(location, condition, stringified_condition, message)                                      \
+    if (iox2::legacy::er::Configuration::CHECK_ASSERT && !(condition)) {                                               \
+        iox2::legacy::er::forwardFatalError(iox2::legacy::er::Violation::createAssertViolation(),                      \
+                                            iox2::legacy::er::ASSERT_VIOLATION,                                        \
+                                            location,                                                                  \
+                                            stringified_condition,                                                     \
+                                            message);                                                                  \
+    }                                                                                                                  \
+    []() -> void { }() // the empty lambda forces a semicolon on the caller side
+
+/// @brief only for debug builds: report fatal assert violation if expression evaluates to false
+/// @note for conditions that should not happen with correct use
+/// @param condition boolean expression that must hold
+/// @param message message to be forwarded in case of violation
+#define IOX2_ASSERT(condition, message)                                                                                \
+    IOX2_ASSERT_INTERNAL(iox2::bb::detail::SourceLocation::current(), condition, #condition, message)
+
+/// @brief Only for internal usage
+#define IOX2_ENFORCE_INTERNAL(location, condition, stringified_condition, message)                                     \
+    if (!(condition)) {                                                                                                \
+        iox2::legacy::er::forwardFatalError(iox2::legacy::er::Violation::createEnforceViolation(),                     \
+                                            iox2::legacy::er::ENFORCE_VIOLATION,                                       \
+                                            location,                                                                  \
+                                            stringified_condition,                                                     \
+                                            message);                                                                  \
+    }                                                                                                                  \
+    []() -> void { }() // the empty lambda forces a semicolon on the caller side
+
+/// @brief report fatal enforce violation if expression evaluates to false
+/// @note for conditions that may actually happen during correct use
+/// @param condition boolean expression that must hold
+/// @param message message to be forwarded in case of violation
+#define IOX2_ENFORCE(condition, message)                                                                               \
+    IOX2_ENFORCE_INTERNAL(iox2::bb::detail::SourceLocation::current(), condition, #condition, message)
+
+/// @brief panic if control flow reaches this code at runtime
+#define IOX2_UNREACHABLE()                                                                                             \
+    iox2::legacy::er::detail::unreachable_wrapped<void, void>(iox2::bb::detail::SourceLocation::current(),             \
+                                                              "Reached code that was supposed to be unreachable.")
+
+/// @brief panic if control flow reaches this code at runtime and tells the user that this part of the code is not yet
+/// implemented
+#define IOX2_TODO() iox2::legacy::er::forwardPanic(iox2::bb::detail::SourceLocation::current(), "Not yet implemented!")
+
+// NOLINTEND(cppcoreguidelines-macro-usage)
+
+#endif // IOX2_BB_DETAIL_ASSERTIONS_HPP

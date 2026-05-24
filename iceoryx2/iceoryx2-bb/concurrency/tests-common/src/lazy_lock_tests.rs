@@ -1,0 +1,168 @@
+// Copyright (c) 2026 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Apache Software License 2.0 which is available at
+// https://www.apache.org/licenses/LICENSE-2.0, or the MIT license
+// which is available at https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
+use core::time::Duration;
+
+use alloc::string::String;
+use alloc::string::ToString;
+use alloc::vec;
+use alloc::vec::Vec;
+
+use iceoryx2_bb_concurrency::atomic::{AtomicUsize, Ordering};
+use iceoryx2_bb_concurrency::lazy_lock::LazyLock;
+use iceoryx2_bb_posix::barrier::{BarrierBuilder, BarrierHandle, Handle};
+use iceoryx2_bb_posix::clock::nanosleep;
+use iceoryx2_bb_posix::thread::thread_scope;
+use iceoryx2_bb_testing::assert_that;
+use iceoryx2_bb_testing_macros::test;
+
+#[test]
+pub fn initialization_of_primitive_type() {
+    static VALUE: LazyLock<u32> = LazyLock::new(|| 42);
+    assert_eq!(*VALUE, 42);
+}
+
+#[test]
+pub fn initialization_of_complex_type() {
+    #[derive(Debug, PartialEq)]
+    struct ComplexType {
+        name: String,
+        value: Vec<i32>,
+    }
+
+    static COMPLEX: LazyLock<ComplexType> = LazyLock::new(|| ComplexType {
+        name: "test".to_string(),
+        value: vec![1, 2, 3, 4, 5],
+    });
+
+    assert_eq!(COMPLEX.name, "test");
+    assert_eq!(COMPLEX.value.len(), 5);
+    assert_eq!(COMPLEX.value[2], 3);
+}
+
+#[test]
+pub fn initialization_of_zero_sized_type() {
+    #[derive(Debug, PartialEq)]
+    struct ZeroSized;
+
+    static VALUE: LazyLock<ZeroSized> = LazyLock::new(|| ZeroSized);
+    assert_eq!(*VALUE, ZeroSized);
+}
+
+#[test]
+pub fn closure_is_executed_on_new() {
+    let multiplier = 10;
+    let lazy = LazyLock::new(move || multiplier * 5);
+    assert_eq!(*lazy, 50);
+}
+
+#[test]
+pub fn non_static_usage() {
+    let lazy = LazyLock::new(|| vec![1, 2, 3]);
+    assert_eq!(lazy.len(), 3);
+    assert_eq!(lazy[1], 2);
+}
+
+#[test]
+pub fn deref_retrieves_stored_value() {
+    static VALUE: LazyLock<String> = LazyLock::new(|| "hello".to_string());
+    assert_eq!(VALUE.len(), 5);
+    assert_eq!(&*VALUE, "hello");
+}
+
+#[test]
+pub fn initialization_occurs_once() {
+    static CALL_COUNT: AtomicUsize = AtomicUsize::new(0);
+    static VALUE: LazyLock<u32> = LazyLock::new(|| {
+        CALL_COUNT.fetch_add(1, Ordering::SeqCst);
+        42
+    });
+
+    assert_eq!(*VALUE, 42);
+    assert_eq!(*VALUE, 42);
+    assert_eq!(*VALUE, 42);
+
+    assert_eq!(CALL_COUNT.load(Ordering::SeqCst), 1);
+}
+
+#[test]
+pub fn force_initialization() {
+    static CALL_COUNT: AtomicUsize = AtomicUsize::new(0);
+    static VALUE: LazyLock<u32> = LazyLock::new(|| {
+        CALL_COUNT.fetch_add(1, Ordering::SeqCst);
+        100
+    });
+
+    let val = LazyLock::force(&VALUE);
+    assert_eq!(*val, 100);
+    assert_eq!(CALL_COUNT.load(Ordering::SeqCst), 1);
+
+    // Subsequent force should not re-initialize
+    let val2 = LazyLock::force(&VALUE);
+    assert_eq!(*val2, 100);
+    assert_eq!(CALL_COUNT.load(Ordering::SeqCst), 1);
+}
+
+#[test]
+pub fn returns_same_reference() {
+    static VALUE: LazyLock<String> = LazyLock::new(|| "hello".to_string());
+
+    let ref1 = &*VALUE;
+    let ref2 = &*VALUE;
+
+    assert!(core::ptr::eq(ref1, ref2));
+}
+
+#[test]
+pub fn dependent_initialization() {
+    static FIRST: LazyLock<u32> = LazyLock::new(|| 10);
+    static SECOND: LazyLock<u32> = LazyLock::new(|| *FIRST * 2);
+
+    assert_eq!(*SECOND, 20);
+    assert_eq!(*FIRST, 10);
+}
+
+#[test]
+pub fn concurrent_access_from_multiple_threads() {
+    const NUMBER_OF_THREADS: u32 = 10;
+    const TIMEOUT: Duration = Duration::from_millis(10);
+
+    static CALL_COUNT: AtomicUsize = AtomicUsize::new(0);
+    static VALUE: LazyLock<u32> = LazyLock::new(|| {
+        CALL_COUNT.fetch_add(1, Ordering::Relaxed);
+        nanosleep(TIMEOUT).unwrap();
+        123
+    });
+
+    let barrier_handle = BarrierHandle::new();
+    let barrier = BarrierBuilder::new(NUMBER_OF_THREADS + 1)
+        .create(&barrier_handle)
+        .unwrap();
+
+    thread_scope(|s| {
+        for _ in 0..NUMBER_OF_THREADS {
+            s.thread_builder()
+                .spawn(|| {
+                    barrier.wait();
+                    assert_that!(*VALUE, eq 123);
+                })
+                .expect("failed to spawn thread");
+        }
+
+        barrier.wait();
+
+        Ok(())
+    })
+    .expect("failed to spawn thread");
+
+    assert_that!(CALL_COUNT.load(Ordering::Relaxed), eq 1);
+}

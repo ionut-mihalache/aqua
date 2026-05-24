@@ -1,0 +1,262 @@
+[package]
+name = "example"
+description = "iceoryx2: examples"
+categories = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+version = { workspace = true }
+
+[dependencies]
+iceoryx2-log = { workspace = true, features = ["std"] }
+iceoryx2-services-discovery = { workspace = true, features = ["std"] }
+iceoryx2 = { workspace = true, features = ["std"] }
+iceoryx2-cal = { workspace = true, features = ["std"] }
+iceoryx2-bb-loggers = { workspace = true, features = ["std", "console"]}
+iceoryx2-bb-concurrency = { workspace = true, features = ["std"] }
+iceoryx2-bb-container = { workspace = true, features = ["std"] }
+iceoryx2-bb-derive-macros = { workspace = true, features = ["std"] }
+iceoryx2-bb-elementary = { workspace = true, features = ["std"] }
+iceoryx2-bb-elementary-traits = { workspace = true }
+iceoryx2-bb-system-types = { workspace = true, features = ["std"] }
+iceoryx2-bb-posix = { workspace = true, features = ["std"] }
+
+[dev-dependencies]
+clap = { workspace = true }
+
+[lib]
+name = "examples_common"
+path = "rust/_examples_common/lib.rs"
+
+# blackboard
+
+[[example]]
+name = "blackboard_opener"
+path = "rust/blackboard/opener.rs"
+
+[[example]]
+name = "blackboard_creator"
+path = "rust/blackboard/creator.rs"
+
+# blackboard event based communication
+
+[[example]]
+name = "blackboard_event_based_opener"
+path = "rust/blackboard_event_based_communication/opener.rs"
+
+[[example]]
+name = "blackboard_event_based_creator"
+path = "rust/blackboard_event_based_communication/creator.rs"
+
+# complex data types
+
+[[example]]
+name = "complex_data_types"
+path = "rust/complex_data_types/complex_data_types.rs"
+
+# cross_language_communication_basics
+
+[[example]]
+name = "cross_language_communication_basics_publisher"
+path = "rust/cross_language_communication_basics/publisher.rs"
+
+[[example]]
+name = "cross_language_communication_basics_subscriber"
+path = "rust/cross_language_communication_basics/subscriber.rs"
+
+# cross_language_communication_container
+
+[[example]]
+name = "cross_language_communication_container_publisher"
+path = "rust/cross_language_communication_container/publisher.rs"
+
+[[example]]
+name = "cross_language_communication_container_subscriber"
+path = "rust/cross_language_communication_container/subscriber.rs"
+
+# cross_language_communication_complex_types
+
+[[example]]
+name = "cross_language_communication_complex_types_publisher"
+path = "rust/cross_language_communication_complex_types/publisher.rs"
+
+[[example]]
+name = "cross_language_communication_complex_types_subscriber"
+path = "rust/cross_language_communication_complex_types/subscriber.rs"
+
+# discovery
+
+[[example]]
+name = "discovery"
+path = "rust/discovery/discovery.rs"
+
+[[example]]
+name = "discovery_service"
+path = "rust/discovery_service/discovery_service.rs"
+
+[[example]]
+name = "discovery_service_client"
+path = "rust/discovery_service/discovery_service_client.rs"
+
+# domains
+
+[[example]]
+name = "domains_publisher"
+path = "rust/domains/publisher.rs"
+
+[[example]]
+name = "domains_subscriber"
+path = "rust/domains/subscriber.rs"
+
+[[example]]
+name = "domains_discovery"
+path = "rust/domains/discovery.rs"
+
+# event
+
+[[example]]
+name = "event_listener"
+path = "rust/event/listener.rs"
+
+[[example]]
+name = "event_notifier"
+path = "rust/event/notifier.rs"
+
+# event multiplexing
+
+[[example]]
+name = "event_multiplexing_notifier"
+path = "rust/event_multiplexing/notifier.rs"
+
+[[example]]
+name = "event_multiplexing_wait"
+path = "rust/event_multiplexing/wait.rs"
+
+# event based communication
+
+[[example]]
+name = "event_based_comm_publisher"
+path = "rust/event_based_communication/publisher.rs"
+
+[[example]]
+name = "event_based_comm_subscriber"
+path = "rust/event_based_communication/subscriber.rs"
+
+# health monitoring
+
+[[example]]
+name = "health_monitoring_publisher_1"
+path = "rust/health_monitoring/publisher_1.rs"
+
+[[example]]
+name = "health_monitoring_publisher_2"
+path = "rust/health_monitoring/publisher_2.rs"
+
+[[example]]
+name = "health_monitoring_subscriber"
+path = "rust/health_monitoring/subscriber.rs"
+
+[[example]]
+name = "health_monitoring_central_daemon"
+path = "rust/health_monitoring/central_daemon.rs"
+
+# publish_subscribe
+
+[[example]]
+name = "publish_subscribe_publisher"
+path = "rust/publish_subscribe/publisher.rs"
+
+[[example]]
+name = "publish_subscribe_subscriber"
+path = "rust/publish_subscribe/subscriber.rs"
+
+# publish_subscribe_dynamic_data
+
+[[example]]
+name = "publish_subscribe_dyn_publisher"
+path = "rust/publish_subscribe_dynamic_data/publisher.rs"
+
+[[example]]
+name = "publish_subscribe_dyn_subscriber"
+path = "rust/publish_subscribe_dynamic_data/subscriber.rs"
+
+# publish_subscribe_with_backpressure_handler
+
+[[example]]
+name = "publish_subscribe_backpressure_publisher"
+path = "rust/publish_subscribe_with_backpressure/publisher.rs"
+
+[[example]]
+name = "publish_subscribe_backpressure_subscriber"
+path = "rust/publish_subscribe_with_backpressure/subscriber.rs"
+
+# publish_subscribe_with_user_header
+
+[[example]]
+name = "publish_subscribe_user_header_publisher"
+path = "rust/publish_subscribe_with_user_header/publisher.rs"
+
+[[example]]
+name = "publish_subscribe_user_header_subscriber"
+path = "rust/publish_subscribe_with_user_header/subscriber.rs"
+
+# request_response
+
+[[example]]
+name = "request_response_server"
+path = "rust/request_response/server.rs"
+
+[[example]]
+name = "request_response_client"
+path = "rust/request_response/client.rs"
+
+# request_response_dynamic_data
+
+[[example]]
+name = "request_response_dyn_server"
+path = "rust/request_response_dynamic_data/server.rs"
+
+[[example]]
+name = "request_response_dyn_client"
+path = "rust/request_response_dynamic_data/client.rs"
+
+# service attributes
+
+[[example]]
+name = "service_attributes_creator"
+path = "rust/service_attributes/creator.rs"
+
+[[example]]
+name = "service_attributes_opener"
+path = "rust/service_attributes/opener.rs"
+
+[[example]]
+name = "service_attributes_incompatible"
+path = "rust/service_attributes/incompatible.rs"
+
+# service types
+
+[[example]]
+name = "service_types_ipc_threadsafe_subscriber"
+path = "rust/service_types/ipc_threadsafe_subscriber.rs"
+
+[[example]]
+name = "service_types_ipc_publisher"
+path = "rust/service_types/ipc_publisher.rs"
+
+[[example]]
+name = "service_types_local_pubsub"
+path = "rust/service_types/local_pubsub.rs"
+
+# service variant customization
+
+[[example]]
+name = "service_variant_customization_subscriber"
+path = "rust/service_variant_customization/subscriber.rs"
+
+[[example]]
+name = "service_variant_customization_publisher"
+path = "rust/service_variant_customization/publisher.rs"

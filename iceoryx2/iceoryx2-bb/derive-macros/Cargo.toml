@@ -1,0 +1,39 @@
+[package]
+name = "iceoryx2-bb-derive-macros"
+description = "iceoryx2: [internal] helper derive proc-macros"
+categories = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+readme = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+version = { workspace = true }
+
+[lib]
+proc-macro = true
+
+[features]
+default = []
+
+std = [
+  "iceoryx2-bb-elementary/std"
+]
+
+[dependencies]
+iceoryx2-bb-elementary = { workspace = true }
+iceoryx2-bb-elementary-traits = { workspace = true }
+
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
+syn = { workspace = true }
+
+[dev-dependencies]
+iceoryx2-bb-derive-macros-tests-common = { workspace = true, features = ["std"] }
+iceoryx2-bb-testing = { workspace = true, features = ["std"] }
+
+[[test]]
+name = "iceoryx2-bb-derive-macros-tests"
+path = "tests/tests.rs"
+harness = false

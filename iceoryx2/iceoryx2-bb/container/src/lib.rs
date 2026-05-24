@@ -1,0 +1,123 @@
+// Copyright (c) 2023 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Apache Software License 2.0 which is available at
+// https://www.apache.org/licenses/LICENSE-2.0, or the MIT license
+// which is available at https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
+#![no_std]
+#![warn(clippy::alloc_instead_of_core)]
+#![warn(clippy::std_instead_of_alloc)]
+#![warn(clippy::std_instead_of_core)]
+#![warn(missing_docs)]
+
+//! # iceoryx2 Building Blocks (BB) Container
+//!
+//! This is a support library for iceoryx2 which comes with containers that are
+//! compatible with shared memory and can be used to construct custom payload types for
+//! inter-process communication.
+//!
+//! Most containers come in 3 variations:
+//!  1. `FixedSize*Container*`, compile-time fixed size version. The capacity must be known at compile
+//!     time. Those fixed-size constructs are always self-contained, meaning that the required
+//!     memory is part of the constructs and usually stored in some kind of array.
+//!  2. `Relocatable*Container*`, run-time fixed size version that is shared memory compatible. The
+//!     capacity must be known when the object is created. **This object is not movable!**
+//!  3. `*Container*`, run-time fixed size version that is **not** shared memory compatible but can be
+//!     moved. The memory is by default stored on the heap.
+//!
+//! # Example
+//!
+//! ## 1. Compile-Time FixedSize Containers
+//!
+//! We create a struct consisting of compile-time fixed size containers that can be used for
+//! zero copy inter-process communication.
+//!
+//! ```
+//! # extern crate iceoryx2_bb_loggers;
+//!
+//! use iceoryx2_bb_container::string::*;
+//! use iceoryx2_bb_container::vector::*;
+//!
+//! const TEXT_CAPACITY: usize = 123;
+//! const DATA_CAPACITY: usize = 456;
+//!
+//! #[repr(C)]
+//! struct MyMessageType {
+//!     some_text: StaticString<TEXT_CAPACITY>,
+//!     some_data: StaticVec<u64, DATA_CAPACITY>,
+//! }
+//!
+//! # fn main() -> Result<(), Box<dyn core::error::Error>> {
+//! let my_message = MyMessageType {
+//!     some_text: StaticString::from_bytes(b"Hello World")?,
+//!     some_data: StaticVec::new(),
+//! };
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ## 2. Shared Memory Compatible Run-Time FixedSize Containers
+//!
+//! Despite that the containers are already implemented, iceoryx2 itself does not yet support
+//! run-time fixed size types. It is planned and will be part of an upcoming release.
+//!
+//! ## 3. Run-Time FixedSize Containers
+//!
+//! We create a struct consisting of run-time fixed size containers. This can be interesting when
+//! it shall be used in a safety-critical environment where everything must be pre-allocated to
+//! ensure that required memory is always available.
+//!
+//! ```
+//! # extern crate iceoryx2_bb_loggers;
+//!
+//! use iceoryx2_bb_container::queue::*;
+//!
+//! const QUEUE_CAPACITY: usize = 123;
+//!
+//! #[repr(C)]
+//! struct MyType {
+//!     some_queue: Queue<u64>,
+//! }
+//!
+//! # fn main() -> Result<(), Box<dyn core::error::Error>> {
+//! let my_thing = MyType {
+//!     some_queue: Queue::new(QUEUE_CAPACITY),
+//! };
+//! # Ok(())
+//! # }
+//! ```
+
+extern crate alloc;
+
+/// A queue similar to [`alloc::collections::vec_deque::VecDeque`]
+pub mod queue;
+/// A container with persistent unique keys to access values.
+pub mod slotmap;
+/// Extends the [StaticString](crate::string::StaticString) so that custom string types with a semantic
+/// ruleset on their content can be realized.
+#[macro_use]
+pub mod semantic_string;
+
+/// A container to store key-value pairs.
+pub mod flatmap;
+
+/// A trait that defines the interface of a string and several string variants.
+pub mod string;
+
+/// Implementation of an [`Option`] that has a stable memory layout and is
+/// shared memory compatible.
+pub mod relocatable_option;
+
+#[doc(hidden)]
+pub(crate) mod vec;
+/// A trait that defines the interface of a vector and several vector variants.
+pub mod vector;
+
+/// A wrapper that provides byte-wise atomic read and write accesses on the inner type.
+pub mod byte_atomic;

@@ -1,0 +1,126 @@
+// Copyright (c) 2024 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Apache Software License 2.0 which is available at
+// https://www.apache.org/licenses/LICENSE-2.0, or the MIT license
+// which is available at https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
+#include "iox2/bb/slice.hpp"
+
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+#include <array>
+
+namespace {
+using namespace ::testing;
+using namespace iox2::bb;
+
+struct DummyData {
+    static constexpr uint64_t DEFAULT_VALUE_A = 42;
+    static constexpr bool DEFAULT_VALUE_Z { false };
+    uint64_t a { DEFAULT_VALUE_A };
+    bool z { DEFAULT_VALUE_Z };
+};
+
+TEST(SliceTest, const_correctness_is_maintained) {
+    constexpr uint64_t SLICE_MAX_LENGTH = 10;
+
+    auto elements = std::array<DummyData, SLICE_MAX_LENGTH> {};
+
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) fine in the tests
+
+    auto mutable_slice = MutableSlice<DummyData>(elements.data(), SLICE_MAX_LENGTH);
+    ASSERT_FALSE(std::is_const<std::remove_pointer_t<decltype(mutable_slice.begin())>>::value);
+    ASSERT_FALSE(std::is_const<std::remove_pointer_t<decltype(mutable_slice.end())>>::value);
+    ASSERT_FALSE(std::is_const<std::remove_pointer_t<decltype(mutable_slice.data())>>::value);
+    ASSERT_FALSE(std::is_const<std::remove_reference_t<decltype(mutable_slice[0])>>::value);
+
+    // const instances of MutableSlice are also not mutable
+    const auto const_mutable_slice = MutableSlice<DummyData>(elements.data(), SLICE_MAX_LENGTH);
+    ASSERT_TRUE(std::is_const<std::remove_pointer_t<decltype(const_mutable_slice.begin())>>::value);
+    ASSERT_TRUE(std::is_const<std::remove_pointer_t<decltype(const_mutable_slice.end())>>::value);
+    ASSERT_TRUE(std::is_const<std::remove_pointer_t<decltype(const_mutable_slice.data())>>::value);
+    ASSERT_TRUE(std::is_const<std::remove_reference_t<decltype(const_mutable_slice[0])>>::value);
+
+    auto immutable_slice = ImmutableSlice<DummyData>(elements.data(), SLICE_MAX_LENGTH);
+    ASSERT_TRUE(std::is_const<std::remove_pointer_t<decltype(immutable_slice.begin())>>::value);
+    ASSERT_TRUE(std::is_const<std::remove_pointer_t<decltype(immutable_slice.end())>>::value);
+    ASSERT_TRUE(std::is_const<std::remove_pointer_t<decltype(immutable_slice.data())>>::value);
+    ASSERT_TRUE(std::is_const<std::remove_reference_t<decltype(immutable_slice[0])>>::value);
+
+    const auto const_immutable_slice = ImmutableSlice<DummyData>(elements.data(), SLICE_MAX_LENGTH);
+    ASSERT_TRUE(std::is_const<std::remove_pointer_t<decltype(const_immutable_slice.begin())>>::value);
+    ASSERT_TRUE(std::is_const<std::remove_pointer_t<decltype(const_immutable_slice.end())>>::value);
+    ASSERT_TRUE(std::is_const<std::remove_pointer_t<decltype(const_immutable_slice.data())>>::value);
+    ASSERT_TRUE(std::is_const<std::remove_reference_t<decltype(const_immutable_slice[0])>>::value);
+
+    // NOLINTEND(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
+}
+
+TEST(SliceTest, can_iterate_mutable_slice) {
+    constexpr uint64_t SLICE_MAX_LENGTH = 10;
+
+    auto elements = std::array<DummyData, SLICE_MAX_LENGTH> {};
+
+    auto mutable_slice = MutableSlice<DummyData>(elements.data(), SLICE_MAX_LENGTH);
+    auto iterations = 0;
+    for (auto element : mutable_slice) {
+        ASSERT_THAT(element.a, Eq(DummyData::DEFAULT_VALUE_A));
+        ASSERT_THAT(element.z, Eq(DummyData::DEFAULT_VALUE_Z));
+        iterations++;
+    }
+    ASSERT_EQ(iterations, SLICE_MAX_LENGTH);
+}
+
+TEST(SliceTest, can_iterate_const_mutable_slice) {
+    constexpr uint64_t SLICE_MAX_LENGTH = 10;
+
+    auto elements = std::array<DummyData, SLICE_MAX_LENGTH> {};
+
+    const auto slice = MutableSlice<DummyData>(elements.data(), SLICE_MAX_LENGTH);
+    auto iterations = 0;
+    for (auto element : slice) {
+        ASSERT_THAT(element.a, Eq(DummyData::DEFAULT_VALUE_A));
+        ASSERT_THAT(element.z, Eq(DummyData::DEFAULT_VALUE_Z));
+        iterations++;
+    }
+    ASSERT_EQ(iterations, SLICE_MAX_LENGTH);
+}
+
+TEST(SliceTest, can_iterate_immutable_slice) {
+    constexpr uint64_t SLICE_MAX_LENGTH = 10;
+
+    auto elements = std::array<DummyData, SLICE_MAX_LENGTH> {};
+
+    auto slice = ImmutableSlice<DummyData>(elements.data(), SLICE_MAX_LENGTH);
+    auto iterations = 0;
+    for (auto element : slice) {
+        ASSERT_THAT(element.a, Eq(DummyData::DEFAULT_VALUE_A));
+        ASSERT_THAT(element.z, Eq(DummyData::DEFAULT_VALUE_Z));
+        iterations++;
+    }
+    ASSERT_EQ(iterations, SLICE_MAX_LENGTH);
+}
+
+TEST(SliceTest, can_iterate_const_immutable_slice) {
+    constexpr uint64_t SLICE_MAX_LENGTH = 10;
+
+    auto elements = std::array<DummyData, SLICE_MAX_LENGTH> {};
+
+    const auto slice = ImmutableSlice<DummyData>(elements.data(), SLICE_MAX_LENGTH);
+    auto iterations = 0;
+    for (auto element : slice) {
+        ASSERT_THAT(element.a, Eq(DummyData::DEFAULT_VALUE_A));
+        ASSERT_THAT(element.z, Eq(DummyData::DEFAULT_VALUE_Z));
+        iterations++;
+    }
+    ASSERT_EQ(iterations, SLICE_MAX_LENGTH);
+}
+
+} // namespace

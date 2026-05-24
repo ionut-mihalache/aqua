@@ -1,0 +1,14 @@
+[package]
+name = "bare-metal-nostd-common"
+description = "common components for nostd examples that run on bare metal"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+default = []
+semihosting = []
+
+[dependencies]
+iceoryx2-bb-memory = { workspace = true, features = [] }
+iceoryx2-bb-concurrency = { workspace = true, features = [] }
+iceoryx2-bb-elementary-traits = { workspace = true, features = [] }

@@ -1,0 +1,323 @@
+# Copyright (c) 2024 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache Software License 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0, or the MIT license
+# which is available at https://opensource.org/licenses/MIT.
+#
+# SPDX-License-Identifier: Apache-2.0 OR MIT
+
+load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
+    "NOTICE.md",
+])
+
+#
+# Config & Platform support
+#
+
+config_setting(
+    name = "linux",
+    constraint_values = ["@platforms//os:linux"],
+)
+
+config_setting(
+    name = "win-gcc",
+    constraint_values = ["@platforms//os:windows"],
+    flag_values = {"@bazel_tools//tools/cpp:compiler": "mingw-gcc"},
+)
+
+config_setting(
+    name = "win-msvc",
+    constraint_values = ["@platforms//os:windows"],
+    flag_values = {"@bazel_tools//tools/cpp:compiler": "msvc-cl"},
+)
+
+#
+# Rust Feature Flags
+#
+
+string_flag(
+    name = "feature_std",
+    build_setting_default = "on",
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "cfg_feature_std",
+    flag_values = {
+        "//:feature_std": "on",
+    },
+)
+
+string_flag(
+    name = "feature_dev_permissions",
+    build_setting_default = "off",
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "cfg_feature_dev_permissions",
+    flag_values = {
+        "//:feature_dev_permissions": "on",
+    },
+)
+
+string_flag(
+    name = "feature_logger_buffer",
+    build_setting_default = "off",
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "cfg_feature_logger_buffer",
+    flag_values = {
+        "//:feature_logger_buffer": "on",
+    },
+)
+
+string_flag(
+    name = "feature_logger_file",
+    build_setting_default = "off",
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "cfg_feature_logger_file",
+    flag_values = {
+        "//:feature_logger_file": "on",
+    },
+)
+
+string_flag(
+    name = "feature_logger_console",
+    build_setting_default = "on",
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "cfg_feature_logger_console",
+    flag_values = {
+        "//:feature_logger_console": "on",
+    },
+)
+
+string_flag(
+    name = "feature_logger_log",
+    build_setting_default = "off",
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "cfg_feature_logger_log",
+    flag_values = {
+        "//:feature_logger_log": "on",
+    },
+)
+
+string_flag(
+    name = "feature_logger_tracing",
+    build_setting_default = "off",
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "cfg_feature_logger_tracing",
+    flag_values = {
+        "//:feature_logger_tracing": "on",
+    },
+)
+
+string_flag(
+    name = "feature_logger_std",
+    build_setting_default = "on",
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "cfg_feature_logger_std",
+    flag_values = {
+        "//:feature_logger_std": "on",
+    },
+)
+
+string_flag(
+    name = "feature_logger_posix",
+    build_setting_default = "off",
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "cfg_feature_logger_posix",
+    flag_values = {
+        "//:feature_logger_posix": "on",
+    },
+)
+
+string_flag(
+    name = "feature_logger_bare_metal",
+    build_setting_default = "off",
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "cfg_feature_logger_bare_metal",
+    flag_values = {
+        "//:feature_logger_bare_metal": "on",
+    },
+)
+
+string_flag(
+    name = "use_std_expected",
+    build_setting_default = "off",
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "cfg_use_std_expected",
+    flag_values = {
+        "//:use_std_expected": "on",
+    },
+)
+
+string_flag(
+    name = "use_std_optional",
+    build_setting_default = "off",
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "cfg_use_std_optional",
+    flag_values = {
+        "//:use_std_optional": "on",
+    },
+)
+
+#
+# Alias
+#
+
+alias(
+    name = "iceoryx2",
+    actual = "//iceoryx2:iceoryx2",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "iceoryx2-c-shared",
+    actual = "//iceoryx2-c:iceoryx2-c-shared",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "iceoryx2-c-static",
+    actual = "//iceoryx2-c:iceoryx2-c-static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "iceoryx2-bb-cxx",
+    actual = "//iceoryx2-bb/cxx:iceoryx2-bb-cxx",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "iceoryx2-cxx-shared",
+    actual = "//iceoryx2-cxx:iceoryx2-cxx-shared",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "iceoryx2-cxx-static",
+    actual = "//iceoryx2-cxx:iceoryx2-cxx-static",
+    visibility = ["//visibility:public"],
+)
+
+#
+# all_srcs
+#
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob([
+        "config/**",
+        "examples/**",
+        "*.bazel",
+        "*.lock",
+        "*.toml",
+        "*.txt",
+        "*.md",
+        "LICENSE-*",
+    ]) + [
+        "//benchmarks/event:all_srcs",
+        "//benchmarks/publish-subscribe:all_srcs",
+        "//benchmarks/queue:all_srcs",
+        "//benchmarks/request-response:all_srcs",
+        "//component-tests/rust:all_srcs",
+        "//iceoryx2-log/log:all_srcs",
+        "//iceoryx2-log/types:all_srcs",
+        "//iceoryx2:all_srcs",
+        "//iceoryx2/tests-common:all_srcs",
+        "//iceoryx2-bb/print:all_srcs",
+        "//iceoryx2-bb/loggers:all_srcs",
+        "//iceoryx2-bb/concurrency:all_srcs",
+        "//iceoryx2-bb/concurrency/tests-common:all_srcs",
+        "//iceoryx2-bb/container:all_srcs",
+        "//iceoryx2-bb/container/tests-common:all_srcs",
+        "//iceoryx2-bb/derive-macros:all_srcs",
+        "//iceoryx2-bb/derive-macros/tests-common:all_srcs",
+        "//iceoryx2-bb/elementary:all_srcs",
+        "//iceoryx2-bb/elementary/tests-common:all_srcs",
+        "//iceoryx2-bb/elementary-traits:all_srcs",
+        "//iceoryx2-bb/linux:all_srcs",
+        "//iceoryx2-bb/linux/tests-common:all_srcs",
+        "//iceoryx2-bb/lock-free:all_srcs",
+        "//iceoryx2-bb/lock-free/tests-common:all_srcs",
+        "//iceoryx2-bb/memory:all_srcs",
+        "//iceoryx2-bb/memory/tests-common:all_srcs",
+        "//iceoryx2-bb/posix:all_srcs",
+        "//iceoryx2-bb/posix/tests-common:all_srcs",
+        "//iceoryx2-bb/system-types:all_srcs",
+        "//iceoryx2-bb/system-types/tests-common:all_srcs",
+        "//iceoryx2-bb/testing:all_srcs",
+        "//iceoryx2-bb/testing-macros:all_srcs",
+        "//iceoryx2-bb/threadsafe:all_srcs",
+        "//iceoryx2-bb/threadsafe/tests-common:all_srcs",
+        "//iceoryx2-bb/trait-tests:all_srcs",
+        "//iceoryx2-bb/trait-tests/tests-common:all_srcs",
+        "//iceoryx2-c:all_srcs",
+        "//iceoryx2-cal:all_srcs",
+        "//iceoryx2-cal/tests-common:all_srcs",
+        "//iceoryx2-cal/conformance-tests:all_srcs",
+        "//iceoryx2-cal/conformance-tests/tests-common:all_srcs",
+        "//iceoryx2-cli:all_srcs",
+        "//iceoryx2-cxx:all_srcs",
+        "//iceoryx2-ffi/c:all_srcs",
+        "//iceoryx2-ffi/ffi-macros:all_srcs",
+        "//iceoryx2-ffi/python:all_srcs",
+        "//iceoryx2-pal/concurrency-sync:all_srcs",
+        "//iceoryx2-pal/configuration:all_srcs",
+        "//iceoryx2-pal/os-api:all_srcs",
+        "//iceoryx2-pal/posix:all_srcs",
+        "//iceoryx2-pal/print:all_srcs",
+        "//iceoryx2-pal/testing:all_srcs",
+        "//iceoryx2-services/discovery:all_srcs",
+        "//iceoryx2-services/tunnel:all_srcs",
+        "//iceoryx2-services/tunnel-backend:all_srcs",
+        "//iceoryx2-services/tunnel-conformance-tests:all_srcs",
+        "//iceoryx2-services/tunnel-end-to-end-tests:all_srcs",
+        "//iceoryx2-userland/record-and-replay:all_srcs",
+        "//iceoryx2/conformance-tests:all_srcs",
+        "//iceoryx2/conformance-tests/tests-common:all_srcs",
+    ],
+    visibility = ["//visibility:public"],
+)

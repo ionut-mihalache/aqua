@@ -1,0 +1,319 @@
+// Copyright (c) 2025 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Apache Software License 2.0 which is available at
+// https://www.apache.org/licenses/LICENSE-2.0, or the MIT license
+// which is available at https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
+#ifndef IOX2_PORTFACTORY_REQUEST_RESPONSE_HPP
+#define IOX2_PORTFACTORY_REQUEST_RESPONSE_HPP
+
+#include "iox2/attribute_set.hpp"
+#include "iox2/bb/expected.hpp"
+#include "iox2/bb/static_function.hpp"
+#include "iox2/callback_progression.hpp"
+#include "iox2/cleanup_state.hpp"
+#include "iox2/dynamic_config_request_response.hpp"
+#include "iox2/internal/callback_context.hpp"
+#include "iox2/internal/iceoryx2.hpp"
+#include "iox2/node_failure_enums.hpp"
+#include "iox2/node_state.hpp"
+#include "iox2/port_factory_client.hpp"
+#include "iox2/port_factory_server.hpp"
+#include "iox2/service_hash.hpp"
+#include "iox2/service_name.hpp"
+#include "iox2/service_type.hpp"
+#include "iox2/static_config_request_response.hpp"
+
+namespace iox2 {
+/// The factory for [`MessagingPattern::RequestResponse`]. It can acquire
+/// dynamic and static service informations and create [`crate::port::client::Client`]
+/// or [`crate::port::server::Server`] ports.
+template <ServiceType Service,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+class PortFactoryRequestResponse {
+  public:
+    PortFactoryRequestResponse(PortFactoryRequestResponse&& rhs) noexcept;
+    auto operator=(PortFactoryRequestResponse&& rhs) noexcept -> PortFactoryRequestResponse&;
+    ~PortFactoryRequestResponse();
+
+    PortFactoryRequestResponse(const PortFactoryRequestResponse&) = delete;
+    auto operator=(const PortFactoryRequestResponse&) -> PortFactoryRequestResponse& = delete;
+
+    /// Returns the [`ServiceName`] of the service
+    auto name() const -> ServiceNameView;
+
+    /// Returns the [`ServiceHash`] of the [`Service`]
+    auto service_hash() const -> ServiceHash;
+
+    /// Returns the attributes defined in the [`Service`]
+    auto attributes() const -> AttributeSetView;
+
+    /// Returns the StaticConfig of the [`Service`].
+    /// Contains all settings that never change during the lifetime of the service.
+    auto static_config() const -> StaticConfigRequestResponse;
+
+    /// Returns the DynamicConfig of the [`Service`].
+    /// Contains all dynamic settings, like the current participants etc..
+    auto dynamic_config() const -> DynamicConfigRequestResponse;
+
+    /// Iterates over all [`Node`]s of the [`Service`]
+    /// and calls for every [`Node`] the provided callback. If an error occurs
+    /// while acquiring the [`Node`]s corresponding [`NodeState`] the error is
+    /// forwarded to the callback as input argument.
+    auto nodes(const iox2::bb::StaticFunction<CallbackProgression(NodeState<Service>)>& callback) const
+        -> bb::Expected<void, NodeListFailure>;
+
+    /// Returns a [`PortFactoryClient`] to create a new
+    /// [`crate::port::client::Client`] port.
+    auto client_builder() const
+        -> PortFactoryClient<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>;
+
+    /// Returns a [`PortFactoryServer`] to create a new
+    /// [`crate::port::server::Server`] port.
+    auto server_builder() const
+        -> PortFactoryServer<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>;
+
+    /// Removes the stale system resources of all dead [`Node`]s connected to this service.
+    ///
+    /// If a [`Node`] cannot be cleaned up since the process has insufficient permissions or it
+    /// is currently being cleaned up by another process then the [`Node`] is skipped.
+    auto try_cleanup_dead_nodes() const -> CleanupState;
+
+    /// Removes the stale system resources of all dead [`Node`]s connected to this service.
+    ///
+    /// If a [`Node`] cannot be cleaned up since the process has insufficient permissions then the
+    /// [`Node`] is skipped. If it is currently being cleaned up by another process then the
+    /// cleaner will wait until the timeout as either passed or the cleaned was finished.
+    ///
+    /// The timeout is applied to every individual dead [`Node`] the function needs to wait on.
+    auto blocking_cleanup_dead_nodes(iox2::bb::Duration timeout) const -> CleanupState;
+
+  private:
+    template <typename, typename, typename, typename, ServiceType>
+    friend class ServiceBuilderRequestResponse;
+
+    explicit PortFactoryRequestResponse(iox2_port_factory_request_response_h handle);
+    void drop();
+
+    iox2_port_factory_request_response_h m_handle = nullptr;
+};
+
+template <ServiceType Service,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline PortFactoryRequestResponse<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::
+    PortFactoryRequestResponse(PortFactoryRequestResponse&& rhs) noexcept {
+    *this = std::move(rhs);
+}
+
+template <ServiceType Service,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline auto
+PortFactoryRequestResponse<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::operator=(
+    PortFactoryRequestResponse&& rhs) noexcept -> PortFactoryRequestResponse& {
+    if (this != &rhs) {
+        drop();
+        m_handle = rhs.m_handle;
+        rhs.m_handle = nullptr;
+    }
+
+    return *this;
+}
+
+template <ServiceType Service,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline PortFactoryRequestResponse<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::
+    ~PortFactoryRequestResponse() {
+    drop();
+}
+
+template <ServiceType Service,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline auto
+PortFactoryRequestResponse<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::name()
+    const -> ServiceNameView {
+    const auto* service_name_ptr = iox2_port_factory_request_response_service_name(&m_handle);
+    return ServiceNameView(service_name_ptr);
+}
+
+template <ServiceType Service,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline auto
+PortFactoryRequestResponse<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::
+    service_hash() const -> ServiceHash {
+    iox2::legacy::UninitializedArray<char, IOX2_SERVICE_HASH_LENGTH> buffer;
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) index 0 is guaranteed to be valid
+    iox2_port_factory_request_response_service_hash(&m_handle, &buffer[0], IOX2_SERVICE_HASH_LENGTH);
+
+    return ServiceHash(iox2::bb::StaticString<IOX2_SERVICE_HASH_LENGTH>::from_utf8_null_terminated_unchecked_truncated(
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access) index 0 is guaranteed to be valid
+        &buffer[0],
+        IOX2_SERVICE_HASH_LENGTH));
+}
+
+template <ServiceType Service,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline auto
+PortFactoryRequestResponse<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::
+    attributes() const -> AttributeSetView {
+    return AttributeSetView(iox2_port_factory_request_response_attributes(&m_handle));
+}
+
+template <ServiceType Service,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline auto
+PortFactoryRequestResponse<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::
+    static_config() const -> StaticConfigRequestResponse {
+    iox2_static_config_request_response_t static_config {};
+    iox2_port_factory_request_response_static_config(&m_handle, &static_config);
+
+    return StaticConfigRequestResponse(static_config);
+}
+
+template <ServiceType Service,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline auto
+PortFactoryRequestResponse<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::
+    dynamic_config() const -> DynamicConfigRequestResponse {
+    return DynamicConfigRequestResponse(m_handle);
+}
+
+template <ServiceType Service,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline auto
+PortFactoryRequestResponse<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::nodes(
+    const iox2::bb::StaticFunction<CallbackProgression(NodeState<Service>)>& callback) const
+    -> bb::Expected<void, NodeListFailure> {
+    auto ctx = internal::ctx(callback);
+
+    const auto ret_val =
+        iox2_port_factory_request_response_nodes(&m_handle, internal::list_callback<Service>, static_cast<void*>(&ctx));
+
+    if (ret_val == IOX2_OK) {
+        return {};
+    }
+
+    return bb::err(bb::into<NodeListFailure>(ret_val));
+}
+
+template <ServiceType S,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline auto PortFactoryRequestResponse<S, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::
+    try_cleanup_dead_nodes() const -> CleanupState {
+    iox2_cleanup_state_t cleanup_state {};
+
+    iox2_port_factory_request_response_try_cleanup_dead_nodes(&m_handle, &cleanup_state);
+
+    CleanupState ret_val {};
+    ret_val.cleanups = cleanup_state.cleanups;
+    ret_val.failed_cleanups = cleanup_state.failed_cleanups;
+    return ret_val;
+}
+
+template <ServiceType T,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline auto PortFactoryRequestResponse<T, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::
+    blocking_cleanup_dead_nodes(iox2::bb::Duration timeout) const -> CleanupState {
+    iox2_cleanup_state_t cleanup_state {};
+
+    iox2_port_factory_request_response_blocking_cleanup_dead_nodes(
+        &m_handle, &cleanup_state, timeout.as_secs(), timeout.subsec_nanos());
+
+    CleanupState ret_val {};
+    ret_val.cleanups = cleanup_state.cleanups;
+    ret_val.failed_cleanups = cleanup_state.failed_cleanups;
+    return ret_val;
+}
+
+template <ServiceType Service,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline auto
+PortFactoryRequestResponse<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::
+    client_builder() const
+    -> PortFactoryClient<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader> {
+    return PortFactoryClient<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>(
+        iox2_port_factory_request_response_client_builder(&m_handle, nullptr));
+}
+
+template <ServiceType Service,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline auto
+PortFactoryRequestResponse<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::
+    server_builder() const
+    -> PortFactoryServer<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader> {
+    return PortFactoryServer<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>(
+        iox2_port_factory_request_response_server_builder(&m_handle, nullptr));
+}
+
+template <ServiceType Service,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline PortFactoryRequestResponse<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::
+    PortFactoryRequestResponse(iox2_port_factory_request_response_h handle)
+    : m_handle { handle } {
+}
+
+template <ServiceType Service,
+          typename RequestPayload,
+          typename RequestUserHeader,
+          typename ResponsePayload,
+          typename ResponseUserHeader>
+inline void
+PortFactoryRequestResponse<Service, RequestPayload, RequestUserHeader, ResponsePayload, ResponseUserHeader>::drop() {
+    if (m_handle != nullptr) {
+        iox2_port_factory_request_response_drop(m_handle);
+        m_handle = nullptr;
+    }
+}
+} // namespace iox2
+
+#endif

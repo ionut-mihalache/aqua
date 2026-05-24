@@ -1,0 +1,43 @@
+[package]
+name = "iceoryx2-bb-linux"
+description = "iceoryx2: [internal] high level safe abstractions for low level unsafe linux constructs"
+categories = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+version = { workspace = true }
+
+[features]
+default = []
+
+std = [
+  "iceoryx2-bb-concurrency/std",
+  "iceoryx2-bb-container/std",
+  "iceoryx2-bb-posix/std",
+  "iceoryx2-bb-system-types/std",
+  "iceoryx2-log/std",
+  "iceoryx2-pal-os-api/std",
+  "iceoryx2-pal-posix/std",
+]
+
+[[test]]
+name = "iceoryx2-bb-linux-tests"
+path = "tests/tests.rs"
+harness = false
+
+[dependencies]
+iceoryx2-log = { workspace = true }
+iceoryx2-bb-concurrency = { workspace = true }
+iceoryx2-bb-container = { workspace = true }
+iceoryx2-bb-posix = { workspace = true }
+iceoryx2-bb-system-types = { workspace = true }
+iceoryx2-pal-os-api = { workspace = true }
+iceoryx2-pal-posix = { workspace = true }
+
+[dev-dependencies]
+iceoryx2-bb-linux-tests-common = { workspace = true, features = ["std"] }
+iceoryx2-bb-loggers = { workspace = true, features = ["std"]  }
+iceoryx2-bb-testing = { workspace = true, features = ["std"]  }

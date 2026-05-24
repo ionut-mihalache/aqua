@@ -1,0 +1,26 @@
+[package]
+name = "iceoryx2-pal-print"
+description = "iceoryx2: [internal] abstraction over character printing"
+categories = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+version = { workspace = true }
+
+[features]
+default = []
+std = []
+
+[dependencies]
+
+[target.'cfg(target_os = "linux")'.dependencies]
+iceoryx2-pal-posix = { workspace = true }
+
+[target.'cfg(target_os = "nto")'.dependencies]
+iceoryx2-pal-posix = { workspace = true }
+
+[lints]
+workspace = true

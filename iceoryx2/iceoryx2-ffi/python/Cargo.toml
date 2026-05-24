@@ -1,0 +1,25 @@
+[package]
+name = "iceoryx2-ffi-python"
+description = "iceoryx2 ffi python bindings"
+categories = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+version = { workspace = true }
+readme = { workspace = true }
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "_iceoryx2"
+crate-type = ["cdylib"]
+
+[dependencies]
+iceoryx2 = { workspace = true, features = ["std"] }
+iceoryx2-log = { workspace = true, features = ["std"] }
+
+[dependencies.pyo3]
+version = "0.28.2"
+features = ["abi3-py38"]

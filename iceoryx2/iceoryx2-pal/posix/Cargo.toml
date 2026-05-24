@@ -1,0 +1,37 @@
+[package]
+name = "iceoryx2-pal-posix"
+description = "iceoryx2: [internal] A posix layer that ensures uniform posix behavior on all platforms according to https://posix.opengroup.org"
+categories = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+version = { workspace = true }
+
+[lints]
+workspace = true
+
+[features]
+std = [
+  "iceoryx2-pal-concurrency-sync/std",
+  "libc/std"
+]
+
+[build-dependencies]
+cc = { workspace = true }
+bindgen = { workspace = true }
+
+[dependencies]
+iceoryx2-pal-concurrency-sync = { workspace = true }
+iceoryx2-pal-configuration = { workspace = true }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = { workspace = true }
+
+[target.'cfg(target_os = "android")'.dependencies]
+libc = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { workspace = true }

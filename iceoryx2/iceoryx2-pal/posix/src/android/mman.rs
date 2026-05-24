@@ -1,0 +1,104 @@
+// Copyright (c) 2023 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Apache Software License 2.0 which is available at
+// https://www.apache.org/licenses/LICENSE-2.0, or the MIT license
+// which is available at https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
+#![allow(non_camel_case_types)]
+#![allow(clippy::missing_safety_doc)]
+
+use crate::posix::{Errno, closedir, opendir, readdir, types::*};
+
+pub unsafe fn mlock(addr: *const void, len: size_t) -> int {
+    unsafe { libc::mlock(addr, len) }
+}
+
+pub unsafe fn munlock(addr: *const void, len: size_t) -> int {
+    unsafe { libc::munlock(addr, len) }
+}
+
+pub unsafe fn mlockall(flags: int) -> int {
+    unsafe { libc::mlockall(flags) }
+}
+
+pub unsafe fn munlockall() -> int {
+    unsafe { libc::munlockall() }
+}
+
+pub unsafe fn shm_open(_name: *const c_char, _oflag: int, _mode: mode_t) -> int {
+    Errno::set(Errno::ENOSYS);
+
+    -1
+}
+
+pub unsafe fn shm_unlink(_name: *const c_char) -> int {
+    Errno::set(Errno::ENOSYS);
+
+    -1
+}
+
+pub unsafe fn shm_list() -> Vec<[i8; 256]> {
+    let mut result = vec![];
+    let dir = unsafe { opendir(c"/dev/shm/".as_ptr().cast()) };
+    if dir.is_null() {
+        return result;
+    }
+
+    loop {
+        let entry = unsafe { readdir(dir) };
+        if entry.is_null() {
+            break;
+        }
+        let mut temp = [0i8; 256];
+        for (i, c) in temp.iter_mut().enumerate() {
+            unsafe {
+                *c = (*entry).d_name[i] as _;
+                if (*entry).d_name[i] == 0 {
+                    break;
+                }
+            }
+        }
+
+        // skip empty names
+        if temp[0] == 0 ||
+        // skip dot (for current dir)
+        temp[0] as u8 == b'.' && temp[1] == 0 ||
+        // skip  dot dot (for parent dir)
+        temp[0] as u8 == b'.' && temp[1] as u8 == b'.' && temp[2] == 0
+        {
+            continue;
+        }
+
+        result.push(temp);
+    }
+    unsafe {
+        closedir(dir);
+    }
+
+    result
+}
+
+pub unsafe fn mmap(
+    addr: *mut void,
+    len: size_t,
+    prot: int,
+    flags: int,
+    fd: int,
+    off: off_t,
+) -> *mut void {
+    unsafe { libc::mmap(addr, len, prot, flags, fd, off) }
+}
+
+pub unsafe fn munmap(addr: *mut void, len: size_t) -> int {
+    unsafe { libc::munmap(addr, len) }
+}
+
+pub unsafe fn mprotect(addr: *mut void, len: size_t, prot: int) -> int {
+    unsafe { libc::mprotect(addr, len, prot) }
+}

@@ -1,0 +1,102 @@
+// Copyright (c) 2023 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Apache Software License 2.0 which is available at
+// https://www.apache.org/licenses/LICENSE-2.0, or the MIT license
+// which is available at https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
+#![allow(non_camel_case_types, non_snake_case)]
+#![allow(clippy::missing_safety_doc)]
+
+use crate::posix::types::*;
+
+pub unsafe fn proc_pidpath(pid: pid_t, buffer: *mut c_char, buffer_len: size_t) -> isize {
+    unsafe {
+        let proc = crate::internal::kinfo_getproc(pid);
+        let comm_len = crate::internal::strlen((*proc).ki_comm.as_ptr());
+        if !proc.is_null() && comm_len <= buffer_len as _ {
+            crate::internal::strncpy(buffer.cast(), (*proc).ki_comm.as_ptr(), buffer_len as _);
+            crate::internal::free(proc.cast());
+            return comm_len as _;
+        }
+
+        -1
+    }
+}
+
+pub unsafe fn sysconf(name: int) -> long {
+    unsafe { crate::internal::sysconf(name) }
+}
+
+pub unsafe fn pathconf(path: *const c_char, name: int) -> long {
+    unsafe { crate::internal::pathconf(path, name) }
+}
+
+pub unsafe fn getpid() -> pid_t {
+    unsafe { crate::internal::getpid() }
+}
+
+pub unsafe fn gethostpid() -> pid_t {
+    unsafe { crate::internal::getpid() }
+}
+
+pub unsafe fn getppid() -> pid_t {
+    unsafe { crate::internal::getppid() }
+}
+
+pub unsafe fn dup(fildes: int) -> int {
+    unsafe { crate::internal::dup(fildes) }
+}
+
+pub unsafe fn close(fd: int) -> int {
+    unsafe { crate::internal::close(fd) }
+}
+
+pub unsafe fn read(fd: int, buf: *mut void, count: size_t) -> ssize_t {
+    unsafe { crate::internal::read(fd, buf, count) }
+}
+
+pub unsafe fn write(fd: int, buf: *const void, count: size_t) -> ssize_t {
+    unsafe { crate::internal::write(fd, buf, count) }
+}
+
+pub unsafe fn access(pathname: *const c_char, mode: int) -> int {
+    unsafe { crate::internal::access(pathname, mode) }
+}
+
+pub unsafe fn unlink(pathname: *const c_char) -> int {
+    unsafe { crate::internal::unlink(pathname) }
+}
+
+pub unsafe fn lseek(fd: int, offset: off_t, whence: int) -> off_t {
+    unsafe { crate::internal::lseek(fd, offset, whence) }
+}
+
+pub unsafe fn getuid() -> uid_t {
+    unsafe { crate::internal::getuid() }
+}
+
+pub unsafe fn getgid() -> gid_t {
+    unsafe { crate::internal::getgid() }
+}
+
+pub unsafe fn rmdir(pathname: *const c_char) -> int {
+    unsafe { crate::internal::rmdir(pathname) }
+}
+
+pub unsafe fn ftruncate(fd: int, length: off_t) -> int {
+    unsafe { crate::internal::ftruncate(fd, length) }
+}
+
+pub unsafe fn fchown(fd: int, owner: uid_t, group: gid_t) -> int {
+    unsafe { crate::internal::fchown(fd, owner, group) }
+}
+
+pub unsafe fn fsync(fd: int) -> int {
+    unsafe { crate::internal::fsync(fd) }
+}

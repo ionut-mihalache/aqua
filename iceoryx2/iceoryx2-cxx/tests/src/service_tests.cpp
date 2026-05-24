@@ -1,0 +1,306 @@
+// Copyright (c) 2025 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Apache Software License 2.0 which is available at
+// https://www.apache.org/licenses/LICENSE-2.0, or the MIT license
+// which is available at https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
+#include "iox2/attribute_specifier.hpp"
+#include "iox2/node.hpp"
+#include "iox2/service.hpp"
+
+#include "test.hpp"
+
+namespace {
+using namespace iox2;
+
+template <typename T>
+class ServiceTest : public ::testing::Test {
+  public:
+    static constexpr ServiceType TYPE = T::TYPE;
+};
+
+TYPED_TEST_SUITE(ServiceTest, iox2_testing::ServiceTypes, );
+
+TYPED_TEST(ServiceTest, does_exist_works) {
+    constexpr ServiceType SERVICE_TYPE = TestFixture::TYPE;
+
+    const auto service_name = iox2_testing::generate_service_name();
+
+    ASSERT_FALSE(
+        Service<SERVICE_TYPE>::does_exist(service_name, Config::global_config(), MessagingPattern::PublishSubscribe)
+            .value());
+    ASSERT_FALSE(
+        Service<SERVICE_TYPE>::does_exist(service_name, Config::global_config(), MessagingPattern::Event).value());
+    ASSERT_FALSE(
+        Service<SERVICE_TYPE>::does_exist(service_name, Config::global_config(), MessagingPattern::RequestResponse)
+            .value());
+    ASSERT_FALSE(
+        Service<SERVICE_TYPE>::does_exist(service_name, Config::global_config(), MessagingPattern::Blackboard).value());
+
+    auto node = NodeBuilder().create<SERVICE_TYPE>().value();
+
+    {
+        auto sut = node.service_builder(service_name).template publish_subscribe<uint64_t>().create().value();
+
+        ASSERT_TRUE(
+            Service<SERVICE_TYPE>::does_exist(service_name, Config::global_config(), MessagingPattern::PublishSubscribe)
+                .value());
+        ASSERT_FALSE(
+            Service<SERVICE_TYPE>::does_exist(service_name, Config::global_config(), MessagingPattern::Event).value());
+        ASSERT_FALSE(
+            Service<SERVICE_TYPE>::does_exist(service_name, Config::global_config(), MessagingPattern::RequestResponse)
+                .value());
+        ASSERT_FALSE(
+            Service<SERVICE_TYPE>::does_exist(service_name, Config::global_config(), MessagingPattern::Blackboard)
+                .value());
+    }
+
+    ASSERT_FALSE(
+        Service<SERVICE_TYPE>::does_exist(service_name, Config::global_config(), MessagingPattern::PublishSubscribe)
+            .value());
+    ASSERT_FALSE(
+        Service<SERVICE_TYPE>::does_exist(service_name, Config::global_config(), MessagingPattern::Event).value());
+    ASSERT_FALSE(
+        Service<SERVICE_TYPE>::does_exist(service_name, Config::global_config(), MessagingPattern::RequestResponse)
+            .value());
+    ASSERT_FALSE(
+        Service<SERVICE_TYPE>::does_exist(service_name, Config::global_config(), MessagingPattern::Blackboard).value());
+}
+
+TYPED_TEST(ServiceTest, list_works) {
+    constexpr ServiceType SERVICE_TYPE = TestFixture::TYPE;
+
+    const auto service_name_1 = iox2_testing::generate_service_name();
+    const auto service_name_2 = iox2_testing::generate_service_name();
+    const auto service_name_3 = iox2_testing::generate_service_name();
+    const auto service_name_4 = iox2_testing::generate_service_name();
+
+    auto node = NodeBuilder().create<SERVICE_TYPE>().value();
+
+    auto sut_1 =
+        node.service_builder(service_name_1).template publish_subscribe<uint64_t>().max_nodes(2).create().value();
+    auto sut_2 = node.service_builder(service_name_2).event().max_nodes(3).create().value();
+    auto sut_3 = node.service_builder(service_name_3)
+                     .template request_response<uint64_t, uint64_t>()
+                     .max_nodes(4)
+                     .create()
+                     .value();
+    auto sut_4 = node.service_builder(service_name_4)
+                     .template blackboard_creator<uint64_t>()
+                     .template add_with_default<uint64_t>(0)
+                     .max_nodes(2)
+                     .create()
+                     .value();
+
+    //NOLINTBEGIN(readability-function-cognitive-complexity), false positive caused by EXPECT_THAT
+    auto verify = [&](auto details) -> CallbackProgression {
+        switch (details.static_details.messaging_pattern()) {
+        case MessagingPattern::PublishSubscribe:
+            EXPECT_THAT(details.static_details.name(), StrEq(service_name_1.to_string().unchecked_access().c_str()));
+            EXPECT_THAT(details.static_details.id(), StrEq(sut_1.service_hash().c_str()));
+            EXPECT_THAT(details.static_details.publish_subscribe().max_nodes(), Eq(2));
+            break;
+        case MessagingPattern::Event:
+            EXPECT_THAT(details.static_details.name(), StrEq(service_name_2.to_string().unchecked_access().c_str()));
+            EXPECT_THAT(details.static_details.id(), StrEq(sut_2.service_hash().c_str()));
+            EXPECT_THAT(details.static_details.event().max_nodes(), Eq(3));
+            break;
+        case MessagingPattern::RequestResponse:
+            EXPECT_THAT(details.static_details.name(), StrEq(service_name_3.to_string().unchecked_access().c_str()));
+            EXPECT_THAT(details.static_details.id(), StrEq(sut_3.service_hash().c_str()));
+            EXPECT_THAT(details.static_details.request_response().max_nodes(), Eq(4));
+            break;
+        case MessagingPattern::Blackboard:
+            EXPECT_THAT(details.static_details.name(), StrEq(service_name_4.to_string().unchecked_access().c_str()));
+            EXPECT_THAT(details.static_details.id(), StrEq(sut_4.service_hash().c_str()));
+            EXPECT_THAT(details.static_details.blackboard().max_nodes(), Eq(2));
+            break;
+        }
+
+        return CallbackProgression::Continue;
+    };
+    //NOLINTEND(readability-function-cognitive-complexity)
+
+    auto result = Service<SERVICE_TYPE>::list(Config::global_config(), verify);
+
+    ASSERT_THAT(result.has_value(), Eq(true));
+}
+
+TYPED_TEST(ServiceTest, list_works_with_attributes) {
+    constexpr ServiceType SERVICE_TYPE = TestFixture::TYPE;
+
+    auto key_1 = *Attribute::Key::from_utf8("do elephants like strawberries?");
+    auto value_1 = *Attribute::Value::from_utf8("do strawberries like elephants?");
+    auto key_2 = *Attribute::Key::from_utf8("the berry of the straw");
+    auto value_2 = *Attribute::Value::from_utf8("has left the field!");
+
+
+    const auto service_name_1 = iox2_testing::generate_service_name();
+    const auto service_name_2 = iox2_testing::generate_service_name();
+    const auto service_name_3 = iox2_testing::generate_service_name();
+    const auto service_name_4 = iox2_testing::generate_service_name();
+
+    auto node = NodeBuilder().create<SERVICE_TYPE>().value();
+
+    auto attribute_specifier = AttributeSpecifier();
+    attribute_specifier.define(key_1, value_1).value();
+    attribute_specifier.define(key_2, value_2).value();
+    auto sut_1 = node.service_builder(service_name_1)
+                     .template publish_subscribe<uint64_t>()
+                     .create_with_attributes(attribute_specifier)
+                     .value();
+    auto sut_2 = node.service_builder(service_name_2).event().create().value();
+    auto sut_3 = node.service_builder(service_name_3)
+                     .template request_response<uint64_t, uint64_t>()
+                     .create_with_attributes(attribute_specifier)
+                     .value();
+    auto sut_4 = node.service_builder(service_name_4)
+                     .template blackboard_creator<uint64_t>()
+                     .template add_with_default<uint64_t>(0)
+                     .create_with_attributes(attribute_specifier)
+                     .value();
+
+    auto counter = 0;
+    //NOLINTBEGIN(readability-function-cognitive-complexity), false positive caused by EXPECT_THAT
+    auto verify = [&](auto details) -> CallbackProgression {
+        switch (details.static_details.messaging_pattern()) {
+        case MessagingPattern::PublishSubscribe:
+            EXPECT_THAT(details.static_details.name(), StrEq(service_name_1.to_string().unchecked_access().c_str()));
+            EXPECT_THAT(details.static_details.id(), StrEq(sut_1.service_hash().c_str()));
+
+            counter = 0;
+            details.static_details.attributes().iter_key_values(key_1, [&](auto& value) -> CallbackProgression {
+                EXPECT_THAT(value.unchecked_access().c_str(), StrEq(value_1.unchecked_access().c_str()));
+                counter++;
+                return CallbackProgression::Continue;
+            });
+            EXPECT_THAT(counter, Eq(1));
+
+            counter = 0;
+            details.static_details.attributes().iter_key_values(key_2, [&](auto& value) -> CallbackProgression {
+                EXPECT_THAT(value.unchecked_access().c_str(), StrEq(value_2.unchecked_access().c_str()));
+                counter++;
+                return CallbackProgression::Continue;
+            });
+            EXPECT_THAT(counter, Eq(1));
+            break;
+        case MessagingPattern::Event:
+            EXPECT_THAT(details.static_details.name(), StrEq(service_name_2.to_string().unchecked_access().c_str()));
+            EXPECT_THAT(details.static_details.id(), StrEq(sut_2.service_hash().c_str()));
+            break;
+        case MessagingPattern::RequestResponse:
+            EXPECT_THAT(details.static_details.name(), StrEq(service_name_3.to_string().unchecked_access().c_str()));
+            EXPECT_THAT(details.static_details.id(), StrEq(sut_3.service_hash().c_str()));
+
+            counter = 0;
+            details.static_details.attributes().iter_key_values(key_1, [&](auto& value) -> CallbackProgression {
+                EXPECT_THAT(value.unchecked_access().c_str(), StrEq(value_1.unchecked_access().c_str()));
+                counter++;
+                return CallbackProgression::Continue;
+            });
+            EXPECT_THAT(counter, Eq(1));
+
+            counter = 0;
+            details.static_details.attributes().iter_key_values(key_2, [&](auto& value) -> CallbackProgression {
+                EXPECT_THAT(value.unchecked_access().c_str(), StrEq(value_2.unchecked_access().c_str()));
+                counter++;
+                return CallbackProgression::Continue;
+            });
+            EXPECT_THAT(counter, Eq(1));
+            break;
+        case MessagingPattern::Blackboard:
+            EXPECT_THAT(details.static_details.name(), StrEq(service_name_4.to_string().unchecked_access().c_str()));
+            EXPECT_THAT(details.static_details.id(), StrEq(sut_4.service_hash().c_str()));
+
+            counter = 0;
+            details.static_details.attributes().iter_key_values(key_1, [&](auto& value) -> CallbackProgression {
+                EXPECT_THAT(value.unchecked_access().c_str(), StrEq(value_1.unchecked_access().c_str()));
+                counter++;
+                return CallbackProgression::Continue;
+            });
+            EXPECT_THAT(counter, Eq(1));
+
+            counter = 0;
+            details.static_details.attributes().iter_key_values(key_2, [&](auto& value) -> CallbackProgression {
+                EXPECT_THAT(value.unchecked_access().c_str(), StrEq(value_2.unchecked_access().c_str()));
+                counter++;
+                return CallbackProgression::Continue;
+            });
+            EXPECT_THAT(counter, Eq(1));
+            break;
+        }
+
+        return CallbackProgression::Continue;
+    };
+    //NOLINTEND(readability-function-cognitive-complexity)
+
+    auto result = Service<SERVICE_TYPE>::list(Config::global_config(), verify);
+
+    ASSERT_THAT(result.has_value(), Eq(true));
+}
+
+//NOLINTBEGIN(readability-function-cognitive-complexity), false positive caused by ASSERT_THAT
+TYPED_TEST(ServiceTest, details_works) {
+    constexpr ServiceType SERVICE_TYPE = TestFixture::TYPE;
+
+    auto key_1 = *Attribute::Key::from_utf8("gimme a strawberries?");
+    auto value_1 = *Attribute::Value::from_utf8("i want a strawberry!");
+    auto key_2 = *Attribute::Key::from_utf8("it makes me immortal");
+    auto value_2 = *Attribute::Value::from_utf8("or at least sticky");
+
+
+    const auto service_name_1 = iox2_testing::generate_service_name();
+    const auto service_name_2 = iox2_testing::generate_service_name();
+
+    auto node = NodeBuilder().create<SERVICE_TYPE>().value();
+
+    auto attribute_specifier = AttributeSpecifier();
+    attribute_specifier.define(key_1, value_1).value();
+    attribute_specifier.define(key_2, value_2).value();
+    auto sut = node.service_builder(service_name_1)
+                   .template publish_subscribe<uint64_t>()
+                   .create_with_attributes(attribute_specifier)
+                   .value();
+
+    auto result =
+        Service<SERVICE_TYPE>::details(service_name_1, Config::global_config(), MessagingPattern::PublishSubscribe);
+
+    ASSERT_THAT(result.has_value(), Eq(true));
+    ASSERT_THAT(result->has_value(), Eq(true));
+
+    ASSERT_THAT(result.value()->static_details.name(), StrEq(service_name_1.to_string().unchecked_access().c_str()));
+    ASSERT_THAT(result.value()->static_details.name(), StrEq(service_name_1.to_string().unchecked_access().c_str()));
+
+    auto counter = 0;
+    result.value()->static_details.attributes().iter_key_values(key_1, [&](auto& value) -> CallbackProgression {
+        EXPECT_THAT(value.unchecked_access().c_str(), StrEq(value_1.unchecked_access().c_str()));
+        counter++;
+        return CallbackProgression::Continue;
+    });
+    EXPECT_THAT(counter, Eq(1));
+
+    counter = 0;
+    result.value()->static_details.attributes().iter_key_values(key_2, [&](auto& value) -> CallbackProgression {
+        EXPECT_THAT(value.unchecked_access().c_str(), StrEq(value_2.unchecked_access().c_str()));
+        counter++;
+        return CallbackProgression::Continue;
+    });
+    EXPECT_THAT(counter, Eq(1));
+
+    result = Service<SERVICE_TYPE>::details(service_name_1, Config::global_config(), MessagingPattern::Event);
+    ASSERT_THAT(result.has_value(), Eq(true));
+    ASSERT_THAT(result->has_value(), Eq(false));
+
+    result =
+        Service<SERVICE_TYPE>::details(service_name_2, Config::global_config(), MessagingPattern::PublishSubscribe);
+    ASSERT_THAT(result.has_value(), Eq(true));
+    ASSERT_THAT(result->has_value(), Eq(false));
+}
+//NOLINTEND(readability-function-cognitive-complexity)
+} // namespace

@@ -1,0 +1,30 @@
+[package]
+name = "iceoryx2-pal-os-api"
+description = "iceoryx2: [internal] OS api layer for OS specific features"
+categories = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+version = { workspace = true }
+
+[features]
+default = []
+
+std = [
+  "iceoryx2-pal-posix/std"
+]
+
+[build-dependencies]
+cc = { workspace = true }
+bindgen = { workspace = true }
+
+[dependencies]
+iceoryx2-pal-posix = { workspace = true }
+
+# libc is always listed as a dependency but unused symbols are stripped by the linker,
+# so it has no impact on binary size when IOX2_PLATFORM_BINDING is set to 'bindgen'.
+# It is actively used only when IOX2_PLATFORM_BINDING=libc.
+libc = { workspace = true }

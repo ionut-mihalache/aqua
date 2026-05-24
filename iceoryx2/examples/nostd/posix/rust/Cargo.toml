@@ -1,0 +1,29 @@
+[workspace]
+resolver = "2"
+members = [
+    "publish-subscribe/",
+    "event/"
+]
+
+[workspace.package]
+edition = "2024"
+version = "0.9.0"
+license = "MIT OR Apache-2.0"
+rust-version = "1.85"
+
+[workspace.dependencies]
+posix-nostd-common = { path = "_common/" }
+posix-nostd-publish-subscribe = { path = "publish-subscribe/" }
+posix-nostd-event = { path = "event/" }
+
+iceoryx2 = { path = "../../../../iceoryx2/", default-features = false }
+iceoryx2-bb-loggers = { path = "../../../../iceoryx2-bb/loggers" }
+iceoryx2-bb-elementary-traits = { path = "../../../../iceoryx2-bb/elementary-traits" }
+iceoryx2-bb-memory = { path = "../../../../iceoryx2-bb/memory" }
+iceoryx2-bb-posix = { path = "../../../../iceoryx2-bb/posix" }
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"

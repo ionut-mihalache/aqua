@@ -1,0 +1,24 @@
+[package]
+name = "iceoryx2-log"
+description = "iceoryx2: logger front-end"
+categories = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+version = { workspace = true }
+
+[features]
+default = []
+std = [
+  "iceoryx2-pal-concurrency-sync/std"
+]
+
+[dependencies]
+iceoryx2-log-types = { workspace = true }
+iceoryx2-pal-concurrency-sync = { workspace = true }
+
+[lints]
+workspace = true

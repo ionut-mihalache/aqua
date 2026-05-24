@@ -1,0 +1,56 @@
+Checks: '-*,
+bugprone-*,
+cert-*,
+clang-analyzer-*,
+cppcoreguidelines-*,
+hicpp-*,
+misc-*,
+modernize-*,
+performance-*,
+portability-*,
+readability-*,
+
+-performance-avoid-endl,
+
+-misc-include-cleaner,
+-cppcoreguidelines-rvalue-reference-param-not-moved,
+-readability-else-after-return,
+'
+
+# NOTE
+# * it would be nice to not suppress 'misc-include-cleaner' but we must be able to suppress it at least for certain include files
+
+
+WarningsAsErrors:     '' # Treat all Checks from above as errors
+HeaderFilterRegex:    ''
+FormatStyle:          file
+InheritParentConfig:  false
+ExtraArgsBefore:
+  - -std=c++14
+
+CheckOptions:
+  - { key: readability-identifier-naming.ClassCase,               value: CamelCase }
+  - { key: readability-identifier-naming.EnumCase,                value: CamelCase }
+  - { key: readability-identifier-naming.StructCase,              value: CamelCase }
+  - { key: readability-identifier-naming.UnionCase,               value: CamelCase }
+  - { key: readability-identifier-naming.EnumConstantCase,        value: CamelCase }
+  - { key: readability-identifier-naming.TemplateParameterCase,   value: CamelCase }
+  - { key: readability-identifier-naming.TypeAliasCase,           value: CamelCase }
+  - { key: readability-identifier-naming.MethodCase,              value: lower_case }
+  - { key: readability-identifier-naming.FunctionCase,            value: lower_case }
+  - { key: readability-identifier-naming.NamespaceCase,           value: lower_case }
+  - { key: readability-identifier-naming.MemberCase,              value: lower_case }
+  - { key: readability-identifier-naming.ParameterCase,           value: lower_case }
+  - { key: readability-identifier-naming.VariableCase,            value: lower_case }
+  - { key: readability-identifier-naming.PublicMemberPrefix,      value: "" }
+  - { key: readability-identifier-naming.PrivateMemberPrefix,     value: m_ }
+  - { key: readability-identifier-naming.ProtectedMemberPrefix,   value: m_ }
+  - { key: readability-identifier-naming.MacroDefinitionPrefix,   value: IOX2_ }
+  - { key: readability-identifier-naming.ConstexprVariableCase,   value: UPPER_CASE }
+  - { key: readability-identifier-naming.MacroDefinitionCase,     value: UPPER_CASE }
+  - { key: readability-identifier-naming.GlobalConstantCase,      value: UPPER_CASE }
+  - { key: readability-identifier-naming.StaticVariableCase,      value: UPPER_CASE }
+  - { key: readability-function-size.LineThreshold,               value: 200 }
+  - { key: readability-function-size.StatementThreshold,          value: 200 }
+  - { key: readability-function-size.BranchThreshold,             value: 10 }
+  - { key: readability-function-size.ParameterThreshold,          value: 4 }

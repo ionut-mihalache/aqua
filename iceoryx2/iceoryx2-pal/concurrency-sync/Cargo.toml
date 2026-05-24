@@ -1,0 +1,26 @@
+[package]
+name = "iceoryx2-pal-concurrency-sync"
+description = "iceoryx2: [internal] low-level basic building blocks to implement posix mutex, condition variables etc."
+categories = { workspace = true }
+edition = { workspace = true }
+homepage = { workspace = true }
+keywords = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+version = { workspace = true }
+
+[lints]
+workspace = true
+
+[features]
+default = []
+std = []
+
+[dependencies]
+
+[dev-dependencies]
+generic-tests = { workspace = true }
+
+[target.'cfg(loom)'.dev-dependencies]
+loom = { workspace = true }

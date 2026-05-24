@@ -1,0 +1,50 @@
+// Copyright (c) 2024 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Apache Software License 2.0 which is available at
+// https://www.apache.org/licenses/LICENSE-2.0, or the MIT license
+// which is available at https://opensource.org/licenses/MIT.
+//
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
+#include "iox2/iceoryx2.hpp"
+
+#include <cstdint>
+
+auto main() -> int {
+    using namespace iox2;
+    set_log_level_from_env_or(LogLevel::Info);
+    auto node = NodeBuilder().create<ServiceType::Ipc>().value();
+
+    auto attribute_verifier = AttributeVerifier();
+    attribute_verifier
+        .require(*Attribute::Key::from_utf8("camera_resolution"), *Attribute::Value::from_utf8("3840x2160"))
+        .value();
+    auto incompatible_service = node.service_builder(ServiceName::create("Service/With/Properties").value())
+                                    .publish_subscribe<uint64_t>()
+                                    .open_with_attributes(
+                                        // the opening of the service will fail since the
+                                        // `camera_resolution` attribute is `1920x1080` and not
+                                        // `3840x2160`
+                                        attribute_verifier);
+    if (!incompatible_service.has_value()) {
+        std::cout << "camera_resolution: 3840x2160 -> not available" << std::endl;
+    }
+
+    attribute_verifier = AttributeVerifier();
+    attribute_verifier.require_key(*Attribute::Key::from_utf8("camera_type")).value();
+    incompatible_service = node.service_builder(ServiceName::create("My/Funk/ServiceName").value())
+                               .publish_subscribe<uint64_t>()
+                               .open_with_attributes(
+                                   // the opening of the service will fail since the key is not
+                                   // defined.
+                                   attribute_verifier);
+    if (!incompatible_service.has_value()) {
+        std::cout << "camera_type -> not available" << std::endl;
+    }
+
+    return 0;
+}
