@@ -125,9 +125,11 @@ int main(void) { // NOLINT
             printf("received request: %d\n", (int32_t) *request_value);
 
             // Create response data
-            struct TransmissionData response = { .x = 5 + counter, .y = 6 * counter, .funky = 7.77 }; // NOLINT
+            // struct TransmissionData response = { .x = 5 + counter, .y = 6 * counter, .funky = 7.77 }; // NOLINT
+            struct TransmissionData response = { .ns = now_ns() };
 
-            printf("  send response: x=%d, y=%d, funky=%f\n", response.x, response.y, response.funky);
+            // printf("  send response: x=%d, y=%d, funky=%f\n", response.x, response.y, response.funky);
+            printf("  send response: ns=%lu\n", response.ns);
 
             // Send first response using copy API
             ret_val = iox2_active_request_send_copy(&active_request, &response, sizeof(struct TransmissionData), 1);
@@ -149,11 +151,13 @@ int main(void) { // NOLINT
                 struct TransmissionData* payload = NULL;
                 iox2_response_mut_payload_mut(&response, (void**) &payload, NULL);
 
-                payload->x = counter * (iter + 1);
-                payload->y = counter + iter;
-                payload->funky = counter * 0.1234; // NOLINT
+                payload->ns = now_ns();
+                // payload->x = counter * (iter + 1);
+                // payload->y = counter + iter;
+                // payload->funky = counter * 0.1234; // NOLINT
 
-                printf("  send response: x=%d, y=%d, funky=%f\n", payload->x, payload->y, payload->funky);
+                // printf("  send response: x=%d, y=%d, funky=%f\n", payload->x, payload->y, payload->funky);
+                printf("  send response: x=%lu\n", payload->ns);
 
                 // Send response
                 ret_val = iox2_response_mut_send(response);

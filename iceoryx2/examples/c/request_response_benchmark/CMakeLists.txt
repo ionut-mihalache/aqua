@@ -11,12 +11,12 @@
 # SPDX-License-Identifier: Apache-2.0 OR MIT
 
 cmake_minimum_required(VERSION 3.22)
-project(example_c_request_response LANGUAGES C)
+project(example_c_request_response_benchmark LANGUAGES C)
 
 find_package(iceoryx2-c 0.9.0 REQUIRED)
 
-add_executable(example_c_request_response_client src/client.c)
-target_link_libraries(example_c_request_response_client iceoryx2-c::static-lib)
+add_executable(example_c_request_response_client_benchmark src/client.c)
+target_link_libraries(example_c_request_response_client_benchmark iceoryx2-c::static-lib)
 
-add_executable(example_c_request_response_server src/server.c)
-target_link_libraries(example_c_request_response_server iceoryx2-c::static-lib)
+add_executable(example_c_request_response_server_benchmark src/server.c)
+target_link_libraries(example_c_request_response_server_benchmark iceoryx2-c::static-lib)

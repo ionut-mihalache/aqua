@@ -23,6 +23,8 @@
 #include <string.h>
 
 int main(void) { // NOLINT
+    uint64_t* latency = malloc(MSG_COUNT * sizeof(uint64_t));
+
     // Setup logging
     iox2_set_log_level_from_env_or(iox2_log_level_e_INFO);
     int ret_val = 0;
@@ -127,11 +129,13 @@ int main(void) { // NOLINT
             }
 
             iox2_response_payload(&response, (const void**) &response_data, NULL);
-            printf("  received response %d: x=%d, y=%d, funky=%f\n",
-                   (int32_t) response_counter,
-                   response_data->x,
-                   response_data->y,
-                   response_data->funky);
+            latency[response_counter] = now_ns() - response_data->ns;
+            printf("  received response %lu: ns=%lu\n", response_counter, latency[response_counter]);
+            // printf("  received response %d: x=%d, y=%d, funky=%f\n",
+            //        (int32_t) response_counter,
+            //        response_data->x,
+            //        response_data->y,
+            //        response_data->funky);
             response_counter += 1;
             iox2_response_drop(response);
         }
@@ -171,6 +175,14 @@ int main(void) { // NOLINT
         iox2_pending_response_drop(pending_response);
     }
 
+    qsort(latency, response_counter, sizeof(uint64_t), cmp_u64);
+
+    printf("Samples = %zu\n", response_counter);
+    printf("P50   = %lu ns\n", latency[(size_t) (response_counter * 0.50)]);
+    printf("P90   = %lu ns\n", latency[(size_t) (response_counter * 0.90)]);
+    printf("P99   = %lu ns\n", latency[(size_t) (response_counter * 0.99)]);
+    printf("P99.9 = %lu ns\n", latency[(size_t) (response_counter * 0.999)]);
+
 drop_client:
     iox2_client_drop(client);
 
@@ -184,5 +196,7 @@ drop_node:
     iox2_node_drop(node_handle);
 
 end:
+    free(latency);
+
     return 0;
 }
