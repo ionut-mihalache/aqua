@@ -16,7 +16,7 @@
 #define PAYLOAD_SIZE_64K (64 * 1024)
 #define PAYLOAD_SIZE_256K (256 * 1024)
 #define PAYLOAD_SIZE_1M (1024 * 1024)
-#define MSG_COUNT 30000
+#define MSG_COUNT 100
 
 #include <stdint.h>
 #include <time.h>
@@ -26,7 +26,7 @@ struct TransmissionData {
     // int32_t y;
     // double funky;
     uint64_t ns;
-    uint8_t data[PAYLOAD_SIZE_64K - sizeof(uint64_t)];
+    uint8_t data[PAYLOAD_SIZE_1M - sizeof(uint64_t)];
 };
 
 static inline uint64_t now_ns(void) {

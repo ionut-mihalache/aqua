@@ -54,15 +54,15 @@ int main(void) { // NOLINT
         iox2_service_builder_request_response(service_builder);
 
     // Set request and response type details
-    const char* request_type_name = "u64";
+    const char* request_type_name = "TransmissionData";
     const char* response_type_name = "TransmissionData";
 
     ret_val = iox2_service_builder_request_response_set_request_payload_type_details(&service_builder_request_response,
                                                                                      iox2_type_variant_e_FIXED_SIZE,
                                                                                      request_type_name,
                                                                                      strlen(request_type_name),
-                                                                                     sizeof(uint64_t),
-                                                                                     alignof(uint64_t));
+                                                                                     sizeof(struct TransmissionData),
+                                                                                     alignof(struct TransmissionData));
     if (ret_val != IOX2_OK) {
         printf("Unable to set request type details! Error: %d\n", ret_val);
         goto drop_service_name;
@@ -98,56 +98,9 @@ int main(void) { // NOLINT
     }
 
     // Start sending requests
-    uint64_t request_counter = 0;
-    uint64_t response_counter = 0;
+    uint64_t samples = 0;
 
-    // For the first request, we use the copy API
-    printf("send request %d ...\n", (int32_t) request_counter);
-    iox2_pending_response_h pending_response = NULL;
-    ret_val = iox2_client_send_copy(&client, &request_counter, sizeof(uint64_t), 1, NULL, &pending_response);
-    if (ret_val != IOX2_OK) {
-        printf("Failed to send initial request! Error: %d\n", ret_val);
-        goto drop_client;
-    }
-
-    // Main loop
-    while (iox2_node_wait(&node_handle, 1, 0) == IOX2_OK) {
-        // Check for responses
-        const struct TransmissionData* response_data = NULL;
-        iox2_response_h response = NULL;
-
-        while (true) {
-            response = NULL;
-            ret_val = iox2_pending_response_receive(&pending_response, NULL, &response);
-            if (ret_val != IOX2_OK) {
-                printf("Failed to receive response! Error: %d\n", ret_val);
-                goto drop_client;
-            }
-
-            if (response == NULL) {
-                break;
-            }
-
-            iox2_response_payload(&response, (const void**) &response_data, NULL);
-            latency[response_counter] = now_ns() - response_data->ns;
-            printf("  received response %lu: ns=%lu\n", response_counter, latency[response_counter]);
-            // printf("  received response %d: x=%d, y=%d, funky=%f\n",
-            //        (int32_t) response_counter,
-            //        response_data->x,
-            //        response_data->y,
-            //        response_data->funky);
-            response_counter += 1;
-            iox2_response_drop(response);
-        }
-
-        request_counter++;
-
-        iox2_pending_response_drop(pending_response);
-        pending_response = NULL;
-
-        // For subsequent requests, use the zero-copy API
-        printf("send request %d ...\n", (int32_t) request_counter);
-
+    for (size_t i = 0; i < MSG_COUNT; ++i) {
         // Loan request sample
         iox2_request_mut_h request = NULL;
         ret_val = iox2_client_loan_slice_uninit(&client, NULL, &request, 1);
@@ -156,10 +109,13 @@ int main(void) { // NOLINT
             goto drop_client;
         }
 
+        struct TransmissionData* payload = NULL;
+
         // Write payload
-        uint64_t* payload = NULL;
         iox2_request_mut_payload_mut(&request, (void**) &payload, NULL);
-        *payload = request_counter;
+        payload->ns = now_ns();
+
+        iox2_pending_response_h pending_response = NULL;
 
         // Send request
         ret_val = iox2_request_mut_send(request, NULL, &pending_response);
@@ -167,21 +123,36 @@ int main(void) { // NOLINT
             printf("Failed to send request! Error: %d\n", ret_val);
             goto drop_client;
         }
-    }
 
-    printf("exit\n");
+        iox2_response_h response = NULL;
 
-    if (pending_response != NULL) {
+        while (response == NULL) {
+            ret_val = iox2_pending_response_receive(&pending_response, NULL, &response);
+
+            if (ret_val != IOX2_OK) {
+                continue;
+            }
+        }
+
+        const struct TransmissionData* response_data = NULL;
+
+        iox2_response_payload(&response, (const void**) &response_data, NULL);
+
+        latency[i] = now_ns() - response_data->ns;
+
+        iox2_response_drop(response);
+
         iox2_pending_response_drop(pending_response);
+        samples++;
     }
 
-    qsort(latency, response_counter, sizeof(uint64_t), cmp_u64);
+    qsort(latency, samples, sizeof(uint64_t), cmp_u64);
 
-    printf("Samples = %zu\n", response_counter);
-    printf("P50   = %lu ns\n", latency[(size_t) (response_counter * 0.50)]);
-    printf("P90   = %lu ns\n", latency[(size_t) (response_counter * 0.90)]);
-    printf("P99   = %lu ns\n", latency[(size_t) (response_counter * 0.99)]);
-    printf("P99.9 = %lu ns\n", latency[(size_t) (response_counter * 0.999)]);
+    printf("Samples = %zu\n", samples);
+    printf("P50     = %lu ns\n", latency[(size_t) (samples * 0.50)]);
+    printf("P90     = %lu ns\n", latency[(size_t) (samples * 0.90)]);
+    printf("P99     = %lu ns\n", latency[(size_t) (samples * 0.99)]);
+    printf("P99.9   = %lu ns\n", latency[(size_t) (samples * 0.999)]);
 
 drop_client:
     iox2_client_drop(client);
@@ -197,6 +168,7 @@ drop_node:
 
 end:
     free(latency);
+    latency = NULL;
 
     return 0;
 }
