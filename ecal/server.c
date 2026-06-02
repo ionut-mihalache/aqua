@@ -6,12 +6,8 @@
 #define PAYLOAD_SIZE_64K (64 * 1024)
 #define PAYLOAD_SIZE_256K (256 * 1024)
 #define PAYLOAD_SIZE_1M (1024 * 1024)
-#define MSG_COUNT 100
 
 struct TransmissionData {
-    // int32_t x;
-    // int32_t y;
-    // double funky;
     uint64_t ns;
     uint8_t data[PAYLOAD_SIZE_1M - sizeof(uint64_t)];
 };

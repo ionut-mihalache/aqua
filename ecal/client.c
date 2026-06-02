@@ -9,12 +9,9 @@
 #define PAYLOAD_SIZE_64K (64 * 1024)
 #define PAYLOAD_SIZE_256K (256 * 1024)
 #define PAYLOAD_SIZE_1M (1024 * 1024)
-#define MSG_COUNT 100
+#define MSG_COUNT 20000
 
 struct TransmissionData {
-    // int32_t x;
-    // int32_t y;
-    // double funky;
     uint64_t ns;
     uint8_t data[PAYLOAD_SIZE_1M - sizeof(uint64_t)];
 };
@@ -33,7 +30,7 @@ static int cmp_u64(const void *a, const void *b) {
     return (aa > bb) - (aa < bb);
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
     eCAL_Initialize("benchmark_client", NULL, NULL);
 
     struct eCAL_SServiceMethodInformation method;

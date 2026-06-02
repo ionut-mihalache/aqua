@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
+#include <string.h>
 
 #include "dsp.h"
 #include "dsp-service.h"
@@ -9,28 +8,59 @@
 #define PAYLOAD_SIZE_64K (64 * 1024)
 #define PAYLOAD_SIZE_256K (256 * 1024)
 #define PAYLOAD_SIZE_1M (1024 * 1024)
-#define MSG_COUNT 20000
+
+#if defined(USE_64K)
+#define PAYLOAD_SIZE PAYLOAD_SIZE_64K
+#elif defined(USE_256K)
+#define PAYLOAD_SIZE PAYLOAD_SIZE_256K
+#else
+#define PAYLOAD_SIZE PAYLOAD_SIZE_1M
+#endif
+
+static int QTYPE = QMBQ;
 
 struct TransmissionData {
     uint64_t ns;
-    uint8_t data[PAYLOAD_SIZE_1M - sizeof(uint64_t)];
+    uint8_t data[PAYLOAD_SIZE - sizeof(uint64_t)];
 };
 
-// static inline uint64_t now_ns(void) {
-//     struct timespec ts;
-//     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+static enum QType sf_GetQType(char *p_Arg) {
+    if (!strcmp(p_Arg, "SMB")) {
+        return SMBQ;
+    }
 
-//     return ((uint64_t)ts.tv_sec * 1000000000ULL) + ts.tv_nsec;
-// }
+    if (!strcmp(p_Arg, "EMB")) {
+        return EMBQ;
+    }
 
-// static int cmp_u64(const void *a, const void *b) {
-//     uint64_t aa = *(uint64_t *)a;
-//     uint64_t bb = *(uint64_t *)b;
+    if (!strcmp(p_Arg, "QMB")) {
+        return QMBQ;
+    }
 
-//     return (aa > bb) - (aa < bb);
-// }
+    if (!strcmp(p_Arg, "HMB")) {
+        return HMBQ;
+    }
 
-int main() {
+    if (!strcmp(p_Arg, "MB")) {
+        return MBQ;
+    }
+
+    if (!strcmp(p_Arg, "DMB")) {
+        return DMBQ;
+    }
+
+    if (!strcmp(p_Arg, "HGB")) {
+        return HGBQ;
+    }
+
+    if (!strcmp(p_Arg, "GB")) {
+        return GBQ;
+    }
+
+    return -1;
+}
+
+int main(int argc, char *argv[]) {
     struct ServiceConnectInfo connectInfo;
     struct ServiceCallInfo callInfo;
     struct ServiceReturnInfo returnInfo;
@@ -42,9 +72,23 @@ int main() {
     struct TransmissionData *returnPayload =
         (struct TransmissionData *)returnData.m_CallInfo;
 
-    dspInstall(&connectInfo, &callInfo, "c-benchmark-testing", "v0.0.2", MBQ);
+    if (argc < 1) {
+        fprintf(
+            stdout,
+            "usage: ./service [SMB | EMB | QMB | HMB | MB | DMB | HGB | GB]\n");
+        return 0;
+    }
 
-    // uint64_t *latency = malloc(sizeof(uint64_t) * MSG_COUNT);
+    QTYPE = sf_GetQType(argv[1]);
+    if (QTYPE == -1) {
+        fprintf(stderr, "Queue type not recognized!\n");
+        return 0;
+    }
+
+    fprintf(stdout, "Starting service with (payload = %u, qtype= %s)\n", PAYLOAD_SIZE, argv[1]);
+    return 0;
+
+    dspInstall(&connectInfo, &callInfo, "c-benchmark-testing", "v0.0.2", QTYPE);
 
     connectInfo.m_ReceiveConnectRequest(&returnInfo, &connectInfo);
 
@@ -56,36 +100,7 @@ int main() {
         sendReturn(&returnInfo, &returnData);
     }
 
-    // for (size_t s = 0; s < 1; ++s) {
-
-    //     for (uint64_t i = 0; i < MSG_COUNT; ++i) {
-    //         // uint64_t t0 = now_ns();
-    //         receiveCall(&callData, &callInfo);
-    //         // uint64_t t1 = now_ns();
-    //         // printf("t1 - t0: %lu\n", t1 - t0);
-    //         // uint64_t now = now_ns();
-    //         // uint64_t call_ns = *(uint64_t *)callData.m_CallInfo;
-    //         // latency[i] = now - call_ns;
-    //         // printf("now - old_now: %lu - %lu\n", now, call_ns);
-
-    //         *(uint64_t *)returnData.m_CallInfo = *(uint64_t
-    //         *)callData.m_CallInfo; sendReturn(&returnInfo, &returnData);
-    //     }
-    // }
     connectInfo.m_ReceiveDisconnectRequest(&connectInfo);
-
-    // qsort(latency, MSG_COUNT, sizeof(uint64_t), cmp_u64);
-
-    // printf("P0 = %lu ns\n", latency[(size_t)(MSG_COUNT * 0.0)]);
-
-    // printf("P50 = %lu ns\n", latency[(size_t)(MSG_COUNT * 0.50)]);
-
-    // printf("P99 = %lu ns\n", latency[(size_t)(MSG_COUNT * 0.99)]);
-
-    // printf("P99.9 = %lu ns\n", latency[(size_t)(MSG_COUNT * 0.999)]);
-
-    // free(latency);
-    // latency = NULL;
 
     return 0;
 }
