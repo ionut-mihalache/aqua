@@ -7,9 +7,17 @@
 #define PAYLOAD_SIZE_256K (256 * 1024)
 #define PAYLOAD_SIZE_1M (1024 * 1024)
 
+#if defined(USE_64K)
+#define PAYLOAD_SIZE PAYLOAD_SIZE_64K
+#elif defined(USE_256K)
+#define PAYLOAD_SIZE PAYLOAD_SIZE_256K
+#else
+#define PAYLOAD_SIZE PAYLOAD_SIZE_1M
+#endif
+
 struct TransmissionData {
     uint64_t ns;
-    uint8_t data[PAYLOAD_SIZE_1M - sizeof(uint64_t)];
+    uint8_t data[PAYLOAD_SIZE - sizeof(uint64_t)];
 };
 
 static int
@@ -44,7 +52,7 @@ int main(void) {
     eCAL_ServiceServer_SetMethodCallback(server, &method, OnEchoCallback, NULL);
 
     while (eCAL_Ok()) {
-        eCAL_Process_SleepMS(100);
+        eCAL_Process_SleepMS(1);
     }
 
     eCAL_ServiceServer_Delete(server);

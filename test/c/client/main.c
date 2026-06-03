@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
     size_t msgCount = 0;
 
     if (argc < 2) {
-        fprintf(stdout, "usage: ./service [SMB | EMB | QMB | HMB | MB | DMB | "
+        fprintf(stdout, "usage: ./client [SMB | EMB | QMB | HMB | MB | DMB | "
                         "HGB | GB] MSG_COUNT\n");
         return 0;
     }
