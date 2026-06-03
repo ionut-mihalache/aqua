@@ -38,8 +38,8 @@ payloads=("USE_64K SMB" "USE_256K QMB" "USE_1M MB")
 for payload in "${payloads[@]}";
 do
     read -r size type <<< "${payload}"
-    echo ${size} ${type}
+    # echo ${size} ${type}
+    runAQUABenchmark ${size} ${type}
 done
 
-
-# runAQUABenchmark USE_64K SMB
+# runAQUABenchmark

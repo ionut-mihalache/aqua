@@ -27,6 +27,11 @@ struct TransmissionData {
     uint8_t data[PAYLOAD_SIZE - sizeof(uint64_t)];
 };
 
+struct Msg {
+    size_t nr;
+    uint8_t data[PAYLOAD_SIZE - sizeof(size_t)];
+};
+
 static inline uint64_t now_ns(void) {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
@@ -82,8 +87,16 @@ int main(int argc, char *argv[]) {
     struct ClientCallInfo callInfo;
     struct ClientReturnInfo returnInfo;
     struct ClientConnectRequestInformation requestInfo;
+#if defined(USE_64K)
+    struct SMBCall callData;
+    struct SMBCall returnData;
+#elif defined(USE_256K)
+    struct QMBCall callData;
+    struct QMBCall returnData;
+#else
     struct MBCall callData;
     struct MBCall returnData;
+#endif
 
     struct TransmissionData *callPayload =
         (struct TransmissionData *)callData.m_CallInfo;
@@ -91,7 +104,7 @@ int main(int argc, char *argv[]) {
         (struct TransmissionData *)returnData.m_CallInfo;
 
     uint64_t *latency = NULL;
-    size_t msgCount = 1;
+    size_t msgCount = 0;
 
     if (argc < 2) {
         fprintf(stdout, "usage: ./service [SMB | EMB | QMB | HMB | MB | DMB | "
@@ -107,25 +120,30 @@ int main(int argc, char *argv[]) {
 
     msgCount = atol(argv[2]);
 
-    fprintf(stdout,
-            "Starting service with (payload = %u, qtype= %s, msg_count=%lu)\n",
-            PAYLOAD_SIZE, argv[1], msgCount);
-    return 0;
+    // fprintf(
+    //     stdout,
+    //     "Starting client with (payload = %u, qtype = %s, msg_count = %lu)\n",
+    //     PAYLOAD_SIZE, argv[1], msgCount);
 
     latency = malloc(sizeof(uint64_t) * msgCount);
 
     dspConnect(&connectInfo, &callInfo, "c-benchmark-testing");
 
-    sprintf(requestInfo.m_ReturnQName, "%s", "return-q-123");
+    sprintf(requestInfo.m_ReturnQName, "%s-%s-%s", "return-q", argv[1],
+            argv[2]);
     requestInfo.m_ReturnQSize = 1;
 
-    sprintf(requestInfo.m_RequestResponseQName, "%s", "response-q-123");
+    sprintf(requestInfo.m_RequestResponseQName, "%s-%s-%s", "response-q",
+            argv[1], argv[2]);
     requestInfo.m_ResponseQSize = 1;
-    requestInfo.m_QType = MBQ;
+    requestInfo.m_QType = QTYPE;
 
     sendConnectRequest(&returnInfo, &connectInfo, &requestInfo);
 
     callData.m_Metadata.m_ConnId = returnInfo.m_ConnectResponseInformation.m_Id;
+
+    ((struct Msg *)callData.m_CallInfo)->nr = msgCount;
+    callFn(&callInfo, &callData);
 
     uint64_t samples = 0;
 
@@ -140,16 +158,17 @@ int main(int argc, char *argv[]) {
         samples++;
     }
 
+    // fprintf(stdout, "Diconnecting client (payload = %u, qtype = %s)\n",
+    //         PAYLOAD_SIZE, argv[1]);
     sendDisconnectRequest(&connectInfo,
                           &returnInfo.m_ConnectResponseInformation);
 
     qsort(latency, samples, sizeof(uint64_t), cmp_u64);
 
-    printf("Samples = %zu\n", samples);
-    printf("P50     = %lu ns\n", latency[(size_t)(samples * 0.50)]);
-    printf("P90     = %lu ns\n", latency[(size_t)(samples * 0.90)]);
-    printf("P99     = %lu ns\n", latency[(size_t)(samples * 0.99)]);
-    printf("P99.9   = %lu ns\n", latency[(size_t)(samples * 0.999)]);
+    printf("msg_count,P50,P90,P99,P99.9\n");
+    printf("%lu,%lu,%lu,%lu,%lu\n", samples, latency[(size_t)(samples * 0.50)],
+           latency[(size_t)(samples * 0.90)], latency[(size_t)(samples * 0.99)],
+           latency[(size_t)(samples * 0.999)]);
 
     free(latency);
     latency = NULL;

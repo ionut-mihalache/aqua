@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -22,6 +23,11 @@ static int QTYPE = QMBQ;
 struct TransmissionData {
     uint64_t ns;
     uint8_t data[PAYLOAD_SIZE - sizeof(uint64_t)];
+};
+
+struct Msg {
+    size_t nr;
+    uint8_t data[PAYLOAD_SIZE - sizeof(size_t)];
 };
 
 static enum QType sf_GetQType(char *p_Arg) {
@@ -64,8 +70,18 @@ int main(int argc, char *argv[]) {
     struct ServiceConnectInfo connectInfo;
     struct ServiceCallInfo callInfo;
     struct ServiceReturnInfo returnInfo;
+
+#if defined(USE_64K)
+    struct SMBCall callData;
+    struct SMBCall returnData;
+#elif defined(USE_256K)
+    struct QMBCall callData;
+    struct QMBCall returnData;
+#else
     struct MBCall callData;
     struct MBCall returnData;
+#endif
+    size_t msgCount = 0, msgs = 0;
 
     struct TransmissionData *callPayload =
         (struct TransmissionData *)callData.m_CallInfo;
@@ -73,9 +89,8 @@ int main(int argc, char *argv[]) {
         (struct TransmissionData *)returnData.m_CallInfo;
 
     if (argc < 1) {
-        fprintf(
-            stdout,
-            "usage: ./service [SMB | EMB | QMB | HMB | MB | DMB | HGB | GB]\n");
+        fprintf(stdout, "usage: ./service [SMB | EMB | QMB | HMB | MB | DMB | "
+                        "HGB | GB] MSG_COUNT\n");
         return 0;
     }
 
@@ -85,22 +100,32 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    fprintf(stdout, "Starting service with (payload = %u, qtype= %s)\n", PAYLOAD_SIZE, argv[1]);
-    return 0;
+    // fprintf(stdout, "Starting service with (payload = %u, qtype = %s)\n",
+    //         PAYLOAD_SIZE, argv[1]);
 
     dspInstall(&connectInfo, &callInfo, "c-benchmark-testing", "v0.0.2", QTYPE);
 
-    connectInfo.m_ReceiveConnectRequest(&returnInfo, &connectInfo);
-
     while (true) {
+        connectInfo.m_ReceiveConnectRequest(&returnInfo, &connectInfo);
+
+        // Receive messages number
         receiveCall(&callData, &callInfo);
 
-        returnPayload->ns = callPayload->ns;
+        msgCount = ((struct Msg *)callData.m_CallInfo)->nr;
+        // fprintf(stdout, "Received %lu messages\n", msgCount);
+        msgs = 0;
+        while (msgs < msgCount) {
+            receiveCall(&callData, &callInfo);
 
-        sendReturn(&returnInfo, &returnData);
+            returnPayload->ns = callPayload->ns;
+
+            sendReturn(&returnInfo, &returnData);
+
+            msgs++;
+        }
+
+        connectInfo.m_ReceiveDisconnectRequest(&connectInfo);
     }
-
-    connectInfo.m_ReceiveDisconnectRequest(&connectInfo);
 
     return 0;
 }
