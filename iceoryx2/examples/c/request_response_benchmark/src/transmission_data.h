@@ -22,9 +22,6 @@
 #include <time.h>
 
 struct TransmissionData {
-    // int32_t x;
-    // int32_t y;
-    // double funky;
     uint64_t ns;
     uint8_t data[PAYLOAD_SIZE_1M - sizeof(uint64_t)];
 };

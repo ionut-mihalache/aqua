@@ -1,3 +1,33 @@
+runIceoryx2Benchmark() {
+    payload=$1
+
+    rm /dev/shm/*
+
+    cd /home/ubuntu/dsp-library/iceoryx2
+    make clean
+    make EXTRA_DEFINES=-D${payload}
+    make run-server &
+    iceoryx2Pid=$!
+    sleep 2
+    cd -
+
+    # msgNumbers=(1000 4000 7000 10000 13000 16000 19000 22000 25000 28000)
+    msgNumbers=(1000 2000 4000 8000 10000)
+    cd /home/ubuntu/dsp-library/iceoryx2
+
+    for msgCount in "${msgNumbers[@]}";
+    do
+        for i in $(seq 1 30);
+        do
+            make run-client MSG_COUNT=${msgCount}
+        done
+    done
+
+    cd -
+
+    kill ${iceoryx2Pid}
+}
+
 runECALBenchmark() {
     payload=$1
 
@@ -11,7 +41,8 @@ runECALBenchmark() {
     sleep 2
     cd -
 
-    msgNumbers=(1000 4000 7000 10000 13000 16000 19000 22000 25000 28000)
+    # msgNumbers=(1000 4000 7000 10000 13000 16000 19000 22000 25000 28000)
+    msgNumbers=(1000 2000 4000 8000 10000)
     cd /home/ubuntu/dsp-library/ecal
 
     for msgCount in "${msgNumbers[@]}";
@@ -23,6 +54,8 @@ runECALBenchmark() {
     done
 
     cd -
+
+    kill ${ecalPid}
 }
 
 runAQUABenchmark() {
@@ -42,7 +75,8 @@ runAQUABenchmark() {
     sleep 2
     cd -
 
-    msgNumbers=(1000 4000 7000 10000 13000 16000 19000 22000 25000 28000)
+    # msgNumbers=(1000 4000 7000 10000 13000 16000 19000 22000 25000 28000)
+    msgNumbers=(1000 2000 4000 8000 10000)
 
     cd /home/ubuntu/dsp-library/test/c/client
     make clean

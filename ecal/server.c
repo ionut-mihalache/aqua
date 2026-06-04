@@ -1,3 +1,4 @@
+#include <ecal_c/auxiliaries.h>
 #include <ecal_c/ecal.h>
 
 #include <stdio.h>  //printf()
