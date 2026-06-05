@@ -13,27 +13,19 @@
 #include "iox2/iceoryx2.h"
 #include "transmission_data.h"
 
-#if defined(_WIN32) || defined(WIN32) || defined(__WIN32__) || defined(_WIN64)
+#ifdef _WIN64
 #define alignof __alignof
 #else
 #include <stdalign.h>
 #endif
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-int main(int argc, char* argv[]) { // NOLINT
-    size_t msgCount = 0;
+#define MILLISECOND_IN_NS 100000          // NOLINT
+#define CYCLE_TIME 10 * MILLISECOND_IN_NS // NOLINT
 
-    if (argc < 1) {
-        fprintf(stdout, "usage: ./client MSG_COUNT\n");
-        return 0;
-    }
-
-    msgCount = atol(argv[1]);
-    uint64_t* latency = malloc(msgCount * sizeof(uint64_t));
-
+int main(void) { // NOLINT
     // Setup logging
     iox2_set_log_level_from_env_or(iox2_log_level_e_INFO);
     int ret_val = 0;
@@ -96,82 +88,58 @@ int main(int argc, char* argv[]) { // NOLINT
         goto drop_service_name;
     }
 
-    // Create client
-    iox2_port_factory_client_builder_h client_builder =
-        iox2_port_factory_request_response_client_builder(&service, NULL);
-    iox2_client_h client = NULL;
-    ret_val = iox2_port_factory_client_builder_create(client_builder, NULL, &client);
+    // Create server
+    iox2_port_factory_server_builder_h server_builder =
+        iox2_port_factory_request_response_server_builder(&service, NULL);
+    iox2_server_h server = NULL;
+    ret_val = iox2_port_factory_server_builder_create(server_builder, NULL, &server);
     if (ret_val != IOX2_OK) {
-        printf("Unable to create client! Error: %d\n", ret_val);
+        printf("Unable to create server! Error: %d\n", ret_val);
         goto drop_service;
     }
 
-    // Start sending requests
-    uint64_t samples = 0;
+    printf("Server ready to receive requests!\n");
 
-    for (size_t i = 0; i < msgCount; ++i) {
-        // Loan request sample
-        iox2_request_mut_h request = NULL;
-        ret_val = iox2_client_loan_slice_uninit(&client, NULL, &request, 1);
+    // while (iox2_node_wait(&node_handle, 0, CYCLE_TIME) == IOX2_OK) {
+    while (true) {
+        iox2_active_request_h active_request = NULL;
+
+        ret_val = iox2_server_receive(&server, NULL, &active_request);
+
         if (ret_val != IOX2_OK) {
-            printf("Failed to loan request! Error: %d\n", ret_val);
-            goto drop_client;
+            continue;
         }
 
-        struct TransmissionData* payload = NULL;
-
-        // Write payload
-        iox2_request_mut_payload_mut(&request, (void**) &payload, NULL);
-        payload->ns = now_ns();
-
-        iox2_pending_response_h pending_response = NULL;
-
-        // Send request
-        ret_val = iox2_request_mut_send(request, NULL, &pending_response);
-        if (ret_val != IOX2_OK) {
-            printf("Failed to send request! Error: %d\n", ret_val);
-            goto drop_client;
+        if (active_request == NULL) {
+            continue;
         }
 
-        iox2_response_h response = NULL;
+        const struct TransmissionData* request = NULL;
 
-        while (response == NULL) {
-            ret_val = iox2_pending_response_receive(&pending_response, NULL, &response);
+        iox2_active_request_payload(&active_request, (const void**) &request, NULL);
 
-            if (ret_val != IOX2_OK) {
-                continue;
-            }
+        // zero-copy response
+        iox2_response_mut_h response = NULL;
+
+        ret_val = iox2_active_request_loan_slice_uninit(&active_request, NULL, &response, 1);
+
+        if (ret_val == IOX2_OK) {
+            struct TransmissionData* payload = NULL;
+
+            iox2_response_mut_payload_mut(&response, (void**) &payload, NULL);
+
+            memcpy(payload, request, sizeof(struct TransmissionData));
+
+            ret_val = iox2_response_mut_send(response);
+
+            (void) ret_val;
         }
 
-        const struct TransmissionData* response_data = NULL;
-
-        iox2_response_payload(&response, (const void**) &response_data, NULL);
-
-        latency[i] = now_ns() - response_data->ns;
-
-        iox2_response_drop(response);
-
-        iox2_pending_response_drop(pending_response);
-        samples++;
+        iox2_active_request_drop(active_request);
     }
 
-    qsort(latency, samples, sizeof(uint64_t), cmp_u64);
-
-    // printf("Samples = %zu\n", samples);
-    // printf("P50     = %lu ns\n", latency[(size_t) (samples * 0.50)]);
-    // printf("P90     = %lu ns\n", latency[(size_t) (samples * 0.90)]);
-    // printf("P99     = %lu ns\n", latency[(size_t) (samples * 0.99)]);
-    // printf("P99.9   = %lu ns\n", latency[(size_t) (samples * 0.999)]);
-    printf("msg_count,P50,P90,P99,P99.9\n");
-    printf("%lu,%lu,%lu,%lu,%lu\n",
-           samples,
-           latency[(size_t) (samples * 0.50)],
-           latency[(size_t) (samples * 0.90)],
-           latency[(size_t) (samples * 0.99)],
-           latency[(size_t) (samples * 0.999)]);
-
-drop_client:
-    iox2_client_drop(client);
+drop_server:
+    iox2_server_drop(server);
 
 drop_service:
     iox2_port_factory_request_response_drop(service);
@@ -183,8 +151,5 @@ drop_node:
     iox2_node_drop(node_handle);
 
 end:
-    free(latency);
-    latency = NULL;
-
     return 0;
 }

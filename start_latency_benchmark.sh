@@ -1,9 +1,9 @@
-runIceoryx2Benchmark() {
+runIceoryx2NoWaitBenchmark() {
     payload=$1
 
     rm /dev/shm/*
 
-    cd /home/ubuntu/dsp-library/iceoryx2
+    cd /home/ubuntu/dsp-library/iceoryx2/examples/c/request_response_nowait_benchmark/src
     make clean
     make EXTRA_DEFINES=-D${payload}
     make run-server &
@@ -13,7 +13,37 @@ runIceoryx2Benchmark() {
 
     # msgNumbers=(1000 4000 7000 10000 13000 16000 19000 22000 25000 28000)
     msgNumbers=(1000 2000 4000 8000 10000)
-    cd /home/ubuntu/dsp-library/iceoryx2
+    cd /home/ubuntu/dsp-library/iceoryx2/examples/c/request_response_nowait_benchmark/src
+
+    for msgCount in "${msgNumbers[@]}";
+    do
+        for i in $(seq 1 30);
+        do
+            make run-client MSG_COUNT=${msgCount}
+        done
+    done
+
+    cd -
+
+    kill ${iceoryx2Pid}
+}
+
+runIceoryx2Benchmark() {
+    payload=$1
+
+    rm /dev/shm/*
+
+    cd /home/ubuntu/dsp-library/iceoryx2/examples/c/request_response_benchmark/src
+    make clean
+    make EXTRA_DEFINES=-D${payload}
+    make run-server &
+    iceoryx2Pid=$!
+    sleep 2
+    cd -
+
+    # msgNumbers=(1000 4000 7000 10000 13000 16000 19000 22000 25000 28000)
+    msgNumbers=(1000 2000 4000 8000 10000)
+    cd /home/ubuntu/dsp-library/iceoryx2/examples/c/request_response_benchmark/src
 
     for msgCount in "${msgNumbers[@]}";
     do
@@ -94,6 +124,22 @@ runAQUABenchmark() {
 
     kill $aquaPid
 }
+
+payloads=(USE_64K USE_256K USE_1M)
+for payload in "${payloads[@]}";
+do
+    # read -r size type <<< "${payload}"
+    # echo ${size} ${type}
+    runIceoryx2NoWaitBenchmark ${payload}
+done
+
+payloads=(USE_64K USE_256K USE_1M)
+for payload in "${payloads[@]}";
+do
+    # read -r size type <<< "${payload}"
+    # echo ${size} ${type}
+    runIceoryx2Benchmark ${payload}
+done
 
 payloads=(USE_64K USE_256K USE_1M)
 for payload in "${payloads[@]}";

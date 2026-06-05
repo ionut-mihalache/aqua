@@ -1,6 +1,7 @@
 #include <ecal_c/auxiliaries.h>
 #include <ecal_c/ecal.h>
 
+#include <ecal_c/process.h>
 #include <stdio.h>  //printf()
 #include <string.h> //memcpy(), memset()
 
@@ -53,7 +54,8 @@ int main(void) {
     eCAL_ServiceServer_SetMethodCallback(server, &method, OnEchoCallback, NULL);
 
     while (eCAL_Ok()) {
-        eCAL_Process_SleepMS(1);
+        // eCAL_Process_SleepMS(1);
+        eCAL_Process_SleepNS(10);
     }
 
     eCAL_ServiceServer_Delete(server);

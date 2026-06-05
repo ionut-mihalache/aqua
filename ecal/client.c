@@ -55,7 +55,6 @@ int main(int argc, char *argv[]) {
 
     struct TransmissionData request;
 
-    uint64_t *latency = malloc(MSG_COUNT * sizeof(uint64_t));
     size_t msgCount = 0;
 
     if (argc < 1) {
@@ -64,6 +63,7 @@ int main(int argc, char *argv[]) {
     }
 
     msgCount = atol(argv[1]);
+    uint64_t *latency = malloc(msgCount * sizeof(uint64_t));
 
     size_t response_count;
     struct eCAL_SServiceResponse *responses;
