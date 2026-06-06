@@ -18,8 +18,6 @@
 #define PAYLOAD_SIZE PAYLOAD_SIZE_1M
 #endif
 
-#define MSG_COUNT 20000
-
 static int QTYPE = QMBQ;
 
 struct TransmissionData {
@@ -106,9 +104,9 @@ int main(int argc, char *argv[]) {
     uint64_t *latency = NULL;
     size_t msgCount = 0;
 
-    if (argc < 2) {
+    if (argc < 3) {
         fprintf(stdout, "usage: ./client [SMB | EMB | QMB | HMB | MB | DMB | "
-                        "HGB | GB] MSG_COUNT\n");
+                        "HGB | GB] MSG_COUNT OUTPUT_FILE\n");
         return 0;
     }
 
@@ -126,6 +124,8 @@ int main(int argc, char *argv[]) {
     //     PAYLOAD_SIZE, argv[1], msgCount);
 
     latency = malloc(sizeof(uint64_t) * msgCount);
+
+    FILE *outfile = fopen(argv[3], "a");
 
     dspConnect(&connectInfo, &callInfo, "c-benchmark-testing");
 
@@ -165,13 +165,15 @@ int main(int argc, char *argv[]) {
 
     qsort(latency, samples, sizeof(uint64_t), cmp_u64);
 
-    printf("msg_count,P50,P90,P99,P99.9\n");
-    printf("%lu,%lu,%lu,%lu,%lu\n", samples, latency[(size_t)(samples * 0.50)],
-           latency[(size_t)(samples * 0.90)], latency[(size_t)(samples * 0.99)],
-           latency[(size_t)(samples * 0.999)]);
+    // fprintf(outfile, "msg_count,P50,P90,P99,P99.9\n");
+    fprintf(
+        outfile, "%lu,%lu,%lu,%lu,%lu\n", samples,
+        latency[(size_t)(samples * 0.50)], latency[(size_t)(samples * 0.90)],
+        latency[(size_t)(samples * 0.99)], latency[(size_t)(samples * 0.999)]);
 
     free(latency);
     latency = NULL;
+    fclose(outfile);
 
     return 0;
 }

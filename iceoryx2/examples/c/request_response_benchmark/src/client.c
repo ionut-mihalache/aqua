@@ -26,13 +26,15 @@
 int main(int argc, char* argv[]) { // NOLINT
     size_t msgCount = 0;
 
-    if (argc < 1) {
-        fprintf(stdout, "usage: ./client MSG_COUNT\n");
+    if (argc < 2) {
+        fprintf(stdout, "usage: ./client MSG_COUNT OUTPUT_FILE\n");
         return 0;
     }
 
     msgCount = atol(argv[1]);
     uint64_t* latency = malloc(msgCount * sizeof(uint64_t));
+
+    FILE* outfile = fopen(argv[2], "a");
 
     // Setup logging
     iox2_set_log_level_from_env_or(iox2_log_level_e_INFO);
@@ -162,13 +164,14 @@ int main(int argc, char* argv[]) { // NOLINT
     // printf("P90     = %lu ns\n", latency[(size_t) (samples * 0.90)]);
     // printf("P99     = %lu ns\n", latency[(size_t) (samples * 0.99)]);
     // printf("P99.9   = %lu ns\n", latency[(size_t) (samples * 0.999)]);
-    printf("msg_count,P50,P90,P99,P99.9\n");
-    printf("%lu,%lu,%lu,%lu,%lu\n",
-           samples,
-           latency[(size_t) (samples * 0.50)],
-           latency[(size_t) (samples * 0.90)],
-           latency[(size_t) (samples * 0.99)],
-           latency[(size_t) (samples * 0.999)]);
+    // fprintf(outfile, "msg_count,P50,P90,P99,P99.9\n");
+    fprintf(outfile,
+            "%lu,%lu,%lu,%lu,%lu\n",
+            samples,
+            latency[(size_t) (samples * 0.50)],
+            latency[(size_t) (samples * 0.90)],
+            latency[(size_t) (samples * 0.99)],
+            latency[(size_t) (samples * 0.999)]);
 
 drop_client:
     iox2_client_drop(client);
@@ -185,6 +188,7 @@ drop_node:
 end:
     free(latency);
     latency = NULL;
+    fclose(outfile);
 
     return 0;
 }

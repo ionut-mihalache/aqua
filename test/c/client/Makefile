@@ -15,7 +15,7 @@ main.o: main.c
 	$(CC) $(EXTRA_DEFINES) $(LINTER_DEFINES) $(OPTIONS) $(INCLUDES) -c main.c -o main.o
 
 run:
-	./client $(QTYPE) $(MSG_COUNT)
+	./client $(QTYPE) $(MSG_COUNT) $(OUTFILE)
 
 clean:
 	rm client *.o

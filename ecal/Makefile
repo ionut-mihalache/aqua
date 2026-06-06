@@ -20,7 +20,7 @@ server.o: server.c
 	$(CC) $(EXTRA_DEFINES) $(LINTER_DEFINES) $(OPTIONS) $(INCLUDES) -c server.c -o server.o
 
 run-client:
-	./client $(MSG_COUNT)
+	./client $(MSG_COUNT) $(OUTFILE)
 
 run-server:
 	./server

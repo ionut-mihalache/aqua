@@ -25,7 +25,7 @@ server.o: server.c transmission_data.h
 	$(CC) $(EXTRA_DEFINES) $(LINTER_DEFINES) $(OPTIONS) $(INCLUDES) -c server.c -o server.o
 
 run-client:
-	./client $(MSG_COUNT)
+	./client $(MSG_COUNT) $(OUTFILE)
 
 run-server:
 	./server
