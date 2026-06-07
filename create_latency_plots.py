@@ -117,7 +117,7 @@ def plot_latency_multi_panel(
     )
 
     plt.savefig(
-        f"{output_dir}/{percentile.lower()}_latency_multi_panel.pdf"
+        f"{output_dir}/{percentile.lower()}_latency.pdf"
     )
 
     plt.close()

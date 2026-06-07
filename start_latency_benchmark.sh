@@ -184,3 +184,7 @@ do
     # echo ${size} ${type}
     runAQUABenchmark ${size} ${type}
 done
+
+source test/php/client/venv/bin/activate
+python3 create_latency_plots.py
+deactivate
