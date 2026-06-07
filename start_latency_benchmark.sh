@@ -21,12 +21,12 @@ runIceoryx2NoWaitBenchmark() {
     msgNumbers=(1000 2000 4000 8000 10000)
     cd /home/ubuntu/dsp-library/iceoryx2/examples/c/request_response_nowait_benchmark/src
 
-    echo "msg_count,P50,P90,P99,P99.9" > ${outpath}/iceoryx2_nowait.out
+    echo "msg_count,P50,P90,P99,P99.9" > ${outpath}/iceoryx2_nowait.csv
     for msgCount in "${msgNumbers[@]}";
     do
         for i in $(seq 1 30);
         do
-            make run-client MSG_COUNT=${msgCount} OUTFILE=${outpath}/iceoryx2_nowait.out
+            make run-client MSG_COUNT=${msgCount} OUTFILE=${outpath}/iceoryx2_nowait.csv
         done
     done
 
@@ -58,12 +58,12 @@ runIceoryx2Benchmark() {
     msgNumbers=(1000 2000 4000 8000 10000)
     cd /home/ubuntu/dsp-library/iceoryx2/examples/c/request_response_benchmark/src
 
-    echo "msg_count,P50,P90,P99,P99.9" > ${outpath}/iceoryx2.out
+    echo "msg_count,P50,P90,P99,P99.9" > ${outpath}/iceoryx2.csv
     for msgCount in "${msgNumbers[@]}";
     do
         for i in $(seq 1 30);
         do
-            make run-client MSG_COUNT=${msgCount} OUTFILE=${outpath}/iceoryx2.out
+            make run-client MSG_COUNT=${msgCount} OUTFILE=${outpath}/iceoryx2.csv
         done
     done
 
@@ -95,12 +95,12 @@ runECALBenchmark() {
     msgNumbers=(1000 2000 4000 8000 10000)
     cd /home/ubuntu/dsp-library/ecal
 
-    echo "msg_count,P50,P90,P99,P99.9" > ${outpath}/ecal.out
+    echo "msg_count,P50,P90,P99,P99.9" > ${outpath}/ecal.csv
     for msgCount in "${msgNumbers[@]}";
     do
         for i in $(seq 1 30);
         do
-            make run-client MSG_COUNT=${msgCount} OUTFILE=${outpath}/ecal.out
+            make run-client MSG_COUNT=${msgCount} OUTFILE=${outpath}/ecal.csv
         done
     done
 
@@ -139,12 +139,12 @@ runAQUABenchmark() {
     make clean
     make EXTRA_DEFINES=-D${payload}
 
-    echo "msg_count,P50,P90,P99,P99.9" > ${outpath}/aqua.out
+    echo "msg_count,P50,P90,P99,P99.9" > ${outpath}/aqua.csv
     for msgCount in "${msgNumbers[@]}";
     do
         for i in $(seq 1 30);
         do
-            make run QTYPE=${qType} MSG_COUNT=${msgCount} OUTFILE=${outpath}/aqua.out
+            make run QTYPE=${qType} MSG_COUNT=${msgCount} OUTFILE=${outpath}/aqua.csv
         done
     done
 
@@ -161,21 +161,21 @@ do
     runIceoryx2NoWaitBenchmark ${payload}
 done
 
-# payloads=(USE_64K USE_256K USE_1M)
-# for payload in "${payloads[@]}";
-# do
-#     # read -r size type <<< "${payload}"
-#     # echo ${size} ${type}
-#     runIceoryx2Benchmark ${payload}
-# done
+payloads=(USE_64K USE_256K USE_1M)
+for payload in "${payloads[@]}";
+do
+    # read -r size type <<< "${payload}"
+    # echo ${size} ${type}
+    runIceoryx2Benchmark ${payload}
+done
 
-# payloads=(USE_64K USE_256K USE_1M)
-# for payload in "${payloads[@]}";
-# do
-#     # read -r size type <<< "${payload}"
-#     # echo ${size} ${type}
-#     runECALBenchmark ${payload}
-# done
+payloads=(USE_64K USE_256K USE_1M)
+for payload in "${payloads[@]}";
+do
+    # read -r size type <<< "${payload}"
+    # echo ${size} ${type}
+    runECALBenchmark ${payload}
+done
 
 payloads=("USE_64K SMB" "USE_256K QMB" "USE_1M MB")
 for payload in "${payloads[@]}";
