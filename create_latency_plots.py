@@ -71,12 +71,12 @@ def plot_latency_multi_panel(
 
         ax.set_title(
             f"Payload Size: {payload}",
-            fontsize=12
+            fontsize=14
         )
 
         ax.set_xlabel(
             "Number of Messages",
-            fontsize=12
+            fontsize=14
         )
 
         ax.grid(
@@ -87,17 +87,17 @@ def plot_latency_multi_panel(
 
         ax.tick_params(
             axis='x',
-            labelsize=11
+            labelsize=14
         )
 
         ax.tick_params(
             axis='y',
-            labelsize=11
+            labelsize=14
         )
 
     axes[0].set_ylabel(
         f"{percentile} Latency (ns)",
-        fontsize=12
+        fontsize=14
     )
 
     handles, labels = axes[0].get_legend_handles_labels()
@@ -108,7 +108,7 @@ def plot_latency_multi_panel(
         loc="upper center",
         ncol=4,
         frameon=False,
-        fontsize=12,
+        fontsize=16,
         bbox_to_anchor=(0.5, 1.03)
     )
 
@@ -145,6 +145,8 @@ if __name__ == "__main__":
         }
     }
 
+    print(data_p50)
+
     plot_latency_multi_panel(
         ".",
         data_p50,
@@ -172,10 +174,13 @@ if __name__ == "__main__":
         }
     }
 
+    print(data_p90)
+
     plot_latency_multi_panel(
     ".",
     data_p90,
     percentile="P90")
+
 
     data_p99 = {
         "64KB": {
@@ -197,6 +202,8 @@ if __name__ == "__main__":
             "iceoryx2_wait": load_latency_csv("USE_1M/iceoryx2.csv", "P99"),
         }
     }
+
+    print("P99:", data_p99)
 
     plot_latency_multi_panel(
     ".",
