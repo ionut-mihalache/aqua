@@ -145,7 +145,7 @@ if __name__ == "__main__":
         }
     }
 
-    print(data_p50)
+    print("P50:", data_p50)
 
     plot_latency_multi_panel(
         ".",
@@ -174,7 +174,7 @@ if __name__ == "__main__":
         }
     }
 
-    print(data_p90)
+    print("P90:", data_p90)
 
     plot_latency_multi_panel(
     ".",
