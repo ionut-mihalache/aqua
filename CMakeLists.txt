@@ -15,13 +15,13 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 file(MAKE_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 set(CORE_SOURCES
-        service/dsp-service.c
-        service/install.c
-        service/call.c
-        service/return.c
-        client/dsp-client.c
-        client/client-connect.c
-        client/client-call.c
+        core/service/dsp-service.c
+        core/service/install.c
+        core/service/call.c
+        core/service/return.c
+        core/client/dsp-client.c
+        core/client/client-connect.c
+        core/client/client-call.c
         utils/commons.c
 )
 
@@ -68,8 +68,8 @@ PUBLIC
         utils/exit
         utils/log
         include
-        service/include
-        client/include
+        core/service/include
+        core/client/include
 
 PRIVATE
         platform/include
