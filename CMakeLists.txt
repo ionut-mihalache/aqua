@@ -2,7 +2,13 @@
 
 cmake_minimum_required(VERSION 3.25.1)
 
-project(dsp-library C)
+project(
+        dsp-library
+        VERSION 0.0.2
+        LANGUAGES C
+)
+
+message(STATUS "Project version: ${PROJECT_VERSION}")
 
 set(CMAKE_C_STANDARD 23)
 
@@ -55,8 +61,8 @@ if (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
 endif()
 
 set_target_properties(${LIB_NAME} PROPERTIES
-        VERSION ${LIB_VERSION}
-        SOVERSION ${LIB_VERSION}
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
         POSITION_INDEPENDENT_CODE ON
 )
 
