@@ -11,13 +11,13 @@ project(
 message(STATUS "Project version: ${PROJECT_VERSION}")
 
 set(CMAKE_C_STANDARD 23)
-
+set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(LIB_VERSION "0.0.2")
 set(LIB_NAME dsp)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 file(MAKE_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 set(CORE_SOURCES
@@ -49,78 +49,103 @@ elseif(WIN32)
         )
 endif()
 
-add_library(${LIB_NAME} SHARED
+add_library(aqua_objects OBJECT
         ${CORE_SOURCES}
         ${PLATFORM_SOURCES}
 )
 
-if (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-        target_compile_options(${LIB_NAME} PRIVATE
-                -fvisibility=hidden
+set_target_properties(aqua_objects PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+)
+
+add_library(${LIB_NAME} SHARED
+        $<TARGET_OBJECTS:aqua_objects>
+)
+
+add_library(${LIB_NAME}_static STATIC
+        $<TARGET_OBJECTS:aqua_objects>
+)
+
+set_target_properties(${LIB_NAME}_static PROPERTIES
+    OUTPUT_NAME ${LIB_NAME}
+)
+
+function(configure_dsp_target target)
+
+        if (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+                target_compile_options(aqua_objects PRIVATE
+                        -fvisibility=hidden
+                )
+        endif()
+
+        target_include_directories(${target}
+        PUBLIC
+                utils
+                utils/macros
+                utils/hashmap
+                utils/exit
+                utils/log
+                include
+                core/service/include
+                core/client/include
+
+        PRIVATE
+                platform/include
         )
-endif()
+
+        if (UNIX AND NOT APPLE)
+                target_include_directories(${target}
+                PRIVATE
+                        platform/linux/include
+                )
+
+                target_compile_options(${target} PRIVATE
+                        -Wall
+                        -Wextra
+                        -Werror
+
+                        $<$<CONFIG:Debug>:-O0>
+                        $<$<CONFIG:Debug>:-g3>
+
+                        $<$<CONFIG:Release>:-O3>
+                )
+
+                target_compile_definitions(${target} PRIVATE
+                        _GNU_SOURCE
+                )
+        elseif(WIN32)
+                target_include_directories(${target}
+                PRIVATE
+                        platform/windows/include
+                )
+                target_compile_options(${target} PRIVATE
+                        /W4
+                        /WX
+
+                        $<$<CONFIG:Debug>:/Od>
+                        $<$<CONFIG:Debug>:/Zi>
+
+                        $<$<CONFIG:Release>:/O2>
+                )
+
+                target_compile_definitions(${target} PRIVATE
+                        _CRT_SECURE_NO_WARNINGS
+                )
+        endif()
+
+        target_compile_definitions(${target} PRIVATE
+                $<$<CONFIG:Debug>:__AQUA_DEBUG__>
+        )
+
+endfunction()
+
+configure_dsp_target(aqua_objects)
 
 set_target_properties(${LIB_NAME} PROPERTIES
-        VERSION ${PROJECT_VERSION}
-        SOVERSION ${PROJECT_VERSION_MAJOR}
-        POSITION_INDEPENDENT_CODE ON
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
 )
 
-target_include_directories(${LIB_NAME}
-PUBLIC
-        utils
-        utils/macros
-        utils/hashmap
-        utils/exit
-        utils/log
-        include
-        core/service/include
-        core/client/include
-
-PRIVATE
-        platform/include
-)
-
-if (UNIX AND NOT APPLE)
-        target_include_directories(${LIB_NAME}
-        PRIVATE
-                platform/linux/include
-        )
-
-        target_compile_options(${LIB_NAME} PRIVATE
-                -Wall
-                -Wextra
-                -Werror
-
-                $<$<CONFIG:Debug>:-O0>
-                $<$<CONFIG:Debug>:-g3>
-
-                $<$<CONFIG:Release>:-O3>
-        )
-
-        target_compile_definitions(${LIB_NAME} PRIVATE
-                _GNU_SOURCE
-        )
-elseif(WIN32)
-        target_include_directories(${LIB_NAME}
-        PRIVATE
-                platform/windows/include
-        )
-        target_compile_options(${LIB_NAME} PRIVATE
-                /W4
-                /WX
-
-                $<$<CONFIG:Debug>:/Od>
-                $<$<CONFIG:Debug>:/Zi>
-
-                $<$<CONFIG:Release>:/O2>
-        )
-
-        target_compile_definitions(${LIB_NAME} PRIVATE
-                _CRT_SECURE_NO_WARNINGS
-        )
-endif()
-
-target_compile_definitions(${LIB_NAME} PRIVATE
-        $<$<CONFIG:Debug>:__AQUA_DEBUG__>
+set_target_properties(${LIB_NAME}_static PROPERTIES
+    VERSION ${PROJECT_VERSION}
 )

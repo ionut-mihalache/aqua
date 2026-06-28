@@ -13,7 +13,7 @@ __NOTE__: All the commands below should be used in the root directory.
 ```
 $ rm -rf build
 $ cmake -B build
-$ cmake --build build
+$ cmake --build build -j<proc-number>
 ```
 
 #### Development ####
@@ -21,7 +21,7 @@ $ cmake --build build
 ```
 $ rm -rf build
 $ cmake -B build -DCMAKE_BUILD_TYPE=Debug
-$ cmake --build build
+$ cmake --build build -j<proc-number>
 ```
 
 ### Windows ###
@@ -34,7 +34,7 @@ TODO
 ### Linux ###
 
 ```
-$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<absolute-path-to-build-lib-directory-after-cmake-build>
+$ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<absolute-path-to-build-lib-directory-after-cmake-build> # for dynamic library
 ```
 
 ### Windows ###
