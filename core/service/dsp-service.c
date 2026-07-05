@@ -156,7 +156,7 @@ spin_lock_unlock:
 
     installInfo->m_ProcId = Process.getPid();
     installInfo->m_Available = true;
-    uint64_t strIdLen = strlen(p_StrId);
+    size_t strIdLen = strlen(p_StrId);
     if (strIdLen > STRING_ID_MAX_LENGTH - 1) {
         ELOGF("Service string id %s is too long. Max length is %i.\n", p_StrId,
               STRING_ID_MAX_LENGTH - 1);
@@ -165,7 +165,7 @@ spin_lock_unlock:
     memset(installInfo->m_StrId, 0, STRING_ID_MAX_LENGTH);
     memcpy(installInfo->m_StrId, p_StrId, strIdLen);
 
-    uint64_t versionLen = strlen(p_Version);
+    size_t versionLen = strlen(p_Version);
     if (versionLen > VERSION_MAX_LENGTH - 1) {
         ELOGF("Version string %s is too long. Max length is %u.\n", p_Version,
               VERSION_MAX_LENGTH - 1);

@@ -16,6 +16,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(LIB_NAME dsp)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 file(MAKE_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
@@ -55,7 +56,7 @@ add_library(aqua_objects OBJECT
 )
 
 set_target_properties(aqua_objects PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
+        POSITION_INDEPENDENT_CODE ON
 )
 
 add_library(${LIB_NAME} SHARED
@@ -67,13 +68,17 @@ add_library(${LIB_NAME}_static STATIC
 )
 
 set_target_properties(${LIB_NAME}_static PROPERTIES
-    OUTPUT_NAME ${LIB_NAME}
+        OUTPUT_NAME ${LIB_NAME}_static
+)
+
+set_target_properties(${LIB_NAME} PROPERTIES
+        OUTPUT_NAME ${LIB_NAME}
 )
 
 function(configure_dsp_target target)
 
         if (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-                target_compile_options(aqua_objects PRIVATE
+                target_compile_options(${target} PRIVATE
                         -fvisibility=hidden
                 )
         endif()
@@ -114,6 +119,10 @@ function(configure_dsp_target target)
                         _GNU_SOURCE
                 )
         elseif(WIN32)
+                if(MSVC)
+                        target_compile_options(${target} PRIVATE /MP)
+                endif()
+
                 target_include_directories(${target}
                 PRIVATE
                         platform/windows/include

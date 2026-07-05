@@ -12,7 +12,7 @@ __NOTE__: All the commands below should be used in the root directory.
 
 ```
 $ rm -rf build
-$ cmake -B build
+$ cmake -B build -DCMAKE_BUILD_TYPE=Release
 $ cmake --build build -j<proc-number>
 ```
 
@@ -26,7 +26,22 @@ $ cmake --build build -j<proc-number>
 
 ### Windows ###
 
-TODO
+
+#### Production ####
+
+```
+$ rm -rf build
+$ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+$ cmake --build build -j<proc-number>
+```
+
+#### Development ####
+
+```
+$ rm -rf build
+$ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+$ cmake --build build -j<proc-number>
+```
 
 
 ## Usage ##
