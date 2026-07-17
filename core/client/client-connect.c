@@ -1,10 +1,16 @@
-#include <pthread.h>
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
 #include <string.h>
-#include <sys/mman.h>
 
 #include "client-connect.h"
+#include "aqua-types.h"
 #include "commons.h"
+#include "dsp.h"
+#include "log.h"
 #include "macros.h"
+#include "platform-types.h"
+#include "platform.h"
+#include "system-values.h"
 
 static int32_t s_ReturnFnSMBHelper(void *p_ReturnData,
                                    struct DSPQueue *p_Queue) {
@@ -185,12 +191,13 @@ static int32_t s_ProcessConnectionRequest(
     struct ConnectRequest *p_ConnectRequest,
     struct ClientConnectInfo *p_ConnectInfo,
     struct ClientConnectRequestInformation *p_ConnectInformation) {
-    int requestResponseQFd;
-    int returnQFd;
+    aqua_file_handle_t requestResponseQFd;
+    aqua_err_t err;
+    aqua_file_handle_t returnQFd;
     int32_t rc = 0;
-    int qFlag;
-    int qProt;
-    mode_t qMode;
+    aqua_file_flags_t qFlag;
+    aqua_mem_prot_t qProt;
+    aqua_file_mode_t qMode;
     size_t qSize;
     void *returnQ;
 
@@ -226,85 +233,108 @@ static int32_t s_ProcessConnectionRequest(
     p_ConnectRequest->m_ResponseQSize =
         RETURN_RESPONSEQ_MAX_SIZE; // CHECK: possibly user specified
 
-    requestResponseQFd = createShmObject(
-        p_ConnectInformation->m_RequestResponseQName, O_RDWR,
-        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH,
+    requestResponseQFd = SharedMemoryObject.create(
+        p_ConnectInformation->m_RequestResponseQName, AQUA_FILE_PERM_RDWR,
+        AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+            AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+            AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE,
         p_ConnectInformation->m_ResponseQSize *
             sizeof(struct ConnectResponseInformation),
         true);
     DIE(requestResponseQFd < 0, "Could not create shared memory object");
 
-    struct ConnectResponseInformation *requestResponseQ =
-        mmap(NULL,
-             p_ConnectInformation->m_ResponseQSize *
-                 sizeof(struct ConnectResponseInformation),
-             PROT_READ, MAP_SHARED, requestResponseQFd, 0);
-    DIE(requestResponseQ == MAP_FAILED,
+    struct ConnectResponseInformation *requestResponseQ;
+    err = Allocator.memmap((aqua_void_ptr_t *)&requestResponseQ, NULL,
+                           p_ConnectInformation->m_ResponseQSize *
+                               sizeof(struct ConnectResponseInformation),
+                           AQUA_MEM_PROT_READ, AQUA_MEM_SHARED,
+                           requestResponseQFd, 0);
+    DIE(err == AQUA_MEM_MAP_FAILED,
         "Could not map request response queue memory");
 
-    triggerKernelPageInit(requestResponseQ,
-                          p_ConnectInformation->m_ResponseQSize *
-                              sizeof(struct ConnectResponseInformation),
-                          PROT_READ);
+    // triggerKernelPageInit(requestResponseQ,
+    //                       p_ConnectInformation->m_ResponseQSize *
+    //                           sizeof(struct ConnectResponseInformation),
+    //                       PROT_READ);
+    Memory.triggerPageFaults(requestResponseQ,
+                             p_ConnectInformation->m_ResponseQSize *
+                                 sizeof(struct ConnectResponseInformation),
+                             AQUA_MEM_PROT_READ);
 
-    rc = close(requestResponseQFd);
-    DIE(rc != 0, "Could not close requestResponseQFd");
+    err = SharedMemoryObject.close(requestResponseQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close requestResponseQFd");
 
     switch (p_ConnectInformation->m_QType) {
     case SMBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_ConnectInformation->m_ReturnQSize * sizeof(struct SMBCall);
-        qProt = PROT_READ;
+        qProt = AQUA_MEM_PROT_READ;
 
         break;
     case EMBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_ConnectInformation->m_ReturnQSize * sizeof(struct EMBCall);
-        qProt = PROT_READ;
+        qProt = AQUA_MEM_PROT_READ;
 
         break;
     case QMBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_ConnectInformation->m_ReturnQSize * sizeof(struct QMBCall);
-        qProt = PROT_READ;
+        qProt = AQUA_MEM_PROT_READ;
 
         break;
     case HMBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_ConnectInformation->m_ReturnQSize * sizeof(struct HMBCall);
-        qProt = PROT_READ;
+        qProt = AQUA_MEM_PROT_READ;
 
         break;
     case MBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_ConnectInformation->m_ReturnQSize * sizeof(struct MBCall);
-        qProt = PROT_READ;
+        qProt = AQUA_MEM_PROT_READ;
 
         break;
     case DMBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_ConnectInformation->m_ReturnQSize * sizeof(struct DMBCall);
-        qProt = PROT_READ;
+        qProt = AQUA_MEM_PROT_READ;
 
         break;
     case HGBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_ConnectInformation->m_ReturnQSize * sizeof(struct HGBCall);
-        qProt = PROT_READ;
+        qProt = AQUA_MEM_PROT_READ;
 
         break;
     case GBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_ConnectInformation->m_ReturnQSize * sizeof(struct GBCall);
-        qProt = PROT_READ;
+        qProt = AQUA_MEM_PROT_READ;
 
         break;
     default:
@@ -314,15 +344,16 @@ static int32_t s_ProcessConnectionRequest(
         DIE(true, "QType is not recognized");
     }
 
-    returnQFd = createShmObject(p_ConnectInformation->m_ReturnQName, qFlag,
-                                qMode, qSize, true);
+    returnQFd = SharedMemoryObject.create(p_ConnectInformation->m_ReturnQName,
+                                          qFlag, qMode, qSize, true);
 
     createQ(&returnQ, qSize, qProt, returnQFd);
 
-    triggerKernelPageInit(returnQ, qSize, qProt);
+    // triggerKernelPageInit(returnQ, qSize, qProt);
+    Memory.triggerPageFaults(returnQ, qSize, qProt);
 
-    rc = close(returnQFd);
-    DIE(rc != 0, "Could not close returnQFd");
+    err = SharedMemoryObject.close(requestResponseQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close returnQFd");
 
     p_ConnectInfo->m_Connections[p_ConnId].m_RequestResponseQPushIdx = 0;
     p_ConnectInfo->m_Connections[p_ConnId].m_RequestResponseQPopIdx = 0;
@@ -377,7 +408,7 @@ s_SendConnectRequest(struct ClientReturnInfo *p_ReturnInfo,
      *  WIP: wait for the service to establish the connection on its side
      */
     // pthread_spin_lock(p_ConnectInfo->m_ConnectLock);
-    pthread_mutex_lock(p_ConnectInfo->m_ConnectLock);
+    Sync.mutexLock(p_ConnectInfo->m_ConnectLock);
     for (connId = 0; connId < OPENED_CONNECTIONS; ++connId) {
         if (!p_ConnectInfo->m_Connections[connId].m_Connected) {
             p_ConnectInfo->m_Connections[connId].m_Connected = true;
@@ -385,7 +416,7 @@ s_SendConnectRequest(struct ClientReturnInfo *p_ReturnInfo,
         }
     }
     // pthread_spin_unlock(p_ConnectInfo->m_ConnectLock);
-    pthread_mutex_unlock(p_ConnectInfo->m_ConnectLock);
+    Sync.mutexUnlock(p_ConnectInfo->m_ConnectLock);
 
     QPUSH(
         queue, CONNECTQ_MAX_SIZE, do {
@@ -441,37 +472,42 @@ int32_t
 configureClientConnectInformation(struct ClientConnectInfo *p_ConnectInfo,
                                   struct InstallInformation *p_InstallInfo) {
     int32_t rc = 0;
-    int connectQFd, disconnectQFd;
+    aqua_err_t err;
+    aqua_file_handle_t connectQFd, disconnectQFd;
 
-    /**
-     * TODO: Implement successfull connection functionality
-     */
-
-    connectQFd = createShmObject(
-        p_InstallInfo->m_ConnectQName, O_RDWR,
-        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH,
+    connectQFd = SharedMemoryObject.create(
+        p_InstallInfo->m_ConnectQName, AQUA_FILE_PERM_RDWR,
+        AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+            AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+            AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE,
         CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest), false);
 
-    struct ConnectRequest *connectQ =
-        mmap(NULL, CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
-             PROT_READ | PROT_WRITE, MAP_SHARED, connectQFd, 0);
-    DIE(connectQ == MAP_FAILED, "Could not map connectQ");
+    struct ConnectRequest *connectQ = NULL;
+    err = Allocator.memmap((aqua_void_ptr_t *)&connectQ, NULL,
+                           CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
+                           AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE,
+                           AQUA_MEM_SHARED, connectQFd, 0);
+    DIE(err == AQUA_MEM_MAP_FAILED, "Could not map connectQ");
 
-    rc = close(connectQFd);
-    DIE(rc != 0, "Could not close connectQFd");
+    err = SharedMemoryObject.close(connectQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close connectQFd");
 
-    disconnectQFd = createShmObject(
-        p_InstallInfo->m_DisconnectQName, O_RDWR,
-        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH,
+    disconnectQFd = SharedMemoryObject.create(
+        p_InstallInfo->m_DisconnectQName, AQUA_FILE_PERM_RDWR,
+        AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+            AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+            AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE,
         CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest), false);
 
-    struct ConnectRequest *disconnectQ =
-        mmap(NULL, CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
-             PROT_READ | PROT_WRITE, MAP_SHARED, disconnectQFd, 0);
-    DIE(disconnectQ == MAP_FAILED, "Could not map disconnect queue memory");
+    struct ConnectRequest *disconnectQ = NULL;
+    err = Allocator.memmap((aqua_void_ptr_t *)&disconnectQ, NULL,
+                           CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
+                           AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE,
+                           AQUA_MEM_SHARED, disconnectQFd, 0);
+    DIE(err == AQUA_MEM_MAP_FAILED, "Could not map disconnect queue memory");
 
-    rc = close(disconnectQFd);
-    DIE(rc != 0, "Could not close disconnectQFd");
+    err = SharedMemoryObject.close(disconnectQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close disconnectQFd");
 
     p_ConnectInfo->m_SendConnectRequest = s_SendConnectRequest;
     p_ConnectInfo->m_Connections = p_InstallInfo->m_Connections;

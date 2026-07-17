@@ -41,7 +41,7 @@ import consts.Constants;
 import queues.commons.ConnectResponseInformation;
 
 interface LibDSP extends Library {
-    LibDSP INSTANCE = (LibDSP) Native.load("dsp", LibDSP.class);
+    LibDSP INSTANCE = (LibDSP) Native.load("aqua", LibDSP.class);
 
     void dspInstall(ServiceConnectInfo p_ConnectInfo, ServiceCallInfo p_CallInfo, String p_StrId, String p_Version,
             int p_CallQType);

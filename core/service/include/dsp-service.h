@@ -1,6 +1,10 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
 #ifndef __DSP_SERVICE_H
 #define __DSP_SERVICE_H
 
+#include "aqua-sync.h"
+#include "platform-types.h"
 #include "dsp.h"
 
 #define INSTALL_SHD "/install-shared-data"
@@ -10,8 +14,10 @@ struct InstallCommons {
 };
 
 struct InstallSharedData {
-    pthread_mutex_t m_InstallMZoneMx;
-    pthread_spinlock_t m_InstallMZoneLk;
+    // pthread_mutex_t m_InstallMZoneMx;
+    aqua_mutex_t m_InstallMZoneMx;
+    // pthread_spinlock_t m_InstallMZoneLk;
+    aqua_spinlock_t m_InstallMZoneLk;
 };
 
 struct ServiceCallInfo {
@@ -32,7 +38,7 @@ struct ServiceConnectInfo {
     struct DisconnectQueue m_DisconnectQ;
     struct ConnectionInformation *m_Connections;
     // pthread_spinlock_t *m_ConnectLock;
-    pthread_mutex_t *m_ConnectLock;
+    aqua_mutex_t *m_ConnectLock;
     int32_t (*m_ReceiveConnectRequest)(struct ServiceReturnInfo *,
                                        struct ServiceConnectInfo *);
     int32_t (*m_ReceiveDisconnectRequest)(struct ServiceConnectInfo *);
@@ -40,11 +46,11 @@ struct ServiceConnectInfo {
 
 void initService();
 
-void dspInstall(struct ServiceConnectInfo *p_ConnectInfo,
+AQUA_API_EXPORT void dspInstall(struct ServiceConnectInfo *p_ConnectInfo,
                 struct ServiceCallInfo *p_CallInfo, const char *p_StrId,
                 const char *p_Version, int p_CallQType);
 
-void receiveCall(void *, struct ServiceCallInfo *);
-void sendReturn(struct ServiceReturnInfo *, void *);
+AQUA_API_EXPORT void receiveCall(void *, struct ServiceCallInfo *);
+AQUA_API_EXPORT void sendReturn(struct ServiceReturnInfo *, void *);
 
 #endif // __DSP_SERVICE_H

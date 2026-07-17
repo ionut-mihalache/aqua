@@ -1,8 +1,8 @@
-#include <stdbool.h>
-#include <string.h>
-#include <sys/shm.h>
-#include <sys/mman.h>
+// SPDX-License-Identifier: LGPL-2.1-or-later
 
+#include <string.h>
+
+#include "aqua-types.h"
 #include "dsp.h"
 
 #include "client-call.h"
@@ -10,7 +10,8 @@
 #include "commons.h"
 #include "dsp-client.h"
 #include "log.h"
-#include "macros.h"
+#include "platform.h"
+#include "system-values.h"
 
 void sendConnectRequest(struct ClientReturnInfo *p_ReturnInfo,
                         struct ClientConnectInfo *p_ConnectInfo,
@@ -112,32 +113,70 @@ int32_t setCallData(int p_Type, void *p_CallInfo, uint8_t *p_Data,
     return rc;
 }
 
+static aqua_size_t sf_GetInstallArenaSize() {
+    aqua_size_t mapGranularity = Memory.getMapGranularity();
+
+    aqua_size_t alignedHeaderSize =
+        alignUp(sizeof(struct InstallInfo), mapGranularity);
+
+    aqua_size_t alignedServiceSize =
+        alignUp(sizeof(struct InstallInformation), mapGranularity);
+
+    return alignedHeaderSize + alignedServiceSize * SERVICES_NUMBER;
+}
+
+static aqua_size_t sf_GetServiceOff(uint16_t i) {
+    aqua_size_t mapGranularity = Memory.getMapGranularity();
+
+    size_t alignedHeaderSize =
+        alignUp(sizeof(struct InstallInfo), mapGranularity);
+
+    aqua_size_t alignedServiceSize =
+        alignUp(sizeof(struct InstallInformation), mapGranularity);
+
+    return alignedHeaderSize + i * alignedServiceSize;
+}
+
+static struct InstallInformation *sf_GetService(struct InstallInfo *info,
+                                                uint16_t i) {
+    return (struct InstallInformation *)((aqua_u8_t *)info +
+                                         sf_GetServiceOff(i));
+}
+
 void dspConnect(struct ClientConnectInfo *p_ConnectInfo,
                 struct ClientCallInfo *p_CallInfo, const char *p_ServiceStrId) {
     int rc;
-    int installShmFd;
+    aqua_file_handle_t installShmFd;
+    aqua_err_t err;
     struct InstallInformation *installInfo;
     uint8_t connected = false;
     uint16_t i;
 
-    installShmFd = createShmObject(INSTALL_MZONE, O_RDWR,
-                                   S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |
-                                       S_IROTH | S_IWOTH,
-                                   sizeof(struct InstallInfo), false);
+    aqua_size_t installArenaSize = sf_GetInstallArenaSize();
+
+    installShmFd = SharedMemoryObject.create(
+        INSTALL_MZONE, AQUA_FILE_PERM_RDWR,
+        AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+            AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+            AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE,
+        installArenaSize, false);
     DIE(installShmFd < 0,
         "Could not open install memory zone shared memory object");
 
-    struct InstallInfo *installMemZone =
-        mmap(NULL, sizeof(struct InstallInfo), PROT_READ | PROT_WRITE,
-             MAP_SHARED, installShmFd, 0);
-    DIE(installMemZone == MAP_FAILED, "Could not mmap install memory zone");
+    struct InstallInfo *installMemZone = NULL;
+    err = Allocator.memmap((aqua_void_ptr_t *)&installMemZone, NULL,
+                           installArenaSize,
+                           AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE,
+                           AQUA_MEM_SHARED, installShmFd, 0);
+
+    DIE(err == AQUA_MEM_MAP_FAILED, "Could not mmap install memory zone");
 
     for (i = 0; i < SERVICES_NUMBER; ++i) {
-        if (!installMemZone->m_Info[i].m_Available) {
+        installInfo = sf_GetService(installMemZone, i);
+
+        if (!installInfo->m_Available) {
             continue;
         }
-
-        installInfo = (struct InstallInformation *)&(installMemZone->m_Info[i]);
 
         if (!strcmp(installInfo->m_StrId, p_ServiceStrId)) {
             if (installInfo->m_Available) {
@@ -152,16 +191,18 @@ void dspConnect(struct ClientConnectInfo *p_ConnectInfo,
         return;
     }
 
-    rc = munmap(installMemZone, sizeof(struct InstallInfo));
+    rc = Allocator.memunmap(installMemZone, sizeof(struct InstallInfo));
     DIE(rc != 0, "Could not unmap install memory zone");
 
     /**
      * Map only the information of the service
      */
-    installInfo = (struct InstallInformation *)mmap(
-        NULL, sizeof(struct InstallInformation), PROT_READ | PROT_WRITE,
-        MAP_SHARED, installShmFd, i * sizeof(struct InstallInformation));
-    DIE(installInfo == MAP_FAILED, "Could not map service information");
+    err = Allocator.memmap(
+        (aqua_void_ptr_t *)&installInfo, NULL,
+        alignUp(sizeof(struct InstallInformation), Memory.getMapGranularity()),
+        AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE, AQUA_MEM_SHARED, installShmFd,
+        sf_GetServiceOff(i));
+    DIE(err == AQUA_MEM_MAP_FAILED, "Could not map service information");
 
     configureClientConnectInformation(p_ConnectInfo, installInfo);
     configureClientCallInformation(p_CallInfo, installInfo);

@@ -1,14 +1,13 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
+
 #ifndef __DSP_H_
 #define __DSP_H_
 
-#include <fcntl.h>
-#include <pthread.h>
 #include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <sys/user.h>
-#include <unistd.h>
+
+#include "aqua-sync.h"
+#include "aqua-types.h"
+#include "platform-types.h"
 
 #define SHMEM_PATH "/shared_memory"
 #define CONNECT_REQS "/conn-reqs"
@@ -95,13 +94,13 @@ struct ConnectionInformation {
     char m_ReturnQName[RETURNQ_NAME_MAX_SIZE];
     char m_RequestResponseQName[RETURNQ_NAME_MAX_SIZE];
 
-    pthread_cond_t m_ReturnQFullCond;
-    pthread_cond_t m_ReturnQEmptyCond;
-    pthread_cond_t m_RequestResponseQFullCond;
-    pthread_cond_t m_RequestResponseQEmptyCond;
+    aqua_cond_t m_ReturnQFullCond;
+    aqua_cond_t m_ReturnQEmptyCond;
+    aqua_cond_t m_RequestResponseQFullCond;
+    aqua_cond_t m_RequestResponseQEmptyCond;
 
-    pthread_mutex_t m_ReturnQMutex;
-    pthread_mutex_t m_RequestResponseQMutex;
+    aqua_mutex_t m_ReturnQMutex;
+    aqua_mutex_t m_RequestResponseQMutex;
 
     void *m_RequestResponseQ, *m_ReturnQ;
     size_t m_RequestResponseQMapSize, m_ReturnQMapSize;
@@ -123,18 +122,17 @@ struct InstallInformation {
     char m_StrId[STRING_ID_MAX_LENGTH];
     char m_Version[VERSION_MAX_LENGTH];
 
-    pthread_cond_t m_CallQFullCond;
-    pthread_cond_t m_CallQEmptyCond;
-    pthread_cond_t m_ConnectQFullCond;
-    pthread_cond_t m_ConnectQEmptyCond;
-    pthread_cond_t m_DisconnectQFullCond;
-    pthread_cond_t m_DisconnectQEmptyCond;
+    aqua_cond_t m_CallQFullCond;
+    aqua_cond_t m_CallQEmptyCond;
+    aqua_cond_t m_ConnectQFullCond;
+    aqua_cond_t m_ConnectQEmptyCond;
+    aqua_cond_t m_DisconnectQFullCond;
+    aqua_cond_t m_DisconnectQEmptyCond;
 
-    pthread_mutex_t m_CallQMutex;
-    pthread_mutex_t m_ConnectQMutex;
-    pthread_mutex_t m_DisconnectQMutex;
-    // pthread_spinlock_t m_ConnectListLock;
-    pthread_mutex_t m_ConnectListLock;
+    aqua_mutex_t m_CallQMutex;
+    aqua_mutex_t m_ConnectQMutex;
+    aqua_mutex_t m_DisconnectQMutex;
+    aqua_mutex_t m_ConnectListLock;
 
     uint32_t m_CallQPushIdx, m_CallQPopIdx, m_CallQSize;
     uint32_t m_ConnectQPushIdx, m_ConnectQPopIdx, m_ConnectQSize;
@@ -142,20 +140,25 @@ struct InstallInformation {
 
     enum QType m_CallQType;
 
-    pid_t m_ProcId;
+    aqua_pid_t m_ProcId;
     uint8_t m_Available;
-} __attribute__((aligned(PAGE_SIZE)));
+};
+
+// struct InstallInfo {
+//     struct InstallInformation m_Info[SERVICES_NUMBER];
+//     uint8_t m_InstallMap[SERVICES_NUMBER >> 3];
+//     uint8_t m_BytesNr;
+// };
 
 struct InstallInfo {
-    struct InstallInformation m_Info[SERVICES_NUMBER];
-    uint8_t m_InstallMap[SERVICES_NUMBER >> 3];
-    uint8_t m_BytesNr;
-} __attribute__((aligned(PAGE_SIZE)));
+    aqua_u8_t m_InstallMap[SERVICES_NUMBER >> 3];
+    aqua_u8_t m_BytesNr;
+};
 
 struct DSPQueueMetadata {
-    pthread_cond_t *m_FullCond;
-    pthread_cond_t *m_EmptyCond;
-    pthread_mutex_t *m_Lock;
+    aqua_cond_t *m_FullCond;
+    aqua_cond_t *m_EmptyCond;
+    aqua_mutex_t *m_Lock;
     uint32_t *m_PushIdxPtr;
     uint32_t *m_PopIdxPtr;
     uint32_t *m_Size;

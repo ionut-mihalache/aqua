@@ -1,9 +1,14 @@
-#include <string.h>
-#include <sys/mman.h>
+// SPDX-License-Identifier: LGPL-2.1-or-later
 
+#include <string.h>
+
+#include "aqua-types.h"
 #include "commons.h"
+#include "dsp.h"
 #include "log.h"
 #include "macros.h"
+#include "platform.h"
+#include "system-values.h"
 #include "return.h"
 
 static int32_t s_SendReturnFnSMBHelper(struct DSPQueue *p_Queue,
@@ -201,78 +206,97 @@ configureServiceReturnInformation(struct ServiceReturnInfo *p_ReturnInfo,
                                   struct ServiceConnectInfo *p_ConnectInfo,
                                   struct ConnectRequest *p_Request) {
     int32_t rc = 0;
-    int returnQFd;
-    int requestResponseQFd;
+    aqua_file_handle_t returnQFd;
+    aqua_file_handle_t requestResponseQFd;
     uint32_t connectionIdx;
-    int qFlag;
-    int qProt;
-    mode_t qMode;
+    aqua_file_flags_t qFlag;
+    aqua_mem_prot_t qProt;
+    aqua_file_mode_t qMode;
     size_t qSize;
     void *returnQ;
+    aqua_err_t err;
 
     connectionIdx = p_Request->m_ConnectionIdx;
 
-    requestResponseQFd = createShmObject(
-        p_Request->m_RequestResponseQName, O_RDWR,
-        S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH,
+    requestResponseQFd = SharedMemoryObject.create(
+        p_Request->m_RequestResponseQName, AQUA_FILE_PERM_RDWR,
+        AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+            AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+            AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE,
         p_Request->m_ResponseQSize * sizeof(struct ConnectResponseInformation),
         false);
 
     switch (p_Request->m_ReturnQType) {
     case SMBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_Request->m_ReturnQSize * sizeof(struct SMBCall);
-        qProt = PROT_WRITE | PROT_READ;
+        qProt = AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE;
 
         break;
     case EMBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_Request->m_ReturnQSize * sizeof(struct EMBCall);
-        qProt = PROT_WRITE | PROT_READ;
+        qProt = AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE;
 
         break;
     case QMBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_Request->m_ReturnQSize * sizeof(struct QMBCall);
-        qProt = PROT_WRITE | PROT_READ;
+        qProt = AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE;
 
         break;
     case HMBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_Request->m_ReturnQSize * sizeof(struct HMBCall);
-        qProt = PROT_WRITE | PROT_READ;
+        qProt = AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE;
 
         break;
     case MBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_Request->m_ReturnQSize * sizeof(struct MBCall);
-        qProt = PROT_WRITE | PROT_READ;
+        qProt = AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE;
 
         break;
     case DMBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_Request->m_ReturnQSize * sizeof(struct DMBCall);
-        qProt = PROT_WRITE | PROT_READ;
+        qProt = AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE;
 
         break;
     case HGBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_Request->m_ReturnQSize * sizeof(struct HGBCall);
-        qProt = PROT_WRITE | PROT_READ;
+        qProt = AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE;
 
         break;
     case GBQ:
-        qFlag = O_RDWR;
-        qMode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+        qFlag = AQUA_FILE_PERM_RDWR;
+        qMode = AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
+                AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
+                AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE;
         qSize = p_Request->m_ReturnQSize * sizeof(struct GBCall);
-        qProt = PROT_WRITE | PROT_READ;
+        qProt = AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE;
 
         break;
     default:
@@ -282,25 +306,27 @@ configureServiceReturnInformation(struct ServiceReturnInfo *p_ReturnInfo,
         DIE(true, "QType is not recognized");
     }
 
-    returnQFd =
-        createShmObject(p_Request->m_ReturnQName, qFlag, qMode, qSize, false);
+    returnQFd = SharedMemoryObject.create(p_Request->m_ReturnQName, qFlag,
+                                          qMode, qSize, false);
 
     createQ(&returnQ, qSize, qProt, returnQFd);
 
     p_ConnectInfo->m_Connections[connectionIdx].m_ReturnQMapSize = qSize;
 
-    rc = close(returnQFd);
-    DIE(rc != 0, "Could not close returnQFd");
+    err = SharedMemoryObject.close(returnQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close returnQFd");
 
-    struct ConnectResponseInformation *requestResponseQ = mmap(
-        NULL,
-        p_Request->m_ResponseQSize * sizeof(struct ConnectResponseInformation),
-        PROT_WRITE | PROT_READ, MAP_SHARED, requestResponseQFd, 0);
-    DIE(requestResponseQ == MAP_FAILED,
+    struct ConnectResponseInformation *requestResponseQ = NULL;
+    err = Allocator.memmap((aqua_void_ptr_t *)&requestResponseQ, NULL,
+                           p_Request->m_ResponseQSize *
+                               sizeof(struct ConnectResponseInformation),
+                           AQUA_MEM_PROT_WRITE | AQUA_MEM_PROT_READ,
+                           AQUA_MEM_SHARED, requestResponseQFd, 0);
+    DIE(err == AQUA_MEM_MAP_FAILED,
         "Could not map request response queue memory");
 
-    rc = close(requestResponseQFd);
-    DIE(rc != 0,
+    err = SharedMemoryObject.close(requestResponseQFd);
+    DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED,
         "Could not close request response queue shared object file descriptor");
 
     p_ConnectInfo->m_Connections[connectionIdx].m_ReturnQPushIdx = 0;
