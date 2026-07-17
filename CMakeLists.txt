@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.25.1)
 
 project(
-        dsp-library
+        aqua
         VERSION 0.0.2
         LANGUAGES C
 )
@@ -14,7 +14,7 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(LIB_NAME dsp)
+set(LIB_NAME aqua)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -75,7 +75,7 @@ set_target_properties(${LIB_NAME} PROPERTIES
         OUTPUT_NAME ${LIB_NAME}
 )
 
-function(configure_dsp_target target)
+function(configure_aqua_target target)
 
         if (CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
                 target_compile_options(${target} PRIVATE
@@ -148,7 +148,7 @@ function(configure_dsp_target target)
 
 endfunction()
 
-configure_dsp_target(aqua_objects)
+configure_aqua_target(aqua_objects)
 
 set_target_properties(${LIB_NAME} PROPERTIES
     VERSION ${PROJECT_VERSION}
