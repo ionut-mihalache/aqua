@@ -1,8 +1,22 @@
 ## Introduction ##
 
-DSP (Driver Service Protocol) relies on AQUA for interoperability. AQUA is used for local IPC and is based on shared memory.
+AQUA is designed for local IPC using shared memory; the design is created and aims for interoperability. It is using a custom protocl DSP (Driver Service Protocol). 
 
 ## Building ##
+
+### Project structure ###
+
+```
+aqua
+|--- core
+|--- include
+|--- platform
+     |--- include
+     |--- linux
+     |--- windows
+     |--- ...
+|--- utils
+```
 
 __NOTE__: All the commands below should be used in the root directory.
 
@@ -54,4 +68,4 @@ $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<absolute-path-to-build-lib-directory-
 
 ### Windows ###
 
-TODO
+WIP
