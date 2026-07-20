@@ -1,0 +1,12 @@
+services:
+  aqua-lib:
+    container_name: aqua
+    hostname: aqua
+    restart: always
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - /shared-mem:/dev/shm
+      - ./start.sh:/start.sh
+      - ../../../aqua:/root/aqua
