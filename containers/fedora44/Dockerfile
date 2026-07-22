@@ -3,7 +3,7 @@ FROM fedora:44
 ARG PHP_VERSION=84
 
 RUN dnf -y update && \
-    dnf -y install gcc gcc-c++ clang cmake git vim python3 python3-pip inkscape \
+    dnf -y install gcc gcc-c++ clang clangd cmake git vim python3 python3-pip inkscape \
         https://rpms.remirepo.net/fedora/remi-release-44.rpm && \
     dnf -y install \
         php${PHP_VERSION} \
