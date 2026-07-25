@@ -10,24 +10,27 @@
 #include "commons.h"
 #include "dsp-client.h"
 #include "log.h"
+#include "platform-types.h"
 #include "platform.h"
 #include "system-values.h"
 
-void sendConnectRequest(struct ClientReturnInfo *p_ReturnInfo,
-                        struct ClientConnectInfo *p_ConnectInfo,
-                        struct ClientConnectRequestInformation *p_RequestInfo) {
+AQUA_API_EXPORT void
+sendConnectRequest(struct ClientReturnInfo *p_ReturnInfo,
+                   struct ClientConnectInfo *p_ConnectInfo,
+                   struct ClientConnectRequestInformation *p_RequestInfo) {
     p_ConnectInfo->m_SendConnectRequest(p_ReturnInfo, p_ConnectInfo,
                                         p_RequestInfo);
 }
 
-void sendDisconnectRequest(
+AQUA_API_EXPORT void sendDisconnectRequest(
     struct ClientConnectInfo *p_ConnectInfo,
     struct ConnectResponseInformation *p_requestResponseInfo) {
     p_ConnectInfo->m_SendDisconnectRequest(p_ConnectInfo,
                                            p_requestResponseInfo);
 }
 
-void callFn(struct ClientCallInfo *p_CallInfo, void *p_CallData) {
+AQUA_API_EXPORT void callFn(struct ClientCallInfo *p_CallInfo,
+                            void *p_CallData) {
     struct CommunicationInfo cInfo;
 
     cInfo.m_Q = &(p_CallInfo->m_Q);
@@ -36,7 +39,8 @@ void callFn(struct ClientCallInfo *p_CallInfo, void *p_CallData) {
     p_CallInfo->m_CallFn(&cInfo);
 };
 
-void returnFn(void *p_ReturnData, struct ClientReturnInfo *p_ReturnInfo) {
+AQUA_API_EXPORT void returnFn(void *p_ReturnData,
+                              struct ClientReturnInfo *p_ReturnInfo) {
     struct CommunicationInfo cInfo;
 
     cInfo.m_Q = &(p_ReturnInfo->m_Q);
@@ -45,8 +49,8 @@ void returnFn(void *p_ReturnData, struct ClientReturnInfo *p_ReturnInfo) {
     p_ReturnInfo->m_ReturnFn(&cInfo);
 }
 
-int32_t setCallData(int p_Type, void *p_CallInfo, uint8_t *p_Data,
-                    uint32_t p_Size) {
+AQUA_API_EXPORT int32_t setCallData(int p_Type, void *p_CallInfo,
+                                    uint8_t *p_Data, uint32_t p_Size) {
     int32_t rc = 0;
 
     switch (p_Type) {
@@ -143,8 +147,9 @@ static struct InstallInformation *sf_GetService(struct InstallInfo *info,
                                          sf_GetServiceOff(i));
 }
 
-void dspConnect(struct ClientConnectInfo *p_ConnectInfo,
-                struct ClientCallInfo *p_CallInfo, const char *p_ServiceStrId) {
+AQUA_API_EXPORT void dspConnect(struct ClientConnectInfo *p_ConnectInfo,
+                                struct ClientCallInfo *p_CallInfo,
+                                const char *p_ServiceStrId) {
     int rc;
     aqua_file_handle_t installShmFd;
     aqua_err_t err;
