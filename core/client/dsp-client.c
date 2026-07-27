@@ -147,7 +147,7 @@ static struct InstallInformation *sf_GetService(struct InstallInfo *info,
                                          sf_GetServiceOff(i));
 }
 
-AQUA_API_EXPORT void dspConnect(struct ClientConnectInfo *p_ConnectInfo,
+AQUA_API_EXPORT void aquaConnect(struct ClientConnectInfo *p_ConnectInfo,
                                 struct ClientCallInfo *p_CallInfo,
                                 const char *p_ServiceStrId) {
     int rc;
@@ -216,7 +216,7 @@ AQUA_API_EXPORT void dspConnect(struct ClientConnectInfo *p_ConnectInfo,
 void retriveInitInformation(struct ClientConnectInfo *p_ConnectInfo,
                             struct ClientCallInfo *p_CallInfo,
                             const char *p_ServiceStrId) {
-    dspConnect(p_ConnectInfo, p_CallInfo, p_ServiceStrId);
+    aquaConnect(p_ConnectInfo, p_CallInfo, p_ServiceStrId);
 }
 
 struct ConnectResponseInformation *

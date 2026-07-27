@@ -62,7 +62,7 @@ AQUA_API_EXPORT void returnFn(void *p_ReturnData,
 AQUA_API_EXPORT int32_t setCallData(int p_Type, void *p_CallInfo,
                                     uint8_t *p_Data, uint32_t p_Size);
 
-AQUA_API_EXPORT void dspConnect(struct ClientConnectInfo *p_ConnectInfo,
+AQUA_API_EXPORT void aquaConnect(struct ClientConnectInfo *p_ConnectInfo,
                                 struct ClientCallInfo *p_CallInfo,
                                 const char *p_ServiceStrId);
 

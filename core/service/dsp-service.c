@@ -74,7 +74,7 @@ static aqua_size_t sf_GetServiceOff(uint16_t i) {
     return alignedHeaderSize + i * alignedServiceSize;
 }
 
-void dspInstall(struct ServiceConnectInfo *p_ConnectInfo,
+void aquaInstall(struct ServiceConnectInfo *p_ConnectInfo,
                 struct ServiceCallInfo *p_CallInfo, const char *p_StrId,
                 const char *p_Version, int p_CallQType) {
     int rc;

@@ -26,7 +26,7 @@ int main() {
         return 0;
     }
 
-    dspConnect(connectInfo.get(), callInfo.get(), "xslt-transformation");
+    aquaConnect(connectInfo.get(), callInfo.get(), "xslt-transformation");
 
     std::unique_ptr<ClientReturnInfo> returnInfo(new ClientReturnInfo);
     if (returnInfo == nullptr) {

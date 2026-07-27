@@ -158,7 +158,7 @@ $ffi = FFI::cdef(
 
     void returnFn(void *p_ReturnData, struct ClientReturnInfo *p_ReturnInfo);
 
-    void dspConnect(struct ClientConnectInfo *p_ConnectInfo,
+    void aquaConnect(struct ClientConnectInfo *p_ConnectInfo,
                 struct ClientCallInfo *p_CallInfo, const char *p_ServiceStrId);
 
     int32_t setCallData(int p_Type, void *p_CallInfo, uint8_t *p_Data, uint32_t p_Size);
@@ -168,9 +168,9 @@ $ffi = FFI::cdef(
     "/home/ubuntu/dsp-library/build/lib/libaqua.so"
 );
 
-function dspConnect($p_Ffi, $connectInfoPtr, $callInfoPtr, $serviceStrId)
+function aquaConnect($p_Ffi, $connectInfoPtr, $callInfoPtr, $serviceStrId)
 {
-    $p_Ffi->dspConnect($connectInfoPtr, $callInfoPtr, $serviceStrId);
+    $p_Ffi->aquaConnect($connectInfoPtr, $callInfoPtr, $serviceStrId);
 }
 
 function sendConnectRequest($p_Ffi, $returnInfoPtr, $connectInfoPtr, $requestInfoPtr)
@@ -287,7 +287,7 @@ $connectInfoPtr = FFI::addr($connectInfo);
 $callInfo = $ffi->new("struct ClientCallInfo");
 $callInfoPtr = FFI::addr($callInfo);
 
-dspConnect($ffi, $connectInfoPtr, $callInfoPtr, "xslt-transformation");
+aquaConnect($ffi, $connectInfoPtr, $callInfoPtr, "xslt-transformation");
 
 $returnInfo = $ffi->new("struct ClientReturnInfo");
 $returnInfoPtr = FFI::addr($returnInfo);
