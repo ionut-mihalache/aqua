@@ -3,11 +3,13 @@ services:
     container_name: aqua
     hostname: aqua
     restart: always
+
     build:
       context: .
       dockerfile: ./Dockerfile
+
     volumes:
-      - ~/.ssh:/root/.ssh
+      - ~/.ssh:/.host-ssh:ro
       - /shared-mem:/dev/shm
       - ./start.sh:/start.sh
       - ../../../aqua:/root/aqua
