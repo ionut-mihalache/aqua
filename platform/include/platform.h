@@ -19,7 +19,7 @@ struct AQUA_Allocator {
                          aqua_void_ptr_t start_addr, aqua_size_t len,
                          aqua_mem_prot_t prot, aqua_mem_flags_t flags,
                          aqua_file_handle_t handle, aqua_off_t off);
-    aqua_int_t (*memunmap)(aqua_void_ptr_t addr, aqua_size_t len);
+    aqua_err_t (*memunmap)(aqua_void_ptr_t addr, aqua_size_t len);
 };
 
 struct AQUA_Sync {
