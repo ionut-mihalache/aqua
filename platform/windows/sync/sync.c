@@ -2,10 +2,21 @@
 
 #include <Windows.h>
 #include <assert.h>
+#include <minwindef.h>
 
 #include "aqua-sync.h"
 #include "aqua-types.h"
 #include "platform.h"
+
+struct HandleInfo {
+    char name[max(AQUA_MUTEX_MEM_SIZE,
+                  max(AQUA_SPINLOCK_MEM_SIZE,
+                      max(AQUA_COND_MEM_SIZE, AQUA_SEM_MEM_SIZE)))];
+    HANDLE handle;
+};
+
+_Thread_local struct HandleInfo tl_Handles[128];
+_Thread_local uint32_t tl_Size;
 
 static aqua_void_t createMutex(aqua_mutex_t *p_Mutex, const char *p_Name) {
     assert(strlen(p_Name) <= AQUA_MUTEX_MEM_SIZE);
@@ -37,19 +48,37 @@ static aqua_void_t createSemaphore(aqua_sem_t *p_Sem, const char *p_Name) {
 }
 
 static aqua_void_t destroyMutex(aqua_mutex_t *p_Mutex) {
+    HANDLE mutexHandle = NULL;
     char *mutexName = (char *)p_Mutex->memory;
 
-    HANDLE mutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, mutexName);
+    // Search for already opened mutex
+    for (uint32_t i = 0; i < tl_Size; ++i) {
+        if (!strcmp(tl_Handles[i].name, mutexName)) {
+            mutexHandle = tl_Handles[i].handle;
+            break;
+        }
+    }
 
-    CloseHandle(mutex);
+    // TODO: Check if mutex handle is valid
+
+    CloseHandle(mutexHandle);
 }
 
 static aqua_void_t destroyCond(aqua_cond_t *p_Cond) {
+    HANDLE condHandle = NULL;
     char *condName = (char *)p_Cond->memory;
 
-    HANDLE cond = OpenEvent(EVENT_ALL_ACCESS, FALSE, condName);
+    // Search for already opened condition
+    for (uint32_t i = 0; i < tl_Size; ++i) {
+        if (!strcmp(tl_Handles[i].name, condName)) {
+            condHandle = tl_Handles[i].handle;
+            break;
+        }
+    }
 
-    CloseHandle(cond);
+    // TODO: Check if condition handle is valid
+
+    CloseHandle(condHandle);
 }
 
 static aqua_void_t destroySemaphore(aqua_sem_t *p_Sem) {
@@ -57,11 +86,24 @@ static aqua_void_t destroySemaphore(aqua_sem_t *p_Sem) {
 }
 
 static aqua_void_t mutexLock(aqua_mutex_t *p_Mutex) {
+    HANDLE mutexHandle = NULL;
     char *mutexName = (char *)p_Mutex->memory;
 
-    HANDLE mutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, mutexName);
+    // Search for already opened mutex
+    for (uint32_t i = 0; i < tl_Size; ++i) {
+        if (!strcmp(tl_Handles[i].name, mutexName)) {
+            mutexHandle = tl_Handles[i].handle;
+            goto handleOpened;
+        }
+    }
 
-    WaitForSingleObject(mutex, INFINITE);
+    mutexHandle = OpenMutex(MUTEX_ALL_ACCESS, FALSE, mutexName);
+    memcpy(tl_Handles[tl_Size].name, mutexName, strlen(mutexName));
+    tl_Handles[tl_Size].handle = mutexHandle;
+    tl_Size++;
+
+handleOpened:
+    WaitForSingleObject(mutexHandle, INFINITE);
 }
 
 static aqua_void_t spinLock(aqua_spinlock_t *p_SpinLock) {
@@ -89,15 +131,42 @@ static aqua_void_t spinUnlock(aqua_spinlock_t *p_SpinLock) {
 }
 
 static aqua_void_t condWait(aqua_cond_t *p_Cond, aqua_mutex_t *p_Mutex) {
+    HANDLE mutexHandle = NULL;
+    HANDLE condHandle = NULL;
     char *mutexName = (char *)p_Mutex->memory;
     char *condName = (char *)p_Cond->memory;
 
-    HANDLE mutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, mutexName);
-    HANDLE cond = OpenEvent(EVENT_ALL_ACCESS, FALSE, condName);
+    // Search for already opened condition
+    for (uint32_t i = 0; i < tl_Size; ++i) {
+        if (!strcmp(tl_Handles[i].name, condName)) {
+            condHandle = tl_Handles[i].handle;
+            if (mutexHandle != NULL) {
+                break;
+            }
+            continue;
+        }
 
-    ReleaseMutex(mutex);
-    WaitForSingleObject(cond, INFINITE);
-    WaitForSingleObject(mutex, INFINITE);
+        if (!strcmp(tl_Handles[i].name, mutexName)) {
+            mutexHandle = tl_Handles[i].handle;
+            if (condHandle != NULL) {
+                break;
+            }
+        }
+    }
+
+    mutexHandle = OpenMutex(MUTEX_ALL_ACCESS, FALSE, mutexName);
+    memcpy(tl_Handles[tl_Size].name, mutexName, strlen(mutexName));
+    tl_Handles[tl_Size].handle = mutexHandle;
+    tl_Size++;
+
+    condHandle = OpenEvent(EVENT_ALL_ACCESS, FALSE, condName);
+    memcpy(tl_Handles[tl_Size].name, condName, strlen(condName));
+    tl_Handles[tl_Size].handle = condHandle;
+    tl_Size++;
+
+    ReleaseMutex(mutexHandle);
+    WaitForSingleObject(condHandle, INFINITE);
+    WaitForSingleObject(mutexHandle, INFINITE);
 }
 
 static aqua_void_t condBroadcast(aqua_cond_t *p_Cond) {
