@@ -26,7 +26,8 @@ struct AQUA_Sync {
     aqua_void_t (*createMutex)(aqua_mutex_t *mutex, const char *name);
     aqua_void_t (*createSpinLock)(aqua_spinlock_t *spinLock, const char *name);
     aqua_void_t (*createCond)(aqua_cond_t *cond, const char *name);
-    aqua_void_t (*createSemaphore)(aqua_sem_t *sem, const char *name);
+    aqua_void_t (*createSemaphore)(aqua_sem_t *sem, const char *name,
+                                   aqua_sem_cnt_t maxValue);
     aqua_void_t (*destroyMutex)(aqua_mutex_t *mutex);
     aqua_void_t (*destroyCond)(aqua_cond_t *cond);
     aqua_void_t (*destroySemaphore)(aqua_sem_t *sem);

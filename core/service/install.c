@@ -12,21 +12,59 @@
 #include "return.h"
 #include "system-values.h"
 
-int32_t initializeServiceConnections(struct InstallInformation *p_InstallInfo) {
+int32_t initializeServiceConnections(struct InstallInformation *p_InI) {
     int32_t rc = 0;
     uint32_t i;
     struct ConnectionInformation *connInfo;
+    uint32_t mutexId = 0;
+    uint32_t condId = 0;
+    char mutexName[AQUA_MUTEX_MEM_SIZE];
+    char condName[AQUA_COND_MEM_SIZE];
 
     for (i = 0; i < OPENED_CONNECTIONS; ++i) {
-        connInfo = &p_InstallInfo->m_Connections[i];
+        connInfo = &p_InI->m_Connections[i];
 
-        Sync.createMutex(&connInfo->m_ReturnQMutex, "");
-        Sync.createMutex(&connInfo->m_RequestResponseQMutex, "");
+        memset(mutexName, 0, AQUA_MUTEX_MEM_SIZE);
+        // TODO: This needs to be checked in order to make sure that the NULL
+        // terminator is properly set
+        sprintf(mutexName, "__aqua_%s_%u_ret_mutex", p_InI->m_StrId, mutexId);
+        mutexId++;
+        Sync.createMutex(&connInfo->m_ReturnQMutex, mutexName);
 
-        Sync.createCond(&connInfo->m_ReturnQFullCond, "");
-        Sync.createCond(&connInfo->m_ReturnQEmptyCond, "");
-        Sync.createCond(&connInfo->m_RequestResponseQFullCond, "");
-        Sync.createCond(&connInfo->m_RequestResponseQEmptyCond, "");
+        memset(mutexName, 0, AQUA_MUTEX_MEM_SIZE);
+        // TODO: This needs to be checked in order to make sure that the NULL
+        // terminator is properly set
+        sprintf(mutexName, "__aqua_%s_%u_reqr_mutex", p_InI->m_StrId, mutexId);
+        mutexId++;
+        Sync.createMutex(&connInfo->m_RequestResponseQMutex, mutexName);
+
+        memset(condName, 0, AQUA_MUTEX_MEM_SIZE);
+        // TODO: This needs to be checked in order to make sure that the NULL
+        // terminator is properly set
+        sprintf(condName, "__aqua_%s_%u_ret_fcond", p_InI->m_StrId, condId);
+        condId++;
+        Sync.createCond(&connInfo->m_ReturnQFullCond, condName);
+
+        memset(condName, 0, AQUA_MUTEX_MEM_SIZE);
+        // TODO: This needs to be checked in order to make sure that the NULL
+        // terminator is properly set
+        sprintf(condName, "__aqua_%s_%u_ret_econd", p_InI->m_StrId, condId);
+        condId++;
+        Sync.createCond(&connInfo->m_ReturnQEmptyCond, condName);
+
+        memset(condName, 0, AQUA_MUTEX_MEM_SIZE);
+        // TODO: This needs to be checked in order to make sure that the NULL
+        // terminator is properly set
+        sprintf(condName, "__aqua_%s_%u_req_fcond", p_InI->m_StrId, condId);
+        condId++;
+        Sync.createCond(&connInfo->m_RequestResponseQFullCond, condName);
+
+        memset(condName, 0, AQUA_MUTEX_MEM_SIZE);
+        // TODO: This needs to be checked in order to make sure that the NULL
+        // terminator is properly set
+        sprintf(condName, "__aqua_%s_%u_req_econd", p_InI->m_StrId, condId);
+        condId++;
+        Sync.createCond(&connInfo->m_RequestResponseQEmptyCond, condName);
     }
 
     return rc;
@@ -125,23 +163,23 @@ s_ReceiveDisconnectRequest(struct ServiceConnectInfo *p_ConnectInfo) {
     return rc;
 }
 
-int32_t
-configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnectInfo,
-                                   struct InstallInformation *p_InstallInfo) {
+int32_t configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnI,
+                                           struct InstallInformation *p_InI) {
     aqua_err_t err;
     int32_t rc = 0;
     aqua_file_handle_t connectQFd, disconnectQFd;
+    char condName[AQUA_COND_MEM_SIZE];
 
-    p_InstallInfo->m_ConnectQPushIdx = 0;
-    p_InstallInfo->m_ConnectQPopIdx = 0;
-    p_InstallInfo->m_ConnectQSize = 0;
+    p_InI->m_ConnectQPushIdx = 0;
+    p_InI->m_ConnectQPopIdx = 0;
+    p_InI->m_ConnectQSize = 0;
 
-    p_InstallInfo->m_DisconnectQPushIdx = 0;
-    p_InstallInfo->m_DisconnectQPopIdx = 0;
-    p_InstallInfo->m_DisconnectQSize = 0;
+    p_InI->m_DisconnectQPushIdx = 0;
+    p_InI->m_DisconnectQPopIdx = 0;
+    p_InI->m_DisconnectQSize = 0;
 
     connectQFd = SharedMemoryObject.create(
-        p_InstallInfo->m_ConnectQName, AQUA_FILE_PERM_RDWR,
+        p_InI->m_ConnectQName, AQUA_FILE_PERM_RDWR,
         AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
             AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
             AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE,
@@ -160,7 +198,7 @@ configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnectInfo,
     DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close connectQFd");
 
     disconnectQFd = SharedMemoryObject.create(
-        p_InstallInfo->m_DisconnectQName, AQUA_FILE_PERM_RDWR,
+        p_InI->m_DisconnectQName, AQUA_FILE_PERM_RDWR,
         AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
             AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
             AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE,
@@ -178,49 +216,59 @@ configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnectInfo,
     err = SharedMemoryObject.close(disconnectQFd);
     DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close disconnectQFd");
 
-    p_ConnectInfo->m_ReceiveConnectRequest = s_ReceiveConnectRequest;
-    p_ConnectInfo->m_ConnectQ.m_Data = connectQ;
-    p_ConnectInfo->m_ConnectQ.m_Metadata.m_PushIdxPtr =
-        &p_InstallInfo->m_ConnectQPushIdx;
-    p_ConnectInfo->m_ConnectQ.m_Metadata.m_PopIdxPtr =
-        &p_InstallInfo->m_ConnectQPopIdx;
-    p_ConnectInfo->m_ConnectQ.m_Metadata.m_Size =
-        &p_InstallInfo->m_ConnectQSize;
-    p_ConnectInfo->m_Connections = p_InstallInfo->m_Connections;
+    p_ConnI->m_ReceiveConnectRequest = s_ReceiveConnectRequest;
+    p_ConnI->m_ConnectQ.m_Data = connectQ;
+    p_ConnI->m_ConnectQ.m_Metadata.m_PushIdxPtr = &p_InI->m_ConnectQPushIdx;
+    p_ConnI->m_ConnectQ.m_Metadata.m_PopIdxPtr = &p_InI->m_ConnectQPopIdx;
+    p_ConnI->m_ConnectQ.m_Metadata.m_Size = &p_InI->m_ConnectQSize;
+    p_ConnI->m_Connections = p_InI->m_Connections;
 
-    p_ConnectInfo->m_ReceiveDisconnectRequest = s_ReceiveDisconnectRequest;
-    p_ConnectInfo->m_DisconnectQ.m_Data = disconnectQ;
-    p_ConnectInfo->m_DisconnectQ.m_Metadata.m_PushIdxPtr =
-        &p_InstallInfo->m_DisconnectQPushIdx;
-    p_ConnectInfo->m_DisconnectQ.m_Metadata.m_PopIdxPtr =
-        &p_InstallInfo->m_DisconnectQPopIdx;
-    p_ConnectInfo->m_DisconnectQ.m_Metadata.m_Size =
-        &p_InstallInfo->m_DisconnectQSize;
+    p_ConnI->m_ReceiveDisconnectRequest = s_ReceiveDisconnectRequest;
+    p_ConnI->m_DisconnectQ.m_Data = disconnectQ;
+    p_ConnI->m_DisconnectQ.m_Metadata.m_PushIdxPtr =
+        &p_InI->m_DisconnectQPushIdx;
+    p_ConnI->m_DisconnectQ.m_Metadata.m_PopIdxPtr = &p_InI->m_DisconnectQPopIdx;
+    p_ConnI->m_DisconnectQ.m_Metadata.m_Size = &p_InI->m_DisconnectQSize;
 
-    Sync.createMutex(&p_InstallInfo->m_ConnectQMutex, "");
-    Sync.createMutex(&p_InstallInfo->m_DisconnectQMutex, "");
-    Sync.createMutex(&p_InstallInfo->m_ConnectListLock, "");
+    Sync.createMutex(&p_InI->m_ConnectQMutex, "");
+    Sync.createMutex(&p_InI->m_DisconnectQMutex, "");
+    Sync.createMutex(&p_InI->m_ConnectListLock, "");
 
-    p_ConnectInfo->m_ConnectLock = &p_InstallInfo->m_ConnectListLock;
+    p_ConnI->m_ConnectLock = &p_InI->m_ConnectListLock;
 
-    Sync.createCond(&p_InstallInfo->m_ConnectQFullCond, "");
-    Sync.createCond(&p_InstallInfo->m_ConnectQEmptyCond, "");
-    Sync.createCond(&p_InstallInfo->m_DisconnectQFullCond, "");
-    Sync.createCond(&p_InstallInfo->m_DisconnectQEmptyCond, "");
+    memset(condName, 0, AQUA_COND_MEM_SIZE);
+    // TODO: This needs to be checked in order to make sure that the NULL
+    // terminator is properly set
+    sprintf(condName, "__aqua_%s_conn_fcond", p_InI->m_StrId);
+    Sync.createCond(&p_InI->m_ConnectQFullCond, condName);
 
-    p_ConnectInfo->m_ConnectQ.m_Metadata.m_Lock =
-        &p_InstallInfo->m_ConnectQMutex;
-    p_ConnectInfo->m_ConnectQ.m_Metadata.m_FullCond =
-        &p_InstallInfo->m_ConnectQFullCond;
-    p_ConnectInfo->m_ConnectQ.m_Metadata.m_EmptyCond =
-        &p_InstallInfo->m_ConnectQEmptyCond;
+    memset(condName, 0, AQUA_COND_MEM_SIZE);
+    // TODO: This needs to be checked in order to make sure that the NULL
+    // terminator is properly set
+    sprintf(condName, "__aqua_%s_conn_econd", p_InI->m_StrId);
+    Sync.createCond(&p_InI->m_ConnectQEmptyCond, condName);
 
-    p_ConnectInfo->m_DisconnectQ.m_Metadata.m_Lock =
-        &p_InstallInfo->m_DisconnectQMutex;
-    p_ConnectInfo->m_DisconnectQ.m_Metadata.m_FullCond =
-        &p_InstallInfo->m_DisconnectQFullCond;
-    p_ConnectInfo->m_DisconnectQ.m_Metadata.m_EmptyCond =
-        &p_InstallInfo->m_DisconnectQEmptyCond;
+    memset(condName, 0, AQUA_COND_MEM_SIZE);
+    // TODO: This needs to be checked in order to make sure that the NULL
+    // terminator is properly set
+    sprintf(condName, "__aqua_%s_disconn_fcond", p_InI->m_StrId);
+    Sync.createCond(&p_InI->m_DisconnectQFullCond, condName);
+
+    memset(condName, 0, AQUA_COND_MEM_SIZE);
+    // TODO: This needs to be checked in order to make sure that the NULL
+    // terminator is properly set
+    sprintf(condName, "__aqua_%s_disconn_econd", p_InI->m_StrId);
+    Sync.createCond(&p_InI->m_DisconnectQEmptyCond, condName);
+
+    p_ConnI->m_ConnectQ.m_Metadata.m_Lock = &p_InI->m_ConnectQMutex;
+    p_ConnI->m_ConnectQ.m_Metadata.m_FullCond = &p_InI->m_ConnectQFullCond;
+    p_ConnI->m_ConnectQ.m_Metadata.m_EmptyCond = &p_InI->m_ConnectQEmptyCond;
+
+    p_ConnI->m_DisconnectQ.m_Metadata.m_Lock = &p_InI->m_DisconnectQMutex;
+    p_ConnI->m_DisconnectQ.m_Metadata.m_FullCond =
+        &p_InI->m_DisconnectQFullCond;
+    p_ConnI->m_DisconnectQ.m_Metadata.m_EmptyCond =
+        &p_InI->m_DisconnectQEmptyCond;
 
     return rc;
 }

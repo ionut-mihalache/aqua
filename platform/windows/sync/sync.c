@@ -2,7 +2,6 @@
 
 #include <Windows.h>
 #include <assert.h>
-#include <minwindef.h>
 
 #include "aqua-sync.h"
 #include "aqua-types.h"
@@ -42,9 +41,13 @@ static aqua_void_t createCond(aqua_cond_t *p_Cond, const char *p_Name) {
     CreateEvent(NULL, FALSE, FALSE, p_Name);
 }
 
-static aqua_void_t createSemaphore(aqua_sem_t *p_Sem, const char *p_Name) {
-    (void)p_Sem;
-    (void)p_Name;
+static aqua_void_t createSemaphore(aqua_sem_t *p_Sem, const char *p_Name,
+                                   aqua_sem_cnt_t p_MaxVal) {
+    assert(strlen(p_Name) <= AQUA_SEM_MEM_SIZE);
+
+    memcpy(p_Sem->memory, p_Name, strlen(p_Name));
+
+    CreateSemaphore(NULL, 0, p_MaxVal, p_Name);
 }
 
 static aqua_void_t destroyMutex(aqua_mutex_t *p_Mutex) {
@@ -82,7 +85,20 @@ static aqua_void_t destroyCond(aqua_cond_t *p_Cond) {
 }
 
 static aqua_void_t destroySemaphore(aqua_sem_t *p_Sem) {
-    (void)p_Sem;
+    HANDLE semHandle = NULL;
+    char *semName = (char *)p_Sem->memory;
+
+    // Search for already opened semaphore
+    for (uint32_t i = 0; i < tl_Size; ++i) {
+        if (!strcmp(tl_Handles[i].name, semName)) {
+            semHandle = tl_Handles[i].handle;
+            break;
+        }
+    }
+
+    // TODO: Check if semaphore handle is valid
+
+    CloseHandle(semHandle);
 }
 
 static aqua_void_t mutexLock(aqua_mutex_t *p_Mutex) {

@@ -7,10 +7,10 @@
 
 #include "aqua-types.h"
 
-#define AQUA_MUTEX_MEM_SIZE 64
-#define AQUA_SPINLOCK_MEM_SIZE 64
-#define AQUA_COND_MEM_SIZE 64
-#define AQUA_SEM_MEM_SIZE 64
+#define AQUA_MUTEX_MEM_SIZE 65
+#define AQUA_SPINLOCK_MEM_SIZE 65
+#define AQUA_COND_MEM_SIZE 65
+#define AQUA_SEM_MEM_SIZE 65
 
 typedef struct aqua_mutex {
     union {

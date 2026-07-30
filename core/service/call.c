@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "call.h"
+#include "aqua-sync.h"
 #include "aqua-types.h"
 #include "commons.h"
 #include "log.h"
@@ -135,6 +136,8 @@ int32_t configureServiceCallInformation(struct ServiceCallInfo *p_CI,
     aqua_file_mode_t qMode;
     size_t qSize;
     void *callQ;
+    char callMutexName[AQUA_MUTEX_MEM_SIZE];
+    char callCondName[AQUA_COND_MEM_SIZE];
 
     switch (p_InI->m_CallQType) {
     case SMBQ:
@@ -233,9 +236,23 @@ int32_t configureServiceCallInformation(struct ServiceCallInfo *p_CI,
     p_CI->m_Q.m_Metadata.m_Size = &p_InI->m_CallQSize;
     p_CI->m_Q.m_Type = p_InI->m_CallQType;
 
-    Sync.createMutex(&p_InI->m_CallQMutex, "");
-    Sync.createCond(&p_InI->m_CallQFullCond, "");
-    Sync.createCond(&p_InI->m_CallQEmptyCond, "");
+    memset(callMutexName, 0, AQUA_MUTEX_MEM_SIZE);
+    // TODO: This needs to be checked in order to make sure that the NULL
+    // terminator is properly set
+    sprintf(callMutexName, "__aqua_%s_call_mutex", p_InI->m_StrId);
+    Sync.createMutex(&p_InI->m_CallQMutex, callMutexName);
+
+    memset(callCondName, 0, AQUA_COND_MEM_SIZE);
+    // TODO: This needs to be checked in order to make sure that the NULL
+    // terminator is properly set
+    sprintf(callCondName, "__aqua_%s_call_fcond", p_InI->m_StrId);
+    Sync.createCond(&p_InI->m_CallQFullCond, callCondName);
+
+    memset(callCondName, 0, AQUA_COND_MEM_SIZE);
+    // TODO: This needs to be checked in order to make sure that the NULL
+    // terminator is properly set
+    sprintf(callCondName, "__aqua_%s_call_econd", p_InI->m_StrId);
+    Sync.createCond(&p_InI->m_CallQEmptyCond, callCondName);
 
     p_CI->m_Q.m_Metadata.m_Lock = &p_InI->m_CallQMutex;
     p_CI->m_Q.m_Metadata.m_FullCond = &p_InI->m_CallQFullCond;

@@ -18,4 +18,6 @@ typedef DWORD aqua_pid_t;
 
 typedef HANDLE aqua_file_handle_t;
 
+typedef LONG aqua_sem_cnt_t;
+
 #endif // __AQUA_WINDOWS_TYPES_H_
