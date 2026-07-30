@@ -26,7 +26,8 @@ int main() {
         return 0;
     }
 
-    aquaConnect(connectInfo.get(), callInfo.get(), "xslt-transformation");
+    aquaInitConnection(connectInfo.get(), callInfo.get(),
+                       "xslt-transformation");
 
     std::unique_ptr<ClientReturnInfo> returnInfo(new ClientReturnInfo);
     if (returnInfo == nullptr) {
@@ -50,7 +51,7 @@ int main() {
     requestInfo->m_ResponseQSize = 1;
     requestInfo->m_QType = SMBQ;
 
-    sendConnectRequest(returnInfo.get(), connectInfo.get(), requestInfo.get());
+    aquaConnect(returnInfo.get(), connectInfo.get(), requestInfo.get());
 
     std::unique_ptr<SMBCall> callData(new SMBCall);
     if (callData == nullptr) {
@@ -125,8 +126,8 @@ int main() {
 
     fprintf(stdout, "Return duration: %lf\n", duration.count());
 
-    sendDisconnectRequest(connectInfo.get(),
-                          &(returnInfo->m_ConnectResponseInformation));
+    aquaDisconnect(connectInfo.get(),
+                   &(returnInfo->m_ConnectResponseInformation));
 
     // fprintf(stdout, "%s\n", returnData->m_CallInfo);
     return 0;

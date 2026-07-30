@@ -172,34 +172,34 @@ $ffi = FFI::cdef(
         int32_t (*m_SendDisconnectRequest)(struct ClientConnectInfo *);
     };
 
-    void sendConnectRequest(struct ClientReturnInfo *p_ReturnInfo,
-                        struct ClientConnectInfo *p_ConnectInfo,
-                        struct ClientConnectRequestInformation *p_RequestInfo);
+    void aquaConnect(struct ClientReturnInfo *p_ReturnInfo,
+                     struct ClientConnectInfo *p_ConnectInfo,
+                     struct ClientConnectRequestInformation *p_RequestInfo);
 
-    void sendDisconnectRequest(struct ClientConnectInfo *p_ConnectInfo, struct ConnectResponseInformation *p_requestResponseInfo);
+    void aquaDisconnect(struct ClientConnectInfo *p_ConnectInfo, struct ConnectResponseInformation *p_requestResponseInfo);
 
     void callFn(struct ClientCallInfo *p_CallInfo, void *p_CallData);
 
     void returnFn(void *p_ReturnData, struct ClientReturnInfo *p_ReturnInfo);
 
-    void aquaConnect(struct ClientConnectInfo *p_ConnectInfo,
+    void aquaInitConnection(struct ClientConnectInfo *p_ConnectInfo,
                 struct ClientCallInfo *p_CallInfo, const char *p_ServiceStrId);
 
     int32_t setCallData(int p_Type, void *p_CallInfo, uint8_t *p_Data, uint32_t p_Size);
 
     struct ConnectResponseInformation *getConnectResponse(struct ClientReturnInfo *p_ReturnInfo);
 ",
-    "/home/ubuntu/dsp-library/libaqua.so"
+    "/root/aqua/build/lib/libaqua.so"
 );
 
-function aquaConnect($p_Ffi, $connectInfoPtr, $callInfoPtr, $serviceStrId)
+function aquaInitConnection($p_Ffi, $connectInfoPtr, $callInfoPtr, $serviceStrId)
 {
-    $p_Ffi->aquaConnect($connectInfoPtr, $callInfoPtr, $serviceStrId);
+    $p_Ffi->aquaInitConnection($connectInfoPtr, $callInfoPtr, $serviceStrId);
 }
 
-function sendConnectRequest($p_Ffi, $returnInfoPtr, $connectInfoPtr, $requestInfoPtr)
+function aquaConnect($p_Ffi, $returnInfoPtr, $connectInfoPtr, $requestInfoPtr)
 {
-    $p_Ffi->sendConnectRequest($returnInfoPtr, $connectInfoPtr, $requestInfoPtr);
+    $p_Ffi->aquaConnect($returnInfoPtr, $connectInfoPtr, $requestInfoPtr);
 }
 
 function setCallData($p_Ffi, $p_Type, $p_CallDataPtr, $p_DataBuffer, $p_Size)
@@ -226,10 +226,10 @@ function returnFn($p_Ffi, $p_ReturnDataPtr, $p_ReturnInfoPtr)
     $p_Ffi->returnFn($p_ReturnDataPtr, $p_ReturnInfoPtr);
 }
 
-function sendDisconnectRequest($p_Ffi, $connectInfoPtr, $requestInfoPtr)
+function aquaDisconnect($p_Ffi, $connectInfoPtr, $requestInfoPtr)
 {
     // echo "Send disconnect request\n";
-    $p_Ffi->sendDisconnectRequest($connectInfoPtr, $requestInfoPtr);
+    $p_Ffi->aquaDisconnect($connectInfoPtr, $requestInfoPtr);
 }
 
 function measureFnExec($p_Fn): float
@@ -311,7 +311,7 @@ $connectInfoPtr = FFI::addr($connectInfo);
 $callInfo = $ffi->new("struct ClientCallInfo");
 $callInfoPtr = FFI::addr($callInfo);
 
-aquaConnect($ffi, $connectInfoPtr, $callInfoPtr, "xslt-transformation");
+aquaInitConnection($ffi, $connectInfoPtr, $callInfoPtr, "xslt-transformation");
 
 $returnInfo = $ffi->new("struct ClientReturnInfo");
 $returnInfoPtr = FFI::addr($returnInfo);
@@ -334,7 +334,7 @@ $requestInfo->m_QType = $qType;
 $requestInfoPtr = FFI::addr($requestInfo);
 
 $benchmark["connect"] = measureFnExec(function () use ($ffi, $returnInfoPtr, $connectInfoPtr, $requestInfoPtr) {
-    sendConnectRequest($ffi, $returnInfoPtr, $connectInfoPtr, $requestInfoPtr);
+    aquaConnect($ffi, $returnInfoPtr, $connectInfoPtr, $requestInfoPtr);
 });
 
 [$callData, $callDataPtr] = getCallDataPtr($ffi, $callInfo);
@@ -381,7 +381,7 @@ $maxLatency = max($latencies);
 $requestInfoPtr = FFI::addr($returnInfo->m_ConnectResponseInformation);
 
 $benchmark["disconnect"] = measureFnExec(function () use ($ffi, $connectInfoPtr, $requestInfoPtr) {
-    sendDisconnectRequest($ffi, $connectInfoPtr, $requestInfoPtr);
+    aquaDisconnect($ffi, $connectInfoPtr, $requestInfoPtr);
 });
 
 $writeToFile = false;

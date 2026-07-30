@@ -15,16 +15,16 @@
 #include "system-values.h"
 
 AQUA_API_EXPORT void
-sendConnectRequest(struct ClientReturnInfo *p_ReturnInfo,
-                   struct ClientConnectInfo *p_ConnectInfo,
-                   struct ClientConnectRequestInformation *p_RequestInfo) {
+aquaConnect(struct ClientReturnInfo *p_ReturnInfo,
+            struct ClientConnectInfo *p_ConnectInfo,
+            struct ClientConnectRequestInformation *p_RequestInfo) {
     p_ConnectInfo->m_SendConnectRequest(p_ReturnInfo, p_ConnectInfo,
                                         p_RequestInfo);
 }
 
-AQUA_API_EXPORT void sendDisconnectRequest(
-    struct ClientConnectInfo *p_ConnectInfo,
-    struct ConnectResponseInformation *p_requestResponseInfo) {
+AQUA_API_EXPORT void
+aquaDisconnect(struct ClientConnectInfo *p_ConnectInfo,
+               struct ConnectResponseInformation *p_requestResponseInfo) {
     p_ConnectInfo->m_SendDisconnectRequest(p_ConnectInfo,
                                            p_requestResponseInfo);
 }
@@ -147,9 +147,9 @@ static struct InstallInformation *sf_GetService(struct InstallInfo *info,
                                          sf_GetServiceOff(i));
 }
 
-AQUA_API_EXPORT void aquaConnect(struct ClientConnectInfo *p_ConnectInfo,
-                                struct ClientCallInfo *p_CallInfo,
-                                const char *p_ServiceStrId) {
+AQUA_API_EXPORT void aquaInitConnection(struct ClientConnectInfo *p_ConnectInfo,
+                                        struct ClientCallInfo *p_CallInfo,
+                                        const char *p_ServiceStrId) {
     int rc;
     aqua_file_handle_t installShmFd;
     aqua_err_t err;
@@ -216,7 +216,7 @@ AQUA_API_EXPORT void aquaConnect(struct ClientConnectInfo *p_ConnectInfo,
 void retriveInitInformation(struct ClientConnectInfo *p_ConnectInfo,
                             struct ClientCallInfo *p_CallInfo,
                             const char *p_ServiceStrId) {
-    aquaConnect(p_ConnectInfo, p_CallInfo, p_ServiceStrId);
+    aquaInitConnection(p_ConnectInfo, p_CallInfo, p_ServiceStrId);
 }
 
 struct ConnectResponseInformation *

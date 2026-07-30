@@ -3,9 +3,9 @@ runAQUAClientBenchmark() {
 
     rm /dev/shm/*
 
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/ubuntu/dsp-library
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/aqua/build/lib
 
-    cd /home/ubuntu/dsp-library/test/java/service/xslt-transformation
+    cd /root/aqua/test/java/service/xslt-transformation
     make clean
     make
     make run PAYLOAD_TYPE=${qType} &
@@ -25,13 +25,13 @@ runAQUAClientBenchmark() {
 
 runAQUAThroughputBenchmark() {
     qType=$1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/ubuntu/dsp-library
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/aqua/build/lib
 
     # msgNumbers=(1000 4000 7000 10000 13000 16000 19000 22000 25000 28000)
 
     rm /dev/shm/*
 
-    cd /home/ubuntu/dsp-library/test/java/service/xslt-transformation
+    cd /root/aqua/test/java/service/xslt-transformation
     make clean
     make
     make throughput-run PAYLOAD_TYPE=${qType} &
@@ -47,7 +47,7 @@ runAQUAThroughputBenchmark() {
 
     # rm /dev/shm/*
 
-    # cd /home/ubuntu/dsp-library/test/java/service/xslt-transformation
+    # cd /root/aqua/test/java/service/xslt-transformation
     # make clean
     # make
     # make throughput-run PAYLOAD_TYPE=${qType} &
@@ -62,7 +62,7 @@ runAQUAThroughputBenchmark() {
 runUDSClientBenchmark() {
     qType=$1
 
-    cd /home/ubuntu/dsp-library/test/java/service/xslt-transformation/src/uds
+    cd /root/aqua/test/java/service/xslt-transformation/src/uds
     make clean
     make
     make run PAYLOAD_TYPE=${qType} &
@@ -87,7 +87,7 @@ runUDSClientBenchmark() {
 runUDSThroughputBenchmark() {
     qType=$1
 
-    cd /home/ubuntu/dsp-library/test/java/service/xslt-transformation/src/uds
+    cd /root/aqua/test/java/service/xslt-transformation/src/uds
     make clean
     make
     make throughput-run PAYLOAD_TYPE=${qType} &
@@ -105,7 +105,7 @@ runUDSThroughputBenchmark() {
 
     # rm /dev/shm/*
 
-    # cd /home/ubuntu/dsp-library/test/java/service/xslt-transformation/src/uds
+    # cd /root/aqua/test/java/service/xslt-transformation/src/uds
     # make clean
     # make
     # make throughput-run PAYLOAD_TYPE=${qType} &
@@ -123,7 +123,7 @@ runUDSThroughputBenchmark() {
 runZeroMQClientBenchmark() {
     qType=$1
 
-    cd /home/ubuntu/dsp-library/test/java/service/xslt-transformation/src/zeromq
+    cd /root/aqua/test/java/service/xslt-transformation/src/zeromq
     make clean
     make
     make run PAYLOAD_TYPE=${qType} &
@@ -150,7 +150,7 @@ runZeroMQClientBenchmark() {
 runZeroMQThroughputBenchmark() {
     qType=$1
 
-    cd /home/ubuntu/dsp-library/test/java/service/xslt-transformation/src/zeromq
+    cd /root/aqua/test/java/service/xslt-transformation/src/zeromq
     make clean
     make
     make throughput-run PAYLOAD_TYPE=${qType} &
@@ -168,7 +168,7 @@ runZeroMQThroughputBenchmark() {
 
     # rm /dev/shm/*
 
-    # cd /home/ubuntu/dsp-library/test/java/service/xslt-transformation/src/zeromq
+    # cd /root/aqua/test/java/service/xslt-transformation/src/zeromq
     # make clean
     # make
     # make throughput-run PAYLOAD_TYPE=${qType} &
