@@ -1,3 +1,7 @@
+<p align="center">
+     <img alt="logo" src="doc/assets/logo.png" width="75%" align="center"/>
+</p>
+
 ## Introduction ##
 
 AQUA is designed for local IPC using shared memory; the design is created and aims for interoperability. It is using a custom protocl DSP (Driver Service Protocol). 
