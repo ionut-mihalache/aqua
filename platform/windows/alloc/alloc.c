@@ -36,7 +36,7 @@ static aqua_err_t memmap(aqua_void_ptr_t *p_ResultAddr,
     DWORD prot = mapProt(p_Prot);
 
     void *ptr =
-        MapViewOfFile(p_Fd, prot, p_Off >> 32, p_Off & 0xFFFFFFFF, p_Len);
+        MapViewOfFile(p_Fd, prot, (DWORD)(p_Off >> 32), (DWORD)p_Off, p_Len);
 
     *p_ResultAddr = ptr;
 

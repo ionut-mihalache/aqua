@@ -10,7 +10,7 @@
 typedef SIZE_T aqua_size_t;
 typedef SSIZE_T aqua_ssize_t;
 
-typedef SIZE_T aqua_off_t;
+typedef DWORD64 aqua_off_t;
 typedef DWORD64 aqua_off64_t;
 typedef DWORDLONG aqua_loff_t;
 
