@@ -6,11 +6,11 @@
 #include "aqua-sync.h"
 #include "aqua-types.h"
 #include "commons.h"
-#include "log.h"
 #include "macros.h"
 #include "platform-types.h"
 #include "platform.h"
 #include "system-values.h"
+#include "utils.h"
 
 static int32_t s_SMBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     int32_t rc = 0;

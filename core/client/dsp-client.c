@@ -13,6 +13,7 @@
 #include "platform-types.h"
 #include "platform.h"
 #include "system-values.h"
+#include "utils.h"
 
 AQUA_API_EXPORT void
 aquaConnect(struct ClientReturnInfo *p_ReturnInfo,

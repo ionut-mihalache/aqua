@@ -3,23 +3,14 @@
 // Created by ionut on 01.06.2024.
 //
 
-#ifndef DSP_LOG_H
-#define DSP_LOG_H
+#ifndef AQUA_LOG_H
+#define AQUA_LOG_H
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-#define DIE(assertion, call_description)                                       \
-    do {                                                                       \
-        if (assertion) {                                                       \
-            fprintf(stderr, "%s (%d): %s - %s\n", __FILE__, __LINE__,          \
-                    call_description, strerror(errno));                        \
-            exit(EXIT_FAILURE);                                                \
-        }                                                                      \
-    } while (0)
 
 #ifdef __AQUA_DEBUG__
 #define LOGF(...)                                                              \
@@ -65,4 +56,4 @@
 #define LOG_ERR(...)
 #endif
 
-#endif // DSP_LOG_H
+#endif // AQUA_LOG_H

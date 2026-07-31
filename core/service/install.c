@@ -6,11 +6,11 @@
 #include "commons.h"
 #include "install.h"
 #include "dsp.h"
-#include "log.h"
 #include "macros.h"
 #include "platform.h"
 #include "return.h"
 #include "system-values.h"
+#include "utils.h"
 
 int32_t initializeServiceConnections(struct InstallInformation *p_InI) {
     int32_t rc = 0;

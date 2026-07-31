@@ -13,6 +13,7 @@
 #include "log.h"
 #include "platform.h"
 #include "system-values.h"
+#include "utils.h"
 
 static struct InstallSharedData *installShdata = NULL;
 
@@ -69,8 +70,8 @@ static aqua_size_t sf_GetServiceOff(uint16_t i) {
 }
 
 void aquaInstall(struct ServiceConnectInfo *p_ConnectInfo,
-                struct ServiceCallInfo *p_CallInfo, const char *p_StrId,
-                const char *p_Version, int p_CallQType) {
+                 struct ServiceCallInfo *p_CallInfo, const char *p_StrId,
+                 const char *p_Version, int p_CallQType) {
     int rc;
     aqua_err_t err;
     aqua_file_handle_t installShmFd;

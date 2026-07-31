@@ -6,11 +6,11 @@
 #include "aqua-types.h"
 #include "commons.h"
 #include "dsp.h"
-#include "log.h"
 #include "macros.h"
 #include "platform-types.h"
 #include "platform.h"
 #include "system-values.h"
+#include "utils.h"
 
 static int32_t s_ReturnFnSMBFn(void *p_RI, struct DSPQueue *p_Q) {
     int32_t rc = 0;

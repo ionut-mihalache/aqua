@@ -9,6 +9,7 @@
 #include "macros.h"
 #include "platform.h"
 #include "system-values.h"
+#include "utils.h"
 #include "return.h"
 
 static int32_t s_SendReturnFnSMBFn(struct DSPQueue *p_Q, void *p_RI) {

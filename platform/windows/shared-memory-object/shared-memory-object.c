@@ -7,13 +7,12 @@
 #include "platform-types.h"
 #include "platform.h"
 #include "system-values.h"
+#include "utils.h"
 
 static aqua_err_t sf_Close(aqua_file_handle_t p_Handle) {
     (void)p_Handle;
 
-    aqua_err_t err = AQUA_NO_ERROR;
-
-    return err;
+    return AQUA_NO_ERROR;
 }
 
 static aqua_file_handle_t sf_Create(const char *p_Name,
@@ -50,7 +49,7 @@ static aqua_file_handle_t sf_Create(const char *p_Name,
         (DWORD)(p_Size >> 32), // maximum object size (high-order DWORD)
         (DWORD)p_Size,         // maximum object size (low-order DWORD)
         p_Name);               // name of mapping object
-    // DIE(handle == NULL, "Could not create shared memory object");
+    DIE(handle == NULL, "Could not create shared memory object");
 
     return handle;
 }
