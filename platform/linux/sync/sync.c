@@ -69,6 +69,12 @@ static aqua_void_t destroyMutex(aqua_mutex_t *p_Mutex) {
     pthread_mutex_destroy(mutex);
 }
 
+static aqua_void_t destroySpinLock(aqua_spinlock_t *p_SpinLock) {
+    pthread_spinlock_t *spinLock = (pthread_spinlock_t *)p_SpinLock->memory;
+
+    pthread_spin_destroy(spinLock);
+}
+
 static aqua_void_t destroyCond(aqua_cond_t *p_Cond) {
     pthread_cond_t *cond = (pthread_cond_t *)p_Cond->memory;
 
@@ -124,6 +130,7 @@ struct AQUA_Sync Sync = {
     .createCond = createCond,
     .createSemaphore = createSemaphore,
     .destroyMutex = destroyMutex,
+    .destroySpinLock = destroySpinLock,
     .destroyCond = destroyCond,
     .destroySemaphore = destroySemaphore,
 
