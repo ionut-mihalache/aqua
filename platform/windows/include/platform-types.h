@@ -21,6 +21,8 @@ typedef HANDLE aqua_file_handle_t;
 typedef LONG aqua_sem_cnt_t;
 
 enum {
+    INSTALL_DATA_HANDLE,
+    CONNECT_LIST_HANDLE,
     CONNECT_HANDLE,
     CONNECT_FULL_HANDLE,
     CONNECT_EMPTY_HANDLE,

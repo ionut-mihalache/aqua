@@ -10,11 +10,14 @@
 
 _Thread_local static HANDLE tl_Handles[HANDLES_TOTAL];
 
-static aqua_void_t createMutex(aqua_mutex_t *p_Mutex, const char *p_Name) {
+static aqua_void_t createMutex(aqua_mutex_t *p_Mutex, const char *p_Name,
+                               aqua_u16_t p_Type) {
     assert(strlen(p_Name) <= UUID_LEN);
+    assert(p_Type = HANDLES_TOTAL);
 
     memset(p_Mutex->id, 0, UUID_LEN + 1);
     memcpy(p_Mutex->id, p_Name, strlen(p_Name));
+    p_Mutex->type = p_Type;
 
     HANDLE handle = CreateMutex(NULL, FALSE, p_Name);
 
@@ -24,11 +27,13 @@ static aqua_void_t createMutex(aqua_mutex_t *p_Mutex, const char *p_Name) {
 }
 
 static aqua_void_t createSpinLock(aqua_spinlock_t *p_SpinLock,
-                                  const char *p_Name) {
+                                  const char *p_Name, aqua_u16_t p_Type) {
     assert(strlen(p_Name) <= UUID_LEN);
+    assert(p_Type < HANDLES_TOTAL);
 
     memset(p_SpinLock->id, 0, UUID_LEN + 1);
     memcpy(p_SpinLock->memory, p_Name, strlen(p_Name));
+    p_SpinLock->type = p_Type;
 
     HANDLE handle = CreateMutex(NULL, FALSE, p_Name);
 
@@ -37,11 +42,14 @@ static aqua_void_t createSpinLock(aqua_spinlock_t *p_SpinLock,
     tl_Handles[p_SpinLock->type] = handle;
 }
 
-static aqua_void_t createCond(aqua_cond_t *p_Cond, const char *p_Name) {
+static aqua_void_t createCond(aqua_cond_t *p_Cond, const char *p_Name,
+                              aqua_u16_t p_Type) {
     assert(strlen(p_Name) <= UUID_LEN);
+    assert(p_Type < HANDLES_TOTAL);
 
     memset(p_Cond->id, 0, UUID_LEN + 1);
     memcpy(p_Cond->memory, p_Name, strlen(p_Name));
+    p_Cond->type = p_Type;
 
     HANDLE handle = CreateEvent(NULL, FALSE, FALSE, p_Name);
 
@@ -51,11 +59,12 @@ static aqua_void_t createCond(aqua_cond_t *p_Cond, const char *p_Name) {
 }
 
 static aqua_void_t createSemaphore(aqua_sem_t *p_Sem, const char *p_Name,
-                                   aqua_sem_cnt_t p_MaxVal) {
+                                   aqua_sem_cnt_t p_MaxVal, aqua_u16_t p_Type) {
     assert(strlen(p_Name) <= UUID_LEN);
 
     memset(p_Sem->id, 0, UUID_LEN + 1);
     memcpy(p_Sem->memory, p_Name, strlen(p_Name));
+    p_Sem->type = p_Type;
 
     HANDLE handle = CreateSemaphore(NULL, 0, p_MaxVal, p_Name);
 
