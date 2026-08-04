@@ -7,6 +7,27 @@
 #include "aqua-types.h"
 #include "platform-types.h"
 
+enum {
+    INSTALL_DATA_HANDLE,
+    CONNECT_LIST_HANDLE,
+    CONNECT_HANDLE,
+    CONNECT_FULL_HANDLE,
+    CONNECT_EMPTY_HANDLE,
+    SEND_HANDLE,
+    SEND_FULL_HANDLE,
+    SEND_EMPTY_HANDLE,
+    RECEIVE_HANDLE,
+    RECEIVE_FULL_HANDLE,
+    RECEIVE_EMPTY_HANDLE,
+    CONNECT_RESPONSE_HANDLE,
+    CONNECT_RESPONSE_FULL_HANDLE,
+    CONNECT_RESPONSE_EMPTY_HANDLE,
+    DISCONNECT_HANDLE,
+    DISCONNECT_FULL_HANDLE,
+    DISCONNECT_EMPTY_HANDLE,
+    HANDLES_TOTAL // This needs to be always the last value
+};
+
 struct AQUA_Memory {
     aqua_size_t (*getPageSize)();
     aqua_size_t (*getMapGranularity)();
