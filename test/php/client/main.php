@@ -165,7 +165,7 @@ $ffi = FFI::cdef(
 
     struct ConnectResponseInformation *getConnectResponse(struct ClientReturnInfo *p_ReturnInfo);
 ",
-    "/root/aqua/build/lib/libaqua.so"
+    "/root/aqua/build/lib/shared/libaqua.so"
 );
 
 function aquaInitConnection($p_Ffi, $connectInfoPtr, $callInfoPtr, $serviceStrId)

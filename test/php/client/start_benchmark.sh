@@ -3,7 +3,7 @@ runAQUAClientBenchmark() {
 
     rm /dev/shm/*
 
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/aqua/build/lib
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/aqua/build/lib/shared
 
     cd /root/aqua/test/java/service/xslt-transformation
     make clean
@@ -25,7 +25,7 @@ runAQUAClientBenchmark() {
 
 runAQUAThroughputBenchmark() {
     qType=$1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/aqua/build/lib
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/aqua/build/lib/shared
 
     # msgNumbers=(1000 4000 7000 10000 13000 16000 19000 22000 25000 28000)
 

@@ -8,7 +8,7 @@ all: build
 build: client
 
 client: main.o
-	$(CC) $(LINTER_DEFINES) $(OPTIONS) $(INCLUDES) -L/root/aqua/build/lib -ldsp main.o -o client
+	$(CC) $(LINTER_DEFINES) $(OPTIONS) $(INCLUDES) -L/root/aqua/build/lib/shared -laqua main.o -o client
 
 main.o: main.cpp
 	$(CC) $(LINTER_DEFINES) $(OPTIONS) $(INCLUDES) -c main.cpp -o main.o
