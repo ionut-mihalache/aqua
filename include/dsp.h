@@ -144,12 +144,6 @@ struct InstallInformation {
     uint8_t m_Available;
 };
 
-// struct InstallInfo {
-//     struct InstallInformation m_Info[SERVICES_NUMBER];
-//     uint8_t m_InstallMap[SERVICES_NUMBER >> 3];
-//     uint8_t m_BytesNr;
-// };
-
 struct InstallInfo {
     aqua_u8_t m_InstallMap[SERVICES_NUMBER >> 3];
     aqua_u8_t m_BytesNr;

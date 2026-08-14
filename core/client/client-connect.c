@@ -214,10 +214,6 @@ s_ProcessConnectionRequest(uint32_t p_ConnId, struct ClientReturnInfo *p_RI,
     DIE(err == AQUA_MEM_MAP_FAILED,
         "Could not map request response queue memory");
 
-    // triggerKernelPageInit(requestResponseQ,
-    //                       p_ConnInf->m_ResponseQSize *
-    //                           sizeof(struct ConnectResponseInformation),
-    //                       PROT_READ);
     Memory.triggerPageFaults(requestResponseQ,
                              p_ConnInf->m_ResponseQSize *
                                  sizeof(struct ConnectResponseInformation),
@@ -311,7 +307,6 @@ s_ProcessConnectionRequest(uint32_t p_ConnId, struct ClientReturnInfo *p_RI,
 
     createQ(&returnQ, qSize, qProt, returnQFd);
 
-    // triggerKernelPageInit(returnQ, qSize, qProt);
     Memory.triggerPageFaults(returnQ, qSize, qProt);
 
     err = SharedMemoryObject.close(requestResponseQFd);
@@ -369,7 +364,6 @@ s_SendConnectRequest(struct ClientReturnInfo *p_ReturnInfo,
      *  send the request to the service with the connection index
      *  WIP: wait for the service to establish the connection on its side
      */
-    // pthread_spin_lock(p_ConnectInfo->m_ConnectLock);
     Sync.mutexLock(p_ConnectInfo->m_ConnectLock);
     for (connId = 0; connId < OPENED_CONNECTIONS; ++connId) {
         if (!p_ConnectInfo->m_Connections[connId].m_Connected) {
@@ -377,7 +371,6 @@ s_SendConnectRequest(struct ClientReturnInfo *p_ReturnInfo,
             break;
         }
     }
-    // pthread_spin_unlock(p_ConnectInfo->m_ConnectLock);
     Sync.mutexUnlock(p_ConnectInfo->m_ConnectLock);
 
     QPUSH(

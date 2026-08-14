@@ -27,52 +27,6 @@ int32_t initializeServiceConnections(struct InstallInformation *p_InstallInfo) {
         Sync.createCond(&connInfo->m_ReturnQEmptyCond, "");
         Sync.createCond(&connInfo->m_RequestResponseQFullCond, "");
         Sync.createCond(&connInfo->m_RequestResponseQEmptyCond, "");
-
-        // pthread_mutexattr_t attr;
-        // rc = pthread_mutexattr_init(&attr);
-        // DIE(rc != 0, "Could not init mutex attribute");
-
-        // rc = pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
-        // DIE(rc != 0, "Could not set pthread shared for mutex attribute");
-
-        // rc = pthread_mutex_init(&connInfo->m_ReturnQMutex, &attr);
-        // DIE(rc != 0, "Could not init connect response lock");
-
-        // rc = pthread_mutex_init(&connInfo->m_RequestResponseQMutex, &attr);
-        // DIE(rc != 0, "Could not init connect response lock");
-
-        // rc = pthread_mutexattr_destroy(&attr);
-        // DIE(rc != 0, "Could not destroy mutex attribute");
-
-        // pthread_condattr_t condAttr;
-
-        // rc = pthread_condattr_init(&condAttr);
-        // DIE(rc != 0, "Could not init condition attribute");
-
-        // rc = pthread_condattr_setpshared(&condAttr, PTHREAD_PROCESS_SHARED);
-        // DIE(rc != 0, "Could not set pthread shared for condition attribute");
-
-        // rc = pthread_cond_init(&connInfo->m_ReturnQFullCond, &condAttr);
-        // DIE(rc != 0,
-        //     "Could not init condition for full connect response queue");
-
-        // rc = pthread_cond_init(&connInfo->m_ReturnQEmptyCond, &condAttr);
-        // DIE(rc != 0,
-        //     "Could not init condition for empty connect response queue");
-
-        // rc =
-        //     pthread_cond_init(&connInfo->m_RequestResponseQFullCond,
-        //     &condAttr);
-        // DIE(rc != 0,
-        //     "Could not init condition for full connect response queue");
-
-        // rc = pthread_cond_init(&connInfo->m_RequestResponseQEmptyCond,
-        //                        &condAttr);
-        // DIE(rc != 0,
-        //     "Could not init condition for empty connect response queue");
-
-        // rc = pthread_condattr_destroy(&condAttr);
-        // DIE(rc != 0, "Could not destroy condition attribute object");
     }
 
     return rc;
@@ -158,22 +112,14 @@ s_ReceiveDisconnectRequest(struct ServiceConnectInfo *p_ConnectInfo) {
 
     SharedMemoryObject.destroy(
         p_ConnectInfo->m_Connections[connId].m_RequestResponseQName);
-    // rc =
-    //     shm_unlink(p_ConnectInfo->m_Connections[connId].m_RequestResponseQName);
-    // DIE(rc != 0,
-    //     "Could not unlink request response queue shared memory object");
 
     SharedMemoryObject.destroy(
         p_ConnectInfo->m_Connections[connId].m_ReturnQName);
-    // rc = shm_unlink(p_ConnectInfo->m_Connections[connId].m_ReturnQName);
-    // DIE(rc != 0, "Could no unlink return queue shared memory object");
 
-    // pthread_spin_lock(p_ConnectInfo->m_ConnectLock);
     Sync.mutexLock(p_ConnectInfo->m_ConnectLock);
 
     p_ConnectInfo->m_Connections[connId].m_Connected = false;
 
-    // pthread_spin_unlock(p_ConnectInfo->m_ConnectLock);
     Sync.mutexUnlock(p_ConnectInfo->m_ConnectLock);
 
     return rc;
@@ -206,9 +152,6 @@ configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnectInfo,
             CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
             AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE, connectQFd);
 
-    // triggerKernelPageInit(connectQ,
-    //                       CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
-    //                       PROT_READ | PROT_WRITE);
     Memory.triggerPageFaults(connectQ,
                              CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
                              AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE);
@@ -228,9 +171,6 @@ configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnectInfo,
             CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
             AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE, connectQFd);
 
-    // triggerKernelPageInit(disconnectQ,
-    //                       CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
-    //                       PROT_READ | PROT_WRITE);
     Memory.triggerPageFaults(disconnectQ,
                              CONNECTQ_MAX_SIZE * sizeof(struct ConnectRequest),
                              AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE);
@@ -261,48 +201,12 @@ configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnectInfo,
     Sync.createMutex(&p_InstallInfo->m_DisconnectQMutex, "");
     Sync.createMutex(&p_InstallInfo->m_ConnectListLock, "");
 
-    // pthread_mutexattr_t attr;
-    // rc = pthread_mutexattr_init(&attr);
-    // DIE(rc != 0, "Could not init mutex attribute");
-
-    // rc = pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
-    // DIE(rc != 0, "Could not set pshread for mutex attribute");
-
-    // rc = pthread_mutex_init(&p_InstallInfo->m_ConnectQMutex, &attr);
-    // DIE(rc != 0, "Could not init connect mutex");
-
-    // rc = pthread_mutex_init(&p_InstallInfo->m_DisconnectQMutex, &attr);
-    // DIE(rc != 0, "Could not init disconnect mutex");
-
-    // rc = pthread_mutex_init(&p_InstallInfo->m_ConnectListLock, &attr);
-    // DIE(rc != 0, "Could not init opened connections lock");
-
-    // rc = pthread_mutexattr_destroy(&attr);
-    // DIE(rc != 0, "Could not destroy mutex attribute");
-
-    // rc = pthread_spin_init(&p_InstallInfo->m_ConnectListLock,
-    //                        PTHREAD_PROCESS_SHARED);
-    // DIE(rc != 0, "Could not init opened connections lock");
-
     p_ConnectInfo->m_ConnectLock = &p_InstallInfo->m_ConnectListLock;
 
     Sync.createCond(&p_InstallInfo->m_ConnectQFullCond, "");
     Sync.createCond(&p_InstallInfo->m_ConnectQEmptyCond, "");
     Sync.createCond(&p_InstallInfo->m_DisconnectQFullCond, "");
     Sync.createCond(&p_InstallInfo->m_DisconnectQEmptyCond, "");
-
-    // pthread_condattr_t condAttr;
-    // pthread_condattr_init(&condAttr);
-
-    // pthread_condattr_setpshared(&condAttr, PTHREAD_PROCESS_SHARED);
-
-    // pthread_cond_init(&p_InstallInfo->m_ConnectQFullCond, &condAttr);
-    // pthread_cond_init(&p_InstallInfo->m_ConnectQEmptyCond, &condAttr);
-
-    // pthread_cond_init(&p_InstallInfo->m_DisconnectQFullCond, &condAttr);
-    // pthread_cond_init(&p_InstallInfo->m_DisconnectQEmptyCond, &condAttr);
-
-    // pthread_condattr_destroy(&condAttr);
 
     p_ConnectInfo->m_ConnectQ.m_Metadata.m_Lock =
         &p_InstallInfo->m_ConnectQMutex;

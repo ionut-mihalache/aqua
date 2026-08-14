@@ -79,7 +79,7 @@ static aqua_file_handle_t sf_Create(const char *p_Name,
                                     aqua_file_mode_t p_Mode, aqua_off_t p_Size,
                                     aqua_bool_t p_Unlink) {
     int rc;
-    int shmFd;
+    int shmFd = -1;
     uint8_t shouldTruncate = true;
     int flags = mapFlags(p_Flags);
     mode_t mode = mapMode(p_Mode);
@@ -96,9 +96,7 @@ static aqua_file_handle_t sf_Create(const char *p_Name,
             shouldTruncate = false;
             shmFd = shm_open(p_Name, flags, mode);
             goto end;
-            // DIE(shmFd < 0, "Could not open shared memory object");
         } else {
-            // DIE(shmFd < 0, "Could not open shared memory object");
             goto end;
         }
     }
@@ -119,8 +117,6 @@ static aqua_file_handle_t sf_Create(const char *p_Name,
 
 end:
     return shmFd;
-
-    return -1;
 }
 
 static aqua_void_t sf_Destroy(const char *p_Name) {

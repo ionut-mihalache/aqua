@@ -17,7 +17,6 @@
 static struct InstallSharedData *installShdata = NULL;
 
 void initService() {
-    // int rc;
     aqua_err_t err;
     aqua_file_handle_t installShdFd;
 
@@ -36,8 +35,6 @@ void initService() {
     DIE(err == AQUA_MEM_MAP_FAILED || installShdata == NULL,
         "Could not mmap install shared data object");
 
-    // triggerKernelPageInit(installShdata, sizeof(struct InstallSharedData),
-    //                       PROT_READ | PROT_WRITE);
     Memory.triggerPageFaults(installShdata, sizeof(struct InstallSharedData),
                              AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE);
 
@@ -45,9 +42,6 @@ void initService() {
     DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close installShdFd");
 
     Sync.createSpinLock(&installShdata->m_InstallMZoneLk, "");
-    // rc = pthread_spin_init(&installShdata->m_InstallMZoneLk,
-    //                        PTHREAD_PROCESS_SHARED);
-    // DIE(rc != 0, "Could not init install shared spinlock");
 }
 
 static aqua_size_t sf_GetInstallArenaSize() {
@@ -107,7 +101,6 @@ void aquaInstall(struct ServiceConnectInfo *p_ConnectInfo,
     uint8_t *freeBytePtr = NULL;
     uint16_t freeByteIdx = 0;
 
-    // pthread_spin_lock(&installShdata->m_InstallMZoneLk);
     Sync.spinLock(&installShdata->m_InstallMZoneLk);
     for (uint8_t i = 0; i < bytesnr; ++i) {
         freeBytePtr = &installMemZone->m_InstallMap[i];
@@ -134,7 +127,6 @@ check_free_index:
     *freeBytePtr = (*freeBytePtr) | (1 << freeIdx);
 
 spin_lock_unlock:
-    // pthread_spin_unlock(&installShdata->m_InstallMZoneLk);
     Sync.spinUnlock(&installShdata->m_InstallMZoneLk);
 
     rc = Allocator.memunmap(installMemZone, sizeof(struct InstallInfo));

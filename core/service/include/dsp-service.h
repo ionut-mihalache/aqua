@@ -14,9 +14,7 @@ struct InstallCommons {
 };
 
 struct InstallSharedData {
-    // pthread_mutex_t m_InstallMZoneMx;
     aqua_mutex_t m_InstallMZoneMx;
-    // pthread_spinlock_t m_InstallMZoneLk;
     aqua_spinlock_t m_InstallMZoneLk;
 };
 

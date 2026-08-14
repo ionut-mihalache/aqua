@@ -221,7 +221,6 @@ int32_t configureServiceCallInformation(struct ServiceCallInfo *p_CI,
 
     createQ(&callQ, qSize, qProt, callQFd);
 
-    // triggerKernelPageInit(callQ, qSize, qProt);
     Memory.triggerPageFaults(callQ, qSize, qProt);
 
     err = SharedMemoryObject.close(callQFd);
@@ -237,29 +236,6 @@ int32_t configureServiceCallInformation(struct ServiceCallInfo *p_CI,
     Sync.createMutex(&p_InI->m_CallQMutex, "");
     Sync.createCond(&p_InI->m_CallQFullCond, "");
     Sync.createCond(&p_InI->m_CallQEmptyCond, "");
-
-    // pthread_mutexattr_t attr;
-    // rc = pthread_mutexattr_init(&attr);
-    // DIE(rc != 0, "Could not init mutex attribute");
-
-    // rc = pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
-    // DIE(rc != 0, "Could not set pshread for mutex attribute");
-
-    // rc = pthread_mutex_init(&p_InI->m_CallQMutex, &attr);
-    // DIE(rc != 0, "Could not init call mutex");
-
-    // rc = pthread_mutexattr_destroy(&attr);
-    // DIE(rc != 0, "Could not destroy mutex attribute");
-
-    // pthread_condattr_t condAttr;
-    // pthread_condattr_init(&condAttr);
-
-    // pthread_condattr_setpshared(&condAttr, PTHREAD_PROCESS_SHARED);
-
-    // pthread_cond_init(&p_InI->m_CallQFullCond, &condAttr);
-    // pthread_cond_init(&p_InI->m_CallQEmptyCond, &condAttr);
-
-    // pthread_condattr_destroy(&condAttr);
 
     p_CI->m_Q.m_Metadata.m_Lock = &p_InI->m_CallQMutex;
     p_CI->m_Q.m_Metadata.m_FullCond = &p_InI->m_CallQFullCond;
