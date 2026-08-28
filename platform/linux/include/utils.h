@@ -1,8 +1,10 @@
 #ifndef __AQUA_LINUX_UTILS_H_
 #define __AQUA_LINUX_UTILS_H_
 
-#include <stdio.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define DIE(assertion, call_description)                                       \
     do {                                                                       \

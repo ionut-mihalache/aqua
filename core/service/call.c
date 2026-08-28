@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
+#include <inttypes.h>
 #include <string.h>
 
 #include "call.h"
@@ -239,20 +240,20 @@ int32_t configureServiceCallInformation(struct ServiceCallInfo *p_CI,
 
     // TODO: This needs to be checked in order to make sure that the NULL
     // terminator is properly set
-    snprintf(callMutexName, sizeof(callMutexName), "__aqua_%016llx%u", nameHash,
-             AQUA_CALL_MUTEX_TAG);
+    snprintf(callMutexName, sizeof(callMutexName), "__aqua_%016" PRIx64 "%u",
+             nameHash, AQUA_CALL_MUTEX_TAG);
     Sync.createMutex(&p_InI->m_CallQMutex, callMutexName, SEND_HANDLE);
 
     // TODO: This needs to be checked in order to make sure that the NULL
     // terminator is properly set
-    snprintf(callCondName, sizeof(callCondName), "__aqua_%016llx%u", nameHash,
-             AQUA_CALL_COND_FULL_TAG);
+    snprintf(callCondName, sizeof(callCondName), "__aqua_%016" PRIx64 "%u",
+             nameHash, AQUA_CALL_COND_FULL_TAG);
     Sync.createCond(&p_InI->m_CallQFullCond, callCondName, SEND_FULL_HANDLE);
 
     // TODO: This needs to be checked in order to make sure that the NULL
     // terminator is properly set
-    snprintf(callCondName, sizeof(callCondName), "__aqua_%016llx%u", nameHash,
-             AQUA_CALL_COND_EMPTY_TAG);
+    snprintf(callCondName, sizeof(callCondName), "__aqua_%016" PRIx64 "%u",
+             nameHash, AQUA_CALL_COND_EMPTY_TAG);
     Sync.createCond(&p_InI->m_CallQEmptyCond, callCondName, SEND_EMPTY_HANDLE);
 
     p_CI->m_Q.m_Metadata.m_Lock = &p_InI->m_CallQMutex;
