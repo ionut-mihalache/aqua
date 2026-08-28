@@ -1,3 +1,7 @@
+<p align="center">
+     <img alt="logo" src="doc/assets/logo.png" width="75%" align="center"/>
+</p>
+
 ## Introduction ##
 
 AQUA is designed for local IPC using shared memory; the design is created and aims for interoperability. It is using a custom protocl DSP (Driver Service Protocol). 
@@ -68,4 +72,4 @@ $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<absolute-path-to-build-lib-directory-
 
 ### Windows ###
 
-WIP
+__NOTE__: Copy the library from _<absolute-path-to-build-lib-directory-after-cmake-build>_ to proper directory or link it properly when creatin the client.

@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.25.1)
 
 project(
         aqua
-        VERSION 0.0.2
+        VERSION 0.0.3
         LANGUAGES C
 )
 
@@ -15,11 +15,6 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(LIB_NAME aqua)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-file(MAKE_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 set(CORE_SOURCES
         core/service/dsp-service.c
@@ -55,6 +50,21 @@ add_library(aqua_objects OBJECT
         ${PLATFORM_SOURCES}
 )
 
+set(LIB_OUTPUT_DIR ${CMAKE_BINARY_DIR}/lib)
+
+if (CMAKE_CONFIGURATION_TYPES)
+        set(SHARED_OUTPUT_DIR ${LIB_OUTPUT_DIR}/$<CONFIG>/shared)
+        set(STATIC_OUTPUT_DIR ${LIB_OUTPUT_DIR}/$<CONFIG>/static)
+else()
+        set(SHARED_OUTPUT_DIR ${LIB_OUTPUT_DIR}/shared)
+        set(STATIC_OUTPUT_DIR ${LIB_OUTPUT_DIR}/static)
+
+        file(MAKE_DIRECTORY
+                ${SHARED_OUTPUT_DIR}
+                ${STATIC_OUTPUT_DIR}
+        )
+endif()
+
 set_target_properties(aqua_objects PROPERTIES
         POSITION_INDEPENDENT_CODE ON
 )
@@ -63,16 +73,27 @@ add_library(${LIB_NAME} SHARED
         $<TARGET_OBJECTS:aqua_objects>
 )
 
+set_target_properties(${LIB_NAME} PROPERTIES
+        OUTPUT_NAME ${LIB_NAME}
+
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+
+        RUNTIME_OUTPUT_DIRECTORY ${SHARED_OUTPUT_DIR}
+        LIBRARY_OUTPUT_DIRECTORY ${SHARED_OUTPUT_DIR}
+        ARCHIVE_OUTPUT_DIRECTORY ${SHARED_OUTPUT_DIR}
+)
+
 add_library(${LIB_NAME}_static STATIC
         $<TARGET_OBJECTS:aqua_objects>
 )
 
 set_target_properties(${LIB_NAME}_static PROPERTIES
-        OUTPUT_NAME ${LIB_NAME}_static
-)
-
-set_target_properties(${LIB_NAME} PROPERTIES
         OUTPUT_NAME ${LIB_NAME}
+
+        VERSION ${PROJECT_VERSION}
+
+        ARCHIVE_OUTPUT_DIRECTORY ${STATIC_OUTPUT_DIR}
 )
 
 function(configure_aqua_target target)
@@ -149,12 +170,3 @@ function(configure_aqua_target target)
 endfunction()
 
 configure_aqua_target(aqua_objects)
-
-set_target_properties(${LIB_NAME} PROPERTIES
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
-)
-
-set_target_properties(${LIB_NAME}_static PROPERTIES
-    VERSION ${PROJECT_VERSION}
-)

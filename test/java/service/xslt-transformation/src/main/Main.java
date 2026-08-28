@@ -43,7 +43,7 @@ import queues.commons.ConnectResponseInformation;
 interface LibDSP extends Library {
     LibDSP INSTANCE = (LibDSP) Native.load("aqua", LibDSP.class);
 
-    void dspInstall(ServiceConnectInfo p_ConnectInfo, ServiceCallInfo p_CallInfo, String p_StrId, String p_Version,
+    void aquaInstall(ServiceConnectInfo p_ConnectInfo, ServiceCallInfo p_CallInfo, String p_StrId, String p_Version,
             int p_CallQType);
 
     void receiveCall(Pointer p_CallData, ServiceCallInfo p_CallInfo);
@@ -470,7 +470,7 @@ public class Main {
         // ConcurrentHashMap<Integer, ServiceReturnInfo> connections = new
         // ConcurrentHashMap<Integer, ServiceReturnInfo>();
 
-        LibDSP.INSTANCE.dspInstall(connectInfo, callInfo, "xslt-transformation", "v0.0.2", QTYPE);
+        LibDSP.INSTANCE.aquaInstall(connectInfo, callInfo, "xslt-transformation", "v0.0.2", QTYPE);
 
         connectInfo.read();
         callInfo.read();

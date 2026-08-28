@@ -14,9 +14,7 @@ struct InstallCommons {
 };
 
 struct InstallSharedData {
-    // pthread_mutex_t m_InstallMZoneMx;
     aqua_mutex_t m_InstallMZoneMx;
-    // pthread_spinlock_t m_InstallMZoneLk;
     aqua_spinlock_t m_InstallMZoneLk;
 };
 
@@ -46,7 +44,7 @@ struct ServiceConnectInfo {
 
 void initService();
 
-AQUA_API_EXPORT void dspInstall(struct ServiceConnectInfo *p_ConnectInfo,
+AQUA_API_EXPORT void aquaInstall(struct ServiceConnectInfo *p_ConnectInfo,
                 struct ServiceCallInfo *p_CallInfo, const char *p_StrId,
                 const char *p_Version, int p_CallQType);
 

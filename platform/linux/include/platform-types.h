@@ -22,4 +22,6 @@ typedef pid_t aqua_pid_t;
 
 typedef int aqua_file_handle_t;
 
+typedef long aqua_sem_cnt_t;
+
 #endif // __AQUA_LINUX_TYPES_H_

@@ -5,24 +5,27 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "aqua-sync.h"
 #include "aqua-types.h"
 #include "call.h"
 #include "commons.h"
 #include "dsp.h"
 #include "install.h"
 #include "log.h"
+#include "platform-types.h"
 #include "platform.h"
 #include "system-values.h"
+#include "utils.h"
 
 static struct InstallSharedData *installShdata = NULL;
 
 void initService() {
-    // int rc;
     aqua_err_t err;
     aqua_file_handle_t installShdFd;
+    char spinLockName[AQUA_SPINLOCK_MEM_SIZE];
 
     installShdFd = SharedMemoryObject.create(
-        INSTALL_MZONE, AQUA_FILE_PERM_RDWR,
+        INSTALL_MZONE "INIT", AQUA_FILE_PERM_RDWR,
         AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
             AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
             AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE,
@@ -36,18 +39,18 @@ void initService() {
     DIE(err == AQUA_MEM_MAP_FAILED || installShdata == NULL,
         "Could not mmap install shared data object");
 
-    // triggerKernelPageInit(installShdata, sizeof(struct InstallSharedData),
-    //                       PROT_READ | PROT_WRITE);
     Memory.triggerPageFaults(installShdata, sizeof(struct InstallSharedData),
                              AQUA_MEM_PROT_READ | AQUA_MEM_PROT_WRITE);
 
     err = SharedMemoryObject.close(installShdFd);
     DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close installShdFd");
 
-    Sync.createSpinLock(&installShdata->m_InstallMZoneLk, "");
-    // rc = pthread_spin_init(&installShdata->m_InstallMZoneLk,
-    //                        PTHREAD_PROCESS_SHARED);
-    // DIE(rc != 0, "Could not init install shared spinlock");
+    memset(spinLockName, 0, AQUA_MUTEX_MEM_SIZE);
+    // TODO: This needs to be checked in order to make sure that the NULL
+    // terminator is properly set
+    sprintf(spinLockName, "__aqua_install_data_lk");
+    Sync.createSpinLock(&installShdata->m_InstallMZoneLk, spinLockName,
+                        INSTALL_DATA_HANDLE);
 }
 
 static aqua_size_t sf_GetInstallArenaSize() {
@@ -74,9 +77,9 @@ static aqua_size_t sf_GetServiceOff(uint16_t i) {
     return alignedHeaderSize + i * alignedServiceSize;
 }
 
-void dspInstall(struct ServiceConnectInfo *p_ConnectInfo,
-                struct ServiceCallInfo *p_CallInfo, const char *p_StrId,
-                const char *p_Version, int p_CallQType) {
+void aquaInstall(struct ServiceConnectInfo *p_ConnectInfo,
+                 struct ServiceCallInfo *p_CallInfo, const char *p_StrId,
+                 const char *p_Version, int p_CallQType) {
     int rc;
     aqua_err_t err;
     aqua_file_handle_t installShmFd;
@@ -107,7 +110,6 @@ void dspInstall(struct ServiceConnectInfo *p_ConnectInfo,
     uint8_t *freeBytePtr = NULL;
     uint16_t freeByteIdx = 0;
 
-    // pthread_spin_lock(&installShdata->m_InstallMZoneLk);
     Sync.spinLock(&installShdata->m_InstallMZoneLk);
     for (uint8_t i = 0; i < bytesnr; ++i) {
         freeBytePtr = &installMemZone->m_InstallMap[i];
@@ -134,7 +136,6 @@ check_free_index:
     *freeBytePtr = (*freeBytePtr) | (1 << freeIdx);
 
 spin_lock_unlock:
-    // pthread_spin_unlock(&installShdata->m_InstallMZoneLk);
     Sync.spinUnlock(&installShdata->m_InstallMZoneLk);
 
     rc = Allocator.memunmap(installMemZone, sizeof(struct InstallInfo));

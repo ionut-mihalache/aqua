@@ -61,7 +61,7 @@ static aqua_err_t memmap(aqua_void_ptr_t *p_ResultAddr,
     return AQUA_NO_ERROR;
 }
 
-static aqua_int_t memunmap(aqua_void_ptr_t p_Addr, aqua_size_t p_Len) {
+static aqua_err_t memunmap(aqua_void_ptr_t p_Addr, aqua_size_t p_Len) {
     return munmap(p_Addr, p_Len);
 }
 
