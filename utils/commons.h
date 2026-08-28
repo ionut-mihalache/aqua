@@ -20,4 +20,6 @@ aqua_size_t alignUp(aqua_size_t base, aqua_size_t alignment);
 void createQ(void **ptrRes, aqua_size_t size, aqua_mem_prot_t prot,
              aqua_file_handle_t fd);
 
+uint64_t hashString64(const char *str);
+
 #endif // DSP_COMMONS_H

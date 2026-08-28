@@ -10,9 +10,9 @@
 #include <unistd.h>
 
 #include "aqua-types.h"
-#include "log.h"
 #include "platform.h"
 #include "system-values.h"
+#include "utils.h"
 
 static int mapFlags(aqua_file_flags_t p_Flags) {
     int flags = 0;

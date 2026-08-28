@@ -5,23 +5,27 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "aqua-sync.h"
 #include "aqua-types.h"
 #include "call.h"
 #include "commons.h"
 #include "dsp.h"
 #include "install.h"
 #include "log.h"
+#include "platform-types.h"
 #include "platform.h"
 #include "system-values.h"
+#include "utils.h"
 
 static struct InstallSharedData *installShdata = NULL;
 
 void initService() {
     aqua_err_t err;
     aqua_file_handle_t installShdFd;
+    char spinLockName[AQUA_SPINLOCK_MEM_SIZE];
 
     installShdFd = SharedMemoryObject.create(
-        INSTALL_MZONE, AQUA_FILE_PERM_RDWR,
+        INSTALL_MZONE "INIT", AQUA_FILE_PERM_RDWR,
         AQUA_FILE_MODE_USER_READ | AQUA_FILE_MODE_USER_WRITE |
             AQUA_FILE_MODE_GROUP_READ | AQUA_FILE_MODE_GROUP_WRITE |
             AQUA_FILE_MODE_OTHER_READ | AQUA_FILE_MODE_OTHER_WRITE,
@@ -41,7 +45,12 @@ void initService() {
     err = SharedMemoryObject.close(installShdFd);
     DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close installShdFd");
 
-    Sync.createSpinLock(&installShdata->m_InstallMZoneLk, "");
+    memset(spinLockName, 0, AQUA_MUTEX_MEM_SIZE);
+    // TODO: This needs to be checked in order to make sure that the NULL
+    // terminator is properly set
+    sprintf(spinLockName, "__aqua_install_data_lk");
+    Sync.createSpinLock(&installShdata->m_InstallMZoneLk, spinLockName,
+                        INSTALL_DATA_HANDLE);
 }
 
 static aqua_size_t sf_GetInstallArenaSize() {
@@ -69,8 +78,8 @@ static aqua_size_t sf_GetServiceOff(uint16_t i) {
 }
 
 void aquaInstall(struct ServiceConnectInfo *p_ConnectInfo,
-                struct ServiceCallInfo *p_CallInfo, const char *p_StrId,
-                const char *p_Version, int p_CallQType) {
+                 struct ServiceCallInfo *p_CallInfo, const char *p_StrId,
+                 const char *p_Version, int p_CallQType) {
     int rc;
     aqua_err_t err;
     aqua_file_handle_t installShmFd;
