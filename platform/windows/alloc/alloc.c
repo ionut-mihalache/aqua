@@ -32,15 +32,22 @@ static aqua_err_t memmap(aqua_void_ptr_t *p_ResultAddr,
                          aqua_file_handle_t p_Fd, aqua_off_t p_Off) {
     (void)p_StartAddr;
     (void)p_Flags;
+    aqua_err_t err = AQUA_NO_ERROR;
 
     DWORD prot = mapProt(p_Prot);
 
     void *ptr =
         MapViewOfFile(p_Fd, prot, (DWORD)(p_Off >> 32), (DWORD)p_Off, p_Len);
 
+    if (ptr == NULL) {
+        err = AQUA_MEM_MAP_FAILED;
+        goto end;
+    }
+
     *p_ResultAddr = ptr;
 
-    return AQUA_NO_ERROR;
+end:
+    return err;
 }
 
 static aqua_err_t memunmap(aqua_void_ptr_t p_Addr, aqua_size_t p_Len) {

@@ -169,7 +169,7 @@ static aqua_void_t condWait(aqua_cond_t *p_Cond, aqua_mutex_t *p_Mutex) {
     // TODO: Check if condition handle is valid
 
     ReleaseMutex(mutexHandle);
-    WaitForSingleObject(condHandle, INFINITE);
+    WaitForSingleObject(condHandle, 5000);
     WaitForSingleObject(mutexHandle, INFINITE);
 }
 
@@ -178,6 +178,7 @@ static aqua_void_t condBroadcast(aqua_cond_t *p_Cond) {
 
     if (condHandle == NULL) {
         condHandle = OpenEvent(MUTEX_ALL_ACCESS, FALSE, (char *)p_Cond->id);
+        tl_Handles[p_Cond->type] = condHandle;
     }
 
     // TODO: Check if condition handle is valid

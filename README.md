@@ -72,4 +72,4 @@ $ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<absolute-path-to-build-lib-directory-
 
 ### Windows ###
 
-WIP
+__NOTE__: Copy the library from _<absolute-path-to-build-lib-directory-after-cmake-build>_ to proper directory or link it properly when creatin the client.

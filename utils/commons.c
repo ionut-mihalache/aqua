@@ -19,3 +19,15 @@ void createQ(void **p_QPtrRes, aqua_size_t p_Size, aqua_mem_prot_t p_Prot,
                            p_Fd, 0);
     DIE(err == AQUA_MEM_MAP_FAILED, "Could not map return queue memory");
 }
+
+uint64_t hashString64(const char *str) {
+    uint64_t hash = 14695981039346656037ULL;
+
+    while (*str != '\0') {
+        hash ^= (uint8_t)*str;
+        hash *= 1099511628211ULL;
+        ++str;
+    }
+
+    return hash;
+}
