@@ -19,8 +19,10 @@ _Static_assert(sizeof(pthread_cond_t) <= AQUA_COND_MEM_SIZE,
 _Static_assert(sizeof(sem_t) <= AQUA_SEM_MEM_SIZE,
                "AQUA_SEM_MEM_SIZE too small");
 
-static aqua_void_t createMutex(aqua_mutex_t *p_Mutex, const char *p_Name) {
+static aqua_void_t createMutex(aqua_mutex_t *p_Mutex, const char *p_Name,
+                               aqua_u16_t p_Type) {
     (void)p_Name;
+    (void)p_Type;
 
     pthread_mutex_t *mutex = (pthread_mutex_t *)p_Mutex->memory;
 
@@ -35,16 +37,19 @@ static aqua_void_t createMutex(aqua_mutex_t *p_Mutex, const char *p_Name) {
 }
 
 static aqua_void_t createSpinLock(aqua_spinlock_t *p_SpinLock,
-                                  const char *p_Name) {
+                                  const char *p_Name, aqua_u16_t p_Type) {
     (void)p_Name;
+    (void)p_Type;
 
     pthread_spinlock_t *spinLock = (pthread_spinlock_t *)p_SpinLock->memory;
 
     pthread_spin_init(spinLock, PTHREAD_PROCESS_SHARED);
 }
 
-static aqua_void_t createCond(aqua_cond_t *p_Cond, const char *p_Name) {
+static aqua_void_t createCond(aqua_cond_t *p_Cond, const char *p_Name,
+                              aqua_u16_t p_Type) {
     (void)p_Name;
+    (void)p_Type;
 
     pthread_cond_t *cond = (pthread_cond_t *)p_Cond->memory;
 
@@ -58,9 +63,13 @@ static aqua_void_t createCond(aqua_cond_t *p_Cond, const char *p_Name) {
     pthread_condattr_destroy(&condAttr);
 }
 
-static aqua_void_t createSemaphore(aqua_sem_t *p_Sem, const char *p_Name) {
+static aqua_void_t createSemaphore(aqua_sem_t *p_Sem, const char *p_Name,
+                                   aqua_sem_cnt_t p_MaxValue,
+                                   aqua_u16_t p_Type) {
     (void)p_Sem;
     (void)p_Name;
+    (void)p_MaxValue;
+    (void)p_Type;
 }
 
 static aqua_void_t destroyMutex(aqua_mutex_t *p_Mutex) {

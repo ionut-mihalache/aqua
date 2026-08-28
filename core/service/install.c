@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
+#include <inttypes.h>
 #include <string.h>
 
 #include "aqua-sync.h"
@@ -29,23 +30,23 @@ int32_t initializeServiceConnections(struct InstallInformation *p_InI) {
 
         // TODO: This needs to be checked in order to make sure that the NULL
         // terminator is properly set
-        snprintf(mutexName, sizeof(mutexName), "__aqua_%016llx%u%u", nameHash,
-                 mutexId, AQUA_RETURN_MUTEX_TAG);
+        snprintf(mutexName, sizeof(mutexName), "__aqua_%016" PRIx64 "%u%u",
+                 nameHash, mutexId, AQUA_RETURN_MUTEX_TAG);
         mutexId++;
         Sync.createMutex(&connInfo->m_ReturnQMutex, mutexName, RECEIVE_HANDLE);
 
         // TODO: This needs to be checked in order to make sure that the NULL
         // terminator is properly set
-        snprintf(mutexName, sizeof(mutexName), "__aqua_%016llx%u%u", nameHash,
-                 mutexId, AQUA_REQ_RESP_MUTEX_TAG);
+        snprintf(mutexName, sizeof(mutexName), "__aqua_%016" PRIx64 "%u%u",
+                 nameHash, mutexId, AQUA_REQ_RESP_MUTEX_TAG);
         mutexId++;
         Sync.createMutex(&connInfo->m_RequestResponseQMutex, mutexName,
                          CONNECT_RESPONSE_HANDLE);
 
         // TODO: This needs to be checked in order to make sure that the NULL
         // terminator is properly set
-        snprintf(condName, sizeof(condName), "__aqua_%016llx%u%u", nameHash,
-                 condId, AQUA_RET_FULL_COND_TAG);
+        snprintf(condName, sizeof(condName), "__aqua_%016" PRIx64 "%u%u",
+                 nameHash, condId, AQUA_RET_FULL_COND_TAG);
         condId++;
         Sync.createCond(&connInfo->m_ReturnQFullCond, condName,
                         RECEIVE_FULL_HANDLE);
@@ -53,24 +54,24 @@ int32_t initializeServiceConnections(struct InstallInformation *p_InI) {
         memset(condName, 0, AQUA_COND_MEM_SIZE);
         // TODO: This needs to be checked in order to make sure that the NULL
         // terminator is properly set
-        snprintf(condName, sizeof(condName), "__aqua_%016llx%u%u", nameHash,
-                 condId, AQUA_RET_EMPTY_COND_TAG);
+        snprintf(condName, sizeof(condName), "__aqua_%016" PRIx64 "%u%u",
+                 nameHash, condId, AQUA_RET_EMPTY_COND_TAG);
         condId++;
         Sync.createCond(&connInfo->m_ReturnQEmptyCond, condName,
                         RECEIVE_EMPTY_HANDLE);
 
         // TODO: This needs to be checked in order to make sure that the NULL
         // terminator is properly set
-        snprintf(condName, sizeof(condName), "__aqua_%016llx%u%u", nameHash,
-                 condId, AQUA_REQ_RESP_FULL_COND_TAG);
+        snprintf(condName, sizeof(condName), "__aqua_%016" PRIx64 "%u%u",
+                 nameHash, condId, AQUA_REQ_RESP_FULL_COND_TAG);
         condId++;
         Sync.createCond(&connInfo->m_RequestResponseQFullCond, condName,
                         CONNECT_RESPONSE_FULL_HANDLE);
 
         // TODO: This needs to be checked in order to make sure that the NULL
         // terminator is properly set
-        snprintf(condName, sizeof(condName), "__aqua_%016llx%u%u", nameHash,
-                 condId, AQUA_REQ_RESP_EMPTY_COND_TAG);
+        snprintf(condName, sizeof(condName), "__aqua_%016" PRIx64 "%u%u",
+                 nameHash, condId, AQUA_REQ_RESP_EMPTY_COND_TAG);
         condId++;
         Sync.createCond(&connInfo->m_RequestResponseQEmptyCond, condName,
                         CONNECT_RESPONSE_EMPTY_HANDLE);
@@ -243,19 +244,19 @@ int32_t configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnI,
 
     // TODO: This needs to be checked in order to make sure that the NULL
     // terminator is properly set
-    snprintf(mutexName, sizeof(mutexName), "__aqua_%016llx%u", nameHash,
+    snprintf(mutexName, sizeof(mutexName), "__aqua_%016" PRIx64 "%u", nameHash,
              AQUA_CONN_MUTEX_TAG);
     Sync.createMutex(&p_InI->m_ConnectQMutex, mutexName, CONNECT_HANDLE);
 
     // TODO: This needs to be checked in order to make sure that the NULL
     // terminator is properly set
-    snprintf(mutexName, sizeof(mutexName), "__aqua_%016llx%u", nameHash,
+    snprintf(mutexName, sizeof(mutexName), "__aqua_%016" PRIx64 "%u", nameHash,
              AQUA_DISCONN_MUTEX_TAG);
     Sync.createMutex(&p_InI->m_DisconnectQMutex, "", DISCONNECT_HANDLE);
 
     // TODO: This needs to be checked in order to make sure that the NULL
     // terminator is properly set
-    snprintf(mutexName, sizeof(mutexName), "__aqua_%016llx%u", nameHash,
+    snprintf(mutexName, sizeof(mutexName), "__aqua_%016" PRIx64 "%u", nameHash,
              AQUA_CONN_LIST_MUTEX_TAG);
     Sync.createMutex(&p_InI->m_ConnectListLock, "", CONNECT_LIST_HANDLE);
 
@@ -263,27 +264,27 @@ int32_t configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnI,
 
     // TODO: This needs to be checked in order to make sure that the NULL
     // terminator is properly set
-    snprintf(condName, sizeof(condName), "__aqua_%016llx%u", nameHash,
+    snprintf(condName, sizeof(condName), "__aqua_%016" PRIx64 "%u", nameHash,
              AQUA_CONN_FULL_COND_TAG);
     Sync.createCond(&p_InI->m_ConnectQFullCond, condName, CONNECT_FULL_HANDLE);
 
     // TODO: This needs to be checked in order to make sure that the NULL
     // terminator is properly set
-    snprintf(condName, sizeof(condName), "__aqua_%016llx%u", nameHash,
+    snprintf(condName, sizeof(condName), "__aqua_%016" PRIx64 "%u", nameHash,
              AQUA_CONN_EMPTY_COND_TAG);
     Sync.createCond(&p_InI->m_ConnectQEmptyCond, condName,
                     CONNECT_EMPTY_HANDLE);
 
     // TODO: This needs to be checked in order to make sure that the NULL
     // terminator is properly set
-    snprintf(condName, sizeof(condName), "__aqua_%016llx%u", nameHash,
+    snprintf(condName, sizeof(condName), "__aqua_%016" PRIx64 "%u", nameHash,
              AQUA_DISCONN_FULL_COND_TAG);
     Sync.createCond(&p_InI->m_DisconnectQFullCond, condName,
                     DISCONNECT_FULL_HANDLE);
 
     // TODO: This needs to be checked in order to make sure that the NULL
     // terminator is properly set
-    snprintf(condName, sizeof(condName), "__aqua_%016llx%u", nameHash,
+    snprintf(condName, sizeof(condName), "__aqua_%016" PRIx64 "%u", nameHash,
              AQUA_DISCONN_EMPTY_COND_TAG);
     Sync.createCond(&p_InI->m_DisconnectQEmptyCond, condName,
                     DISCONNECT_EMPTY_HANDLE);
