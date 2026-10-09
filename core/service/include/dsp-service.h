@@ -39,16 +39,37 @@ struct ServiceConnectInfo {
     aqua_mutex_t *m_ConnectLock;
     int32_t (*m_ReceiveConnectRequest)(struct ServiceReturnInfo *,
                                        struct ServiceConnectInfo *);
+    int32_t (*m_ReceiveConnectRequestV2)(int32_t);
     int32_t (*m_ReceiveDisconnectRequest)(struct ServiceConnectInfo *);
 };
 
 void initService();
 
-AQUA_API_EXPORT void aquaInstall(struct ServiceConnectInfo *p_ConnectInfo,
-                struct ServiceCallInfo *p_CallInfo, const char *p_StrId,
-                const char *p_Version, int p_CallQType);
+struct ServiceConnectInfo *getConnectInfo(int32_t);
+struct ServiceCallInfo *getCallInfo(int32_t);
+
+AQUA_API_EXPORT int32_t aquaCreateConnectInfo();
+AQUA_API_EXPORT int32_t aquaCreateCallInfo();
+
+AQUA_API_EXPORT void aquaDestroyConnectInfo(int32_t);
+AQUA_API_EXPORT void aquaDestroyCallInfo(int32_t);
+
+AQUA_API_EXPORT void aquaInstall(struct ServiceConnectInfo *connectInfo,
+                                 struct ServiceCallInfo *callInfo,
+                                 const char *strId, const char *version,
+                                 int callQType);
+
+AQUA_API_EXPORT void aquaInstallV2(int32_t connectInfoHandle,
+                                   int32_t callInfoHandle, const char *strId,
+                                   const char *version, int callQType);
 
 AQUA_API_EXPORT void receiveCall(void *, struct ServiceCallInfo *);
 AQUA_API_EXPORT void sendReturn(struct ServiceReturnInfo *, void *);
+AQUA_API_EXPORT void sendReturnV2(int32_t, void *);
+
+AQUA_API_EXPORT void receiveConnectRequestV2(void *, int32_t);
+AQUA_API_EXPORT void receiveCallV2(void *, int32_t);
+
+AQUA_API_EXPORT enum QType getReturnInfoQType(int32_t);
 
 #endif // __DSP_SERVICE_H

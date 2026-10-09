@@ -5,6 +5,7 @@ import com.sun.jna.Structure;
 import com.sun.jna.Structure.FieldOrder;
 
 import connect.interfaces.ReceiveConnectRequest;
+import connect.interfaces.ReceiveConnectRequestV2;
 import connect.interfaces.ReceiveDisconnectRequest;
 import queues.ConnectQueue;
 import queues.DisconnectQueue;
@@ -29,6 +30,7 @@ public class ServiceConnectInfo extends Structure {
     public Pointer m_Connections;
     public Pointer m_ConnectLock;
     public ReceiveConnectRequest m_ReceiveConnectRequest;
+    public ReceiveConnectRequestV2 m_ReceiveConnectRequestV2;
     public ReceiveDisconnectRequest m_ReceiveDisconnectRequest;
 
     public ServiceConnectInfo() {

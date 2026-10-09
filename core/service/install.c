@@ -7,6 +7,7 @@
 #include "aqua-types.h"
 #include "commons.h"
 #include "install.h"
+#include "dsp-service.h"
 #include "dsp.h"
 #include "macros.h"
 #include "platform-types.h"
@@ -14,6 +15,9 @@
 #include "return.h"
 #include "system-values.h"
 #include "utils.h"
+
+static struct ServiceReturnInfo returnInfos[OPENED_CONNECTIONS];
+static int32_t currRetHandle = 0;
 
 int32_t initializeServiceConnections(struct InstallInformation *p_InI) {
     int32_t rc = 0;
@@ -133,6 +137,46 @@ s_ReceiveConnectRequest(struct ServiceReturnInfo *p_ReturnInfo,
     return rc;
 }
 
+static int32_t s_ReceiveConnectRequestV2(int32_t p_ConnectInfoHandle) {
+    int32_t rc = 0;
+
+    if (currRetHandle == OPENED_CONNECTIONS) {
+        rc = -1;
+        goto end;
+    }
+
+    rc = currRetHandle;
+    struct ServiceReturnInfo *returnInfo = &returnInfos[currRetHandle++];
+
+    struct ServiceConnectInfo *connectInfo =
+        getConnectInfo(p_ConnectInfoHandle);
+
+    struct ConnectQueue *queue = &connectInfo->m_ConnectQ;
+    struct ConnectResponseInformation responseInfo;
+
+    QPOP(
+        queue, CONNECTQ_MAX_SIZE, do {
+            configureServiceReturnInformation(
+                returnInfo, connectInfo,
+                &queue->m_Data[*queue->m_Metadata.m_PopIdxPtr]);
+
+            memcpy(responseInfo.m_ReturnQName,
+                   queue->m_Data[*queue->m_Metadata.m_PopIdxPtr].m_ReturnQName,
+                   RETURNQ_NAME_MAX_SIZE);
+            memcpy(responseInfo.m_ReturnRequestQName,
+                   queue->m_Data[*queue->m_Metadata.m_PopIdxPtr]
+                       .m_RequestResponseQName,
+                   RETURNQ_NAME_MAX_SIZE);
+            responseInfo.m_Id =
+                queue->m_Data[*queue->m_Metadata.m_PopIdxPtr].m_ConnectionIdx;
+        } while (0));
+
+    s_SendConnectResponse(returnInfo, &responseInfo);
+
+end:
+    return rc;
+}
+
 static int32_t
 s_ReceiveDisconnectRequest(struct ServiceConnectInfo *p_ConnectInfo) {
     int32_t rc = 0;
@@ -229,6 +273,7 @@ int32_t configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnI,
     DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close disconnectQFd");
 
     p_ConnI->m_ReceiveConnectRequest = s_ReceiveConnectRequest;
+    p_ConnI->m_ReceiveConnectRequestV2 = s_ReceiveConnectRequestV2;
     p_ConnI->m_ConnectQ.m_Data = connectQ;
     p_ConnI->m_ConnectQ.m_Metadata.m_PushIdxPtr = &p_InI->m_ConnectQPushIdx;
     p_ConnI->m_ConnectQ.m_Metadata.m_PopIdxPtr = &p_InI->m_ConnectQPopIdx;
@@ -300,4 +345,18 @@ int32_t configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnI,
         &p_InI->m_DisconnectQEmptyCond;
 
     return rc;
+}
+
+enum QType getReturnInfoQType(int32_t p_ReturnInfoHandle) {
+    return returnInfos[p_ReturnInfoHandle].m_Q.m_Type;
+}
+
+void sendReturnV2(int32_t p_ReturnInfoHandle, void *p_ReturnData) {
+    struct CommunicationInfo cInfo;
+    struct ServiceReturnInfo *returnInfo = &returnInfos[p_ReturnInfoHandle];
+
+    cInfo.m_Q = &(returnInfo->m_Q);
+    cInfo.m_Data = p_ReturnData;
+
+    returnInfo->m_SendReturnFn(&cInfo);
 }

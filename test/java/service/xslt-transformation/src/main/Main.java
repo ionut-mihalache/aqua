@@ -43,12 +43,47 @@ import queues.commons.ConnectResponseInformation;
 interface LibDSP extends Library {
     LibDSP INSTANCE = (LibDSP) Native.load("aqua", LibDSP.class);
 
-    void aquaInstall(ServiceConnectInfo p_ConnectInfo, ServiceCallInfo p_CallInfo, String p_StrId, String p_Version,
-            int p_CallQType);
+    // void aquaInstall(ServiceConnectInfo p_ConnectInfo, ServiceCallInfo
+    // p_CallInfo, String p_StrId, String p_Version,
+    // int p_CallQType);
 
-    void receiveCall(Pointer p_CallData, ServiceCallInfo p_CallInfo);
+    int aquaCreateConnectInfo();
 
-    void sendReturn(ServiceReturnInfo p_ReturnInfo, Pointer p_ReturnData);
+    int aquaCreateCallInfo();
+
+    void aquaInstall(
+            Pointer connectInfo,
+            Pointer callInfo,
+            String strId,
+            String version,
+            int callQType);
+
+    void aquaInstallV2(
+            int connectInfoHandle,
+            int callInfoHandle,
+            String strId,
+            String version,
+            int callQType);
+
+    void receiveCall(
+            Pointer p_CallData,
+            ServiceCallInfo p_CallInfo);
+
+    void sendReturn(
+            ServiceReturnInfo p_ReturnInfo,
+            Pointer p_ReturnData);
+
+    void sendReturnV2(
+            int p_ReturnInfoHandle,
+            Pointer p_ReturnData);
+
+    int receiveConnectRequestV2(int p_ConnectInfoHandle);
+
+    void receiveCallV2(
+            Pointer p_CallData,
+            int p_CallInfoHandle);
+
+    int getReturnInfoQType(int p_ReturnInfoHandle);
 }
 
 class ConnectThread extends Thread {
@@ -208,11 +243,16 @@ class ProcessCallThread implements Runnable {
 
 class ProcessCallThread1 implements Runnable {
     private final Call m_CallData;
-    private final ServiceReturnInfo m_ServiceReturnInfo;
+    // private final ServiceReturnInfo m_ServiceReturnInfo;
+    private final int m_ReturnInfoHandle;
 
-    ProcessCallThread1(Call p_CallData, ServiceReturnInfo p_ServiceReturnInfo) {
+    // ProcessCallThread1(Call p_CallData, ServiceReturnInfo p_ServiceReturnInfo) {
+    // m_CallData = p_CallData;
+    // m_ServiceReturnInfo = p_ServiceReturnInfo;
+    // }
+    ProcessCallThread1(Call p_CallData, int p_ReturnInfoHandle) {
         m_CallData = p_CallData;
-        m_ServiceReturnInfo = p_ServiceReturnInfo;
+        m_ReturnInfoHandle = p_ReturnInfoHandle;
     }
 
     public void run() {
@@ -234,7 +274,21 @@ class ProcessCallThread1 implements Runnable {
 
             // System.out.println("SMBReturn size: " + returnDataSegmentSize);
 
-            Call returnData = switch (m_ServiceReturnInfo.m_Q.m_Type) {
+            // Call returnData = switch (m_ServiceReturnInfo.m_Q.m_Type) {
+            // case Constants.SMBQ -> new SMBReturn();
+            // case Constants.EMBQ -> new EMBReturn();
+            // case Constants.QMBQ -> new QMBReturn();
+            // case Constants.HMBQ -> new HMBReturn();
+            // case Constants.MBQ -> new MBReturn();
+            // case Constants.DMBQ -> new DMBReturn();
+            // case Constants.HGBQ -> new HGBReturn();
+            // case Constants.GBQ -> new GBReturn();
+            // default -> {
+            // System.err.println("Return queue type not recognized!");
+            // yield null;
+            // }
+            // };
+            Call returnData = switch (LibDSP.INSTANCE.getReturnInfoQType(m_ReturnInfoHandle)) {
                 case Constants.SMBQ -> new SMBReturn();
                 case Constants.EMBQ -> new EMBReturn();
                 case Constants.QMBQ -> new QMBReturn();
@@ -254,7 +308,8 @@ class ProcessCallThread1 implements Runnable {
                 return;
             }
 
-            // System.arraycopy(resByteArr, 0, returnData.getCallInfo(), 0, resByteArr.length);
+            // System.arraycopy(resByteArr, 0, returnData.getCallInfo(), 0,
+            // resByteArr.length);
             // returnData.getMetadata().m_Size = resByteArr.length;
             System.arraycopy(iiaData, 0, returnData.getCallInfo(), 0, m_CallData.getMetadata().m_Size);
             returnData.getMetadata().m_ConnId = m_CallData.getMetadata().m_ConnId;
@@ -263,7 +318,8 @@ class ProcessCallThread1 implements Runnable {
             // nativeMem.write(0, returnData.getPointer().getByteArray(0, (int)
             // returnDataSegmentSize), 0,
             // (int) returnDataSegmentSize);
-            LibDSP.INSTANCE.sendReturn(m_ServiceReturnInfo, returnData.getPointer());
+            // LibDSP.INSTANCE.sendReturn(m_ServiceReturnInfo, returnData.getPointer());
+            LibDSP.INSTANCE.sendReturnV2(m_ReturnInfoHandle, returnData.getPointer());
 
             // m_ConnectInfo.m_ReceiveDisconnectRequest.receiveDisconnectRequest(m_ConnectInfo);
         } catch (Exception e) {
@@ -465,15 +521,21 @@ public class Main {
 
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
-        ServiceConnectInfo connectInfo = new ServiceConnectInfo();
-        ServiceCallInfo callInfo = new ServiceCallInfo();
+        // ServiceConnectInfo connectInfo = new ServiceConnectInfo();
+        // ServiceCallInfo callInfo = new ServiceCallInfo();
         // ConcurrentHashMap<Integer, ServiceReturnInfo> connections = new
         // ConcurrentHashMap<Integer, ServiceReturnInfo>();
 
-        LibDSP.INSTANCE.aquaInstall(connectInfo, callInfo, "xslt-transformation", "v0.0.2", QTYPE);
+        // LibDSP.INSTANCE.aquaInstall(connectInfo, callInfo, "xslt-transformation",
+        // "v0.0.2", QTYPE);
 
-        connectInfo.read();
-        callInfo.read();
+        // connectInfo.read();
+        // callInfo.read();
+
+        int connectInfoHandle = LibDSP.INSTANCE.aquaCreateConnectInfo();
+        int callInfoHandle = LibDSP.INSTANCE.aquaCreateCallInfo();
+
+        LibDSP.INSTANCE.aquaInstallV2(connectInfoHandle, callInfoHandle, "xslt-transformation", "v0.0.2", QTYPE);
 
         // ConnectThread connectThread = new ConnectThread(connectInfo, connections);
         DisconnectThread disconnectThread = new DisconnectThread(connectInfo);
@@ -486,11 +548,13 @@ public class Main {
 
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                ServiceReturnInfo returnInfo = new ServiceReturnInfo();
+                // ServiceReturnInfo returnInfo = new ServiceReturnInfo();
 
-                connectInfo.m_ReceiveConnectRequest.receiveConnectRequest(returnInfo, connectInfo);
+                // connectInfo.m_ReceiveConnectRequest.receiveConnectRequest(returnInfo,
+                // connectInfo);
+                int returnInfoHandle = LibDSP.INSTANCE.receiveConnectRequestV2(connectInfoHandle);
 
-                returnInfo.read();
+                // returnInfo.read();
 
                 // Pointer nativePtr = returnInfo.m_ResponseQueue.m_Data;
                 // if (nativePtr == null) {
@@ -529,12 +593,15 @@ public class Main {
                     }
                 };
 
-                LibDSP.INSTANCE.receiveCall(callData.getPointer(), callInfo);
+                // LibDSP.INSTANCE.receiveCall(callData.getPointer(), callInfo);
+                LibDSP.INSTANCE.receiveCallV2(callData.getPointer(), callInfoHandle);
 
                 callData.read();
 
                 // executor.submit(new ProcessCallThread(callData, connections));
-                executor.submit(new ProcessCallThread1(callData, returnInfo));
+                // executor.submit(new ProcessCallThread1(callData, returnInfo));
+                executor.submit(new ProcessCallThread1(callData, returnInfoHandle));
+
                 // executor.submit(new ProcessCallThread2(callInfo, returnInfo));
                 // executor.submit(new ProcessCallThread3(connectInfo, callInfo, returnInfo));
                 // ProcessCallThread processCallThread = new ProcessCallThread(callData,
