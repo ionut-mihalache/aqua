@@ -6,18 +6,17 @@
 #include "aqua-sync.h"
 #include "aqua-types.h"
 #include "commons.h"
+#include "info.h"
 #include "install.h"
 #include "dsp-service.h"
 #include "dsp.h"
+#include "log.h"
 #include "macros.h"
 #include "platform-types.h"
 #include "platform.h"
 #include "return.h"
 #include "system-values.h"
 #include "utils.h"
-
-static struct ServiceReturnInfo returnInfos[OPENED_CONNECTIONS];
-static int32_t currRetHandle = 0;
 
 int32_t initializeServiceConnections(struct InstallInformation *p_InI) {
     int32_t rc = 0;
@@ -108,114 +107,114 @@ s_SendConnectResponse(struct ServiceReturnInfo *p_ReturnInfo,
     return rc;
 }
 
-static int32_t
-s_ReceiveConnectRequest(struct ServiceReturnInfo *p_ReturnInfo,
-                        struct ServiceConnectInfo *p_ConnectInfo) {
-    int32_t rc = 0;
-    struct ConnectQueue *queue = &p_ConnectInfo->m_ConnectQ;
-    struct ConnectResponseInformation responseInfo;
+// static int32_t
+// s_ReceiveConnectRequest(struct ServiceReturnInfo *p_ReturnInfo,
+//                         struct ServiceConnectInfo *p_ConnectInfo) {
+//     int32_t rc = 0;
+//     struct ConnectQueue *queue = &p_ConnectInfo->m_ConnectQ;
+//     struct ConnectResponseInformation responseInfo;
 
-    QPOP(
-        queue, CONNECTQ_MAX_SIZE, do {
-            configureServiceReturnInformation(
-                p_ReturnInfo, p_ConnectInfo,
-                &queue->m_Data[*queue->m_Metadata.m_PopIdxPtr]);
+//     QPOP(
+//         queue, CONNECTQ_MAX_SIZE, do {
+//             configureServiceReturnInformation(
+//                 p_ReturnInfo, p_ConnectInfo,
+//                 &queue->m_Data[*queue->m_Metadata.m_PopIdxPtr]);
 
-            memcpy(responseInfo.m_ReturnQName,
-                   queue->m_Data[*queue->m_Metadata.m_PopIdxPtr].m_ReturnQName,
-                   RETURNQ_NAME_MAX_SIZE);
-            memcpy(responseInfo.m_ReturnRequestQName,
-                   queue->m_Data[*queue->m_Metadata.m_PopIdxPtr]
-                       .m_RequestResponseQName,
-                   RETURNQ_NAME_MAX_SIZE);
-            responseInfo.m_Id =
-                queue->m_Data[*queue->m_Metadata.m_PopIdxPtr].m_ConnectionIdx;
-        } while (0));
+//             memcpy(responseInfo.m_ReturnQName,
+//                    queue->m_Data[*queue->m_Metadata.m_PopIdxPtr].m_ReturnQName,
+//                    RETURNQ_NAME_MAX_SIZE);
+//             memcpy(responseInfo.m_ReturnRequestQName,
+//                    queue->m_Data[*queue->m_Metadata.m_PopIdxPtr]
+//                        .m_RequestResponseQName,
+//                    RETURNQ_NAME_MAX_SIZE);
+//             responseInfo.m_Id =
+//                 queue->m_Data[*queue->m_Metadata.m_PopIdxPtr].m_ConnectionIdx;
+//         } while (0));
 
-    s_SendConnectResponse(p_ReturnInfo, &responseInfo);
+//     s_SendConnectResponse(p_ReturnInfo, &responseInfo);
 
-    return rc;
-}
+//     return rc;
+// }
 
-static int32_t s_ReceiveConnectRequestV2(int32_t p_ConnectInfoHandle) {
-    int32_t rc = 0;
+// static int32_t s_ReceiveConnectRequestV2(int32_t p_ConnectInfoHandle) {
+//     int32_t rc = 0;
 
-    if (currRetHandle == OPENED_CONNECTIONS) {
-        rc = -1;
-        goto end;
-    }
+//     if (currRetHandle == OPENED_CONNECTIONS) {
+//         rc = -1;
+//         goto end;
+//     }
 
-    rc = currRetHandle;
-    struct ServiceReturnInfo *returnInfo = &returnInfos[currRetHandle++];
+//     rc = currRetHandle;
+//     struct ServiceReturnInfo *returnInfo = &returnInfos[currRetHandle++];
 
-    struct ServiceConnectInfo *connectInfo =
-        getConnectInfo(p_ConnectInfoHandle);
+//     struct ServiceConnectInfo *connectInfo =
+//         getConnectInfo(p_ConnectInfoHandle);
 
-    struct ConnectQueue *queue = &connectInfo->m_ConnectQ;
-    struct ConnectResponseInformation responseInfo;
+//     struct ConnectQueue *queue = &connectInfo->m_ConnectQ;
+//     struct ConnectResponseInformation responseInfo;
 
-    QPOP(
-        queue, CONNECTQ_MAX_SIZE, do {
-            configureServiceReturnInformation(
-                returnInfo, connectInfo,
-                &queue->m_Data[*queue->m_Metadata.m_PopIdxPtr]);
+//     QPOP(
+//         queue, CONNECTQ_MAX_SIZE, do {
+//             configureServiceReturnInformation(
+//                 returnInfo, connectInfo,
+//                 &queue->m_Data[*queue->m_Metadata.m_PopIdxPtr]);
 
-            memcpy(responseInfo.m_ReturnQName,
-                   queue->m_Data[*queue->m_Metadata.m_PopIdxPtr].m_ReturnQName,
-                   RETURNQ_NAME_MAX_SIZE);
-            memcpy(responseInfo.m_ReturnRequestQName,
-                   queue->m_Data[*queue->m_Metadata.m_PopIdxPtr]
-                       .m_RequestResponseQName,
-                   RETURNQ_NAME_MAX_SIZE);
-            responseInfo.m_Id =
-                queue->m_Data[*queue->m_Metadata.m_PopIdxPtr].m_ConnectionIdx;
-        } while (0));
+//             memcpy(responseInfo.m_ReturnQName,
+//                    queue->m_Data[*queue->m_Metadata.m_PopIdxPtr].m_ReturnQName,
+//                    RETURNQ_NAME_MAX_SIZE);
+//             memcpy(responseInfo.m_ReturnRequestQName,
+//                    queue->m_Data[*queue->m_Metadata.m_PopIdxPtr]
+//                        .m_RequestResponseQName,
+//                    RETURNQ_NAME_MAX_SIZE);
+//             responseInfo.m_Id =
+//                 queue->m_Data[*queue->m_Metadata.m_PopIdxPtr].m_ConnectionIdx;
+//         } while (0));
 
-    s_SendConnectResponse(returnInfo, &responseInfo);
+//     s_SendConnectResponse(returnInfo, &responseInfo);
 
-end:
-    return rc;
-}
+// end:
+//     return rc;
+// }
 
-static int32_t
-s_ReceiveDisconnectRequest(struct ServiceConnectInfo *p_ConnectInfo) {
-    int32_t rc = 0;
-    uint32_t idx;
-    uint32_t connId;
-    struct DisconnectQueue *queue = &p_ConnectInfo->m_DisconnectQ;
+// static int32_t
+// s_ReceiveDisconnectRequest(struct ServiceConnectInfo *p_ConnectInfo) {
+//     int32_t rc = 0;
+//     uint32_t idx;
+//     uint32_t connId;
+//     struct DisconnectQueue *queue = &p_ConnectInfo->m_DisconnectQ;
 
-    QPOP(
-        queue, CONNECTQ_MAX_SIZE, do {
-            idx = *queue->m_Metadata.m_PopIdxPtr;
-            connId = queue->m_Data[idx].m_ConnectionIdx;
-        } while (0));
+//     QPOP(
+//         queue, CONNECTQ_MAX_SIZE, do {
+//             idx = *queue->m_Metadata.m_PopIdxPtr;
+//             connId = queue->m_Data[idx].m_ConnectionIdx;
+//         } while (0));
 
-    rc = Allocator.memunmap(
-        p_ConnectInfo->m_Connections[connId].m_RequestResponseQ,
-        p_ConnectInfo->m_Connections[connId].m_RequestResponseQMapSize);
-    DIE(rc < 0, "Could not unmap request response queue");
-    p_ConnectInfo->m_Connections[connId].m_RequestResponseQ = NULL;
+//     rc = Allocator.memunmap(
+//         p_ConnectInfo->m_Connections[connId].m_RequestResponseQ,
+//         p_ConnectInfo->m_Connections[connId].m_RequestResponseQMapSize);
+//     DIE(rc < 0, "Could not unmap request response queue");
+//     p_ConnectInfo->m_Connections[connId].m_RequestResponseQ = NULL;
 
-    rc = Allocator.memunmap(
-        p_ConnectInfo->m_Connections[connId].m_ReturnQ,
-        p_ConnectInfo->m_Connections[connId].m_ReturnQMapSize);
-    DIE(rc < 0, "Could not unmap return queue");
-    p_ConnectInfo->m_Connections[connId].m_ReturnQ = NULL;
+//     rc = Allocator.memunmap(
+//         p_ConnectInfo->m_Connections[connId].m_ReturnQ,
+//         p_ConnectInfo->m_Connections[connId].m_ReturnQMapSize);
+//     DIE(rc < 0, "Could not unmap return queue");
+//     p_ConnectInfo->m_Connections[connId].m_ReturnQ = NULL;
 
-    SharedMemoryObject.destroy(
-        p_ConnectInfo->m_Connections[connId].m_RequestResponseQName);
+//     SharedMemoryObject.destroy(
+//         p_ConnectInfo->m_Connections[connId].m_RequestResponseQName);
 
-    SharedMemoryObject.destroy(
-        p_ConnectInfo->m_Connections[connId].m_ReturnQName);
+//     SharedMemoryObject.destroy(
+//         p_ConnectInfo->m_Connections[connId].m_ReturnQName);
 
-    Sync.mutexLock(p_ConnectInfo->m_ConnectLock);
+//     Sync.mutexLock(p_ConnectInfo->m_ConnectLock);
 
-    p_ConnectInfo->m_Connections[connId].m_Connected = false;
+//     p_ConnectInfo->m_Connections[connId].m_Connected = false;
 
-    Sync.mutexUnlock(p_ConnectInfo->m_ConnectLock);
+//     Sync.mutexUnlock(p_ConnectInfo->m_ConnectLock);
 
-    return rc;
-}
+//     return rc;
+// }
 
 int32_t configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnI,
                                            struct InstallInformation *p_InI) {
@@ -272,15 +271,15 @@ int32_t configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnI,
     err = SharedMemoryObject.close(disconnectQFd);
     DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close disconnectQFd");
 
-    p_ConnI->m_ReceiveConnectRequest = s_ReceiveConnectRequest;
-    p_ConnI->m_ReceiveConnectRequestV2 = s_ReceiveConnectRequestV2;
+    // p_ConnI->m_ReceiveConnectRequest = s_ReceiveConnectRequest;
+    // p_ConnI->m_ReceiveConnectRequestV2 = s_ReceiveConnectRequestV2;
     p_ConnI->m_ConnectQ.m_Data = connectQ;
     p_ConnI->m_ConnectQ.m_Metadata.m_PushIdxPtr = &p_InI->m_ConnectQPushIdx;
     p_ConnI->m_ConnectQ.m_Metadata.m_PopIdxPtr = &p_InI->m_ConnectQPopIdx;
     p_ConnI->m_ConnectQ.m_Metadata.m_Size = &p_InI->m_ConnectQSize;
     p_ConnI->m_Connections = p_InI->m_Connections;
 
-    p_ConnI->m_ReceiveDisconnectRequest = s_ReceiveDisconnectRequest;
+    // p_ConnI->m_ReceiveDisconnectRequest = s_ReceiveDisconnectRequest;
     p_ConnI->m_DisconnectQ.m_Data = disconnectQ;
     p_ConnI->m_DisconnectQ.m_Metadata.m_PushIdxPtr =
         &p_InI->m_DisconnectQPushIdx;
@@ -348,15 +347,97 @@ int32_t configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnI,
 }
 
 enum QType getReturnInfoQType(int32_t p_ReturnInfoHandle) {
-    return returnInfos[p_ReturnInfoHandle].m_Q.m_Type;
+    struct ServiceReturnInfo *returnInfo = getReturnInfo(p_ReturnInfoHandle);
+
+    return returnInfo->m_Q.m_Type;
 }
 
 void sendReturnV2(int32_t p_ReturnInfoHandle, void *p_ReturnData) {
     struct CommunicationInfo cInfo;
-    struct ServiceReturnInfo *returnInfo = &returnInfos[p_ReturnInfoHandle];
+    struct ServiceReturnInfo *returnInfo = getReturnInfo(p_ReturnInfoHandle);
+
+    LOGF("Send return for handle: %d\n", p_ReturnInfoHandle);
 
     cInfo.m_Q = &(returnInfo->m_Q);
     cInfo.m_Data = p_ReturnData;
 
     returnInfo->m_SendReturnFn(&cInfo);
+}
+
+void receiveDisconnectRequest(int32_t p_ConnectInfoHandle) {
+    int32_t rc = 0;
+    uint32_t idx;
+    uint32_t connId;
+    struct ServiceConnectInfo *connectInfo =
+        getConnectInfo(p_ConnectInfoHandle);
+    struct DisconnectQueue *queue = &connectInfo->m_DisconnectQ;
+
+    QPOP(
+        queue, CONNECTQ_MAX_SIZE, do {
+            idx = *queue->m_Metadata.m_PopIdxPtr;
+            connId = queue->m_Data[idx].m_ConnectionIdx;
+        } while (0));
+
+    rc = Allocator.memunmap(
+        connectInfo->m_Connections[connId].m_RequestResponseQ,
+        connectInfo->m_Connections[connId].m_RequestResponseQMapSize);
+    DIE(rc < 0, "Could not unmap request response queue");
+    connectInfo->m_Connections[connId].m_RequestResponseQ = NULL;
+
+    rc =
+        Allocator.memunmap(connectInfo->m_Connections[connId].m_ReturnQ,
+                           connectInfo->m_Connections[connId].m_ReturnQMapSize);
+    DIE(rc < 0, "Could not unmap return queue");
+    connectInfo->m_Connections[connId].m_ReturnQ = NULL;
+
+    SharedMemoryObject.destroy(
+        connectInfo->m_Connections[connId].m_RequestResponseQName);
+
+    SharedMemoryObject.destroy(
+        connectInfo->m_Connections[connId].m_ReturnQName);
+
+    freeReturnInfo(connectInfo->m_Connections[connId].m_ReturnHandle);
+
+    Sync.mutexLock(connectInfo->m_ConnectLock);
+
+    connectInfo->m_Connections[connId].m_Connected = false;
+
+    Sync.mutexUnlock(connectInfo->m_ConnectLock);
+}
+
+int32_t receiveConnectRequestV2(int32_t p_ConnectInfoHandle) {
+    int32_t rc = 0, returnHandle = -1;
+
+    returnHandle = createReturnInfo();
+    struct ServiceReturnInfo *returnInfo = getReturnInfo(returnHandle);
+
+    struct ServiceConnectInfo *connectInfo =
+        getConnectInfo(p_ConnectInfoHandle);
+
+    struct ConnectQueue *queue = &connectInfo->m_ConnectQ;
+    struct ConnectResponseInformation responseInfo;
+
+    QPOP(
+        queue, CONNECTQ_MAX_SIZE, do {
+            configureServiceReturnInformation(
+                returnInfo, connectInfo,
+                &queue->m_Data[*queue->m_Metadata.m_PopIdxPtr]);
+
+            memcpy(responseInfo.m_ReturnQName,
+                   queue->m_Data[*queue->m_Metadata.m_PopIdxPtr].m_ReturnQName,
+                   RETURNQ_NAME_MAX_SIZE);
+            memcpy(responseInfo.m_ReturnRequestQName,
+                   queue->m_Data[*queue->m_Metadata.m_PopIdxPtr]
+                       .m_RequestResponseQName,
+                   RETURNQ_NAME_MAX_SIZE);
+            responseInfo.m_Id =
+                queue->m_Data[*queue->m_Metadata.m_PopIdxPtr].m_ConnectionIdx;
+            connectInfo->m_Connections[responseInfo.m_Id].m_ReturnHandle =
+                returnHandle;
+        } while (0));
+
+    s_SendConnectResponse(returnInfo, &responseInfo);
+
+    rc = returnHandle;
+    return rc;
 }

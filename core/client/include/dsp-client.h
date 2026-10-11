@@ -48,15 +48,27 @@ AQUA_API_EXPORT void
 aquaConnect(struct ClientReturnInfo *p_ReturnInfo,
             struct ClientConnectInfo *p_ConnectInfo,
             struct ClientConnectRequestInformation *p_RequestInfo);
+
+AQUA_API_EXPORT void aquaConnectV2(int32_t returnInfoHandle,
+                                   int32_t connectInfoHandle,
+                                   int32_t clientConnReqInfoHandle);
+
 AQUA_API_EXPORT void
 aquaDisconnect(struct ClientConnectInfo *p_ConnectInfo,
                struct ConnectResponseInformation *p_requestResponseInfo);
 
+AQUA_API_EXPORT void aquaDisconnectV2(int32_t connectInfoHandle,
+                                      int32_t connectResponseInfoHandle);
+
 AQUA_API_EXPORT void callFn(struct ClientCallInfo *p_CallInfo,
                             void *p_CallData);
 
+AQUA_API_EXPORT void send(int32_t callInfoHandle, void *data);
+
 AQUA_API_EXPORT void returnFn(void *p_ReturnData,
                               struct ClientReturnInfo *p_ReturnInfo);
+
+AQUA_API_EXPORT void recv(void *data, int32_t returnInfoHandle);
 
 AQUA_API_EXPORT int32_t setCallData(int p_Type, void *p_CallInfo,
                                     uint8_t *p_Data, uint32_t p_Size);
@@ -64,6 +76,10 @@ AQUA_API_EXPORT int32_t setCallData(int p_Type, void *p_CallInfo,
 AQUA_API_EXPORT void aquaInitConnection(struct ClientConnectInfo *p_ConnectInfo,
                                         struct ClientCallInfo *p_CallInfo,
                                         const char *p_ServiceStrId);
+
+AQUA_API_EXPORT void aquaInitConnectionV2(int32_t connectInfoHandle,
+                                          int32_t callInfoHandle,
+                                          const char *serviceStrId);
 
 AQUA_API_EXPORT void
 retriveInitInformation(struct ClientConnectInfo *p_ConnectInfo,

@@ -10,6 +10,7 @@
 #include "call.h"
 #include "commons.h"
 #include "dsp.h"
+#include "info.h"
 #include "install.h"
 #include "log.h"
 #include "platform-types.h"
@@ -18,34 +19,6 @@
 #include "utils.h"
 
 static struct InstallSharedData *installShdata = NULL;
-static struct ServiceConnectInfo connectInfos[32];
-static struct ServiceCallInfo callInfos[32];
-static int32_t currConnHandle = 0;
-static int32_t currCallHandle = 0;
-
-int32_t aquaCreateConnectInfo() {
-    if (currConnHandle == 32) {
-        return (-1);
-    }
-
-    return currConnHandle++;
-}
-
-int32_t aquaCreateCallInfo() {
-    if (currCallHandle == 32) {
-        return (-1);
-    }
-
-    return currCallHandle++;
-}
-
-struct ServiceConnectInfo *getConnectInfo(int32_t p_ConnectInfoHandle) {
-    return &connectInfos[p_ConnectInfoHandle];
-}
-
-struct ServiceCallInfo *getCallInfo(int32_t p_CallInfoHandle) {
-    return &callInfos[p_CallInfoHandle];
-}
 
 void initService() {
     aqua_err_t err;
@@ -244,6 +217,9 @@ void aquaInstallV2(int32_t p_ConnectInfoHandle, int32_t p_CallInfoHandle,
     aqua_err_t err;
     aqua_file_handle_t installShmFd;
     uint8_t bytesnr = SERVICES_NUMBER >> 3;
+    struct ServiceConnectInfo *connectInfo =
+        getConnectInfo(p_ConnectInfoHandle);
+    struct ServiceCallInfo *callInfo = getCallInfo(p_CallInfoHandle);
 
     initService();
 
@@ -362,9 +338,8 @@ spin_lock_unlock:
     installInfo->m_CallQType = p_CallQType;
 
     initializeServiceConnections(installInfo);
-    configureServiceConnectInformation(&connectInfos[p_ConnectInfoHandle],
-                                       installInfo);
-    configureServiceCallInformation(&callInfos[p_CallInfoHandle], installInfo);
+    configureServiceConnectInformation(connectInfo, installInfo);
+    configureServiceCallInformation(callInfo, installInfo);
 }
 
 void receiveCall(void *p_CallData, struct ServiceCallInfo *p_CallInfo) {
@@ -378,7 +353,7 @@ void receiveCall(void *p_CallData, struct ServiceCallInfo *p_CallInfo) {
 
 void receiveCallV2(void *p_CallData, int32_t p_CallInfoHandle) {
     struct CommunicationInfo cInfo;
-    struct ServiceCallInfo *callInfo = &callInfos[p_CallInfoHandle];
+    struct ServiceCallInfo *callInfo = getCallInfo(p_CallInfoHandle);
 
     cInfo.m_Q = &(callInfo->m_Q);
     cInfo.m_Data = p_CallData;

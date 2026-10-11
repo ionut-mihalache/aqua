@@ -110,6 +110,7 @@ struct ConnectionInformation {
         m_RequestResponseQSize;
 
     int32_t m_ConnectionError;
+    int32_t m_ReturnHandle;
     bool m_Connected;
 };
 

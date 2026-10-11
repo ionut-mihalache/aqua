@@ -351,7 +351,7 @@ $benchmark["disconnect"] = measureFnExec(function () use ($ffi, $connectInfoPtr,
     aquaDisconnect($ffi, $connectInfoPtr, $requestInfoPtr);
 });
 
-// print_r($benchmark);
+print_r($benchmark);
 
 $writeToFile = false;
 

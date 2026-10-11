@@ -16,22 +16,18 @@ import queues.DisconnectQueue;
  * struct DisconnectQueue m_DisconnectQ;
  * struct ConnectionInformation *m_Connections;
  * pthread_spinlock_t *m_ConnectLock;
- * int32_t (*m_ReceiveConnectRequest)(struct ServiceReturnInfo *,
- * struct ServiceConnectInfo *);
- * int32_t (*m_ReceiveDisconnectRequest)(struct ServiceConnectInfo *);
  * };
  */
 
-@FieldOrder({ "m_ConnectQ", "m_DisconnectQ", "m_Connections", "m_ConnectLock", "m_ReceiveConnectRequest",
-        "m_ReceiveDisconnectRequest" })
+@FieldOrder({ "m_ConnectQ", "m_DisconnectQ", "m_Connections", "m_ConnectLock" })
 public class ServiceConnectInfo extends Structure {
     public ConnectQueue m_ConnectQ;
     public DisconnectQueue m_DisconnectQ;
     public Pointer m_Connections;
     public Pointer m_ConnectLock;
-    public ReceiveConnectRequest m_ReceiveConnectRequest;
-    public ReceiveConnectRequestV2 m_ReceiveConnectRequestV2;
-    public ReceiveDisconnectRequest m_ReceiveDisconnectRequest;
+    // public ReceiveConnectRequest m_ReceiveConnectRequest;
+    // public ReceiveConnectRequestV2 m_ReceiveConnectRequestV2;
+    // public ReceiveDisconnectRequest m_ReceiveDisconnectRequest;
 
     public ServiceConnectInfo() {
         super();
@@ -52,8 +48,6 @@ public class ServiceConnectInfo extends Structure {
                 + m_ConnectQ.toString(indentation + 1) + ws
                 + m_DisconnectQ.toString(indentation + 1) + ws
                 + "m_Connections: " + m_Connections + ws
-                + "m_ConnectLock: " + m_ConnectLock + ws
-                + "m_ReceiveConnectRequest: " + m_ReceiveConnectRequest + ws
-                + "m_ReceiveDisconnectRequest: " + m_ReceiveDisconnectRequest;
+                + "m_ConnectLock: " + m_ConnectLock;
     }
 }
