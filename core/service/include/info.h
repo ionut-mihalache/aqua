@@ -5,6 +5,8 @@
 
 #include "dsp-service.h"
 
+void initServiceInfo(const char *strId);
+
 int32_t createReturnInfo();
 
 struct ServiceConnectInfo *getConnectInfo(int32_t);

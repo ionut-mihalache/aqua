@@ -87,6 +87,7 @@ void aquaInstall(struct ServiceConnectInfo *p_ConnectInfo,
     uint8_t bytesnr = SERVICES_NUMBER >> 3;
 
     initService();
+    initServiceInfo(p_StrId);
 
     aqua_size_t installArenaSize = sf_GetInstallArenaSize();
 
