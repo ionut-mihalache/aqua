@@ -2,6 +2,10 @@ package main;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -103,12 +107,12 @@ class ProcessCallThread1 implements Runnable {
         try {
             byte[] iiaData = Arrays.copyOfRange(m_CallData.getCallInfo(), 0, m_CallData.getMetadata().m_Size);
 
-            // Path xsltPath = Paths.get("transformations/transform_version_v7.xsl");
-            // byte[] xsltData = Files.readAllBytes(xsltPath);
+            Path xsltPath = Paths.get("transformations/transform_version_v7.xsl");
+            byte[] xsltData = Files.readAllBytes(xsltPath);
 
-            // String result = mf_GetXmlTransformed(iiaData, xsltData);
+            String result = mf_GetXmlTransformed(iiaData, xsltData);
 
-            // byte[] resByteArr = result.getBytes(StandardCharsets.UTF_8);
+            byte[] resByteArr = result.getBytes(StandardCharsets.UTF_8);
 
             // ServiceReturnInfo serviceReturnInfo =
             // m_Connections.get(m_CallData.getMetadata().m_ConnId);
@@ -152,10 +156,11 @@ class ProcessCallThread1 implements Runnable {
                 return;
             }
 
-            // System.arraycopy(resByteArr, 0, returnData.getCallInfo(), 0,
-            // resByteArr.length);
-            // returnData.getMetadata().m_Size = resByteArr.length;
-            System.arraycopy(iiaData, 0, returnData.getCallInfo(), 0, m_CallData.getMetadata().m_Size);
+            System.arraycopy(resByteArr, 0, returnData.getCallInfo(), 0,
+                    resByteArr.length);
+            returnData.getMetadata().m_Size = resByteArr.length;
+            // System.arraycopy(iiaData, 0, returnData.getCallInfo(), 0,
+            // m_CallData.getMetadata().m_Size);
             returnData.getMetadata().m_ConnId = m_CallData.getMetadata().m_ConnId;
 
             returnData.write();
@@ -178,25 +183,24 @@ class ProcessCallThread1 implements Runnable {
      * @param xsltBytes The content of the xslt file
      * @return A xml useful to compute the hash code
      */
-    // private String mf_GetXmlTransformed(byte[] xmlBytes, byte[] xsltBytes) throws
-    // Exception {
-    // DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-    // dbf.setNamespaceAware(true);
+    private String mf_GetXmlTransformed(byte[] xmlBytes, byte[] xsltBytes) throws Exception {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setNamespaceAware(true);
 
-    // DocumentBuilder db = dbf.newDocumentBuilder();
-    // Document document = db.parse(new ByteArrayInputStream(xmlBytes));
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        Document document = db.parse(new ByteArrayInputStream(xmlBytes));
 
-    // System.setProperty("javax.xml.transform.TransformerFactory",
-    // "net.sf.saxon.TransformerFactoryImpl");
-    // TransformerFactory transformerFactory = TransformerFactory.newInstance();
-    // Transformer transformer = transformerFactory
-    // .newTransformer(new StreamSource(new ByteArrayInputStream(xsltBytes)));
-    // ByteArrayOutputStream output = new ByteArrayOutputStream();
+        System.setProperty("javax.xml.transform.TransformerFactory",
+                "net.sf.saxon.TransformerFactoryImpl");
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory
+                .newTransformer(new StreamSource(new ByteArrayInputStream(xsltBytes)));
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-    // transformer.transform(new DOMSource(document), new StreamResult(output));
+        transformer.transform(new DOMSource(document), new StreamResult(output));
 
-    // return output.toString();
-    // }
+        return output.toString();
+    }
 }
 
 public class Main {

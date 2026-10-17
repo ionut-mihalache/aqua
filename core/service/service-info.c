@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
-#include <inttypes.h>
 #include "aqua-sync.h"
 #include "aqua-types.h"
 #include "commons.h"
 #include "dsp-service.h"
 #include "dsp.h"
 #include "platform.h"
-#include <pthread.h>
+
+#include <inttypes.h>
 #include <stdio.h>
 
 #define SERVICE_INFO_MAX 8 // maybe will be defined in the configuration file

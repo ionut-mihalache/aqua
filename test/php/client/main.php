@@ -27,8 +27,7 @@ $qType = match (strtoupper($arg)) {
     default => throw new InvalidArgumentException("Unknown queue type: $arg"),
 };
 
-$ffi = FFI::cdef(
-    "
+$ffi = FFI::cdef("
     struct CallMetadata {
         uint32_t m_Size;
         uint32_t m_ConnId;
@@ -42,18 +41,6 @@ $ffi = FFI::cdef(
         uint32_t *m_PushIdxPtr;
         uint32_t *m_PopIdxPtr;
         uint32_t *m_Size;
-    };
-
-    struct ConnectResponseInformation {
-        char m_ReturnQName[256];
-        char m_ReturnRequestQName[256];
-        uint32_t m_Id;
-    };
-
-    struct ConnectResponseQueue {
-        struct DSPQueueMetadata m_Metadata;
-        struct ConnectResponseInformation *m_Data;
-        uint32_t m_MaxSize;
     };
 
     struct SMBCall {
@@ -113,102 +100,93 @@ $ffi = FFI::cdef(
         int m_Type;
     };
 
-    struct ClientCallInfo {
-        struct DSPQueue m_Q;
+    int32_t aquaCreateClientConnectInfo();
+    int32_t aquaCreateClientCallInfo();
+    int32_t aquaCreateClientReturnInfo();
+    int32_t aquaCreateClientConnRequestInfo();
 
-        int32_t (*m_CallFn)(void *);
-    };
+    void aquaDestroyClientConnectInfo(int32_t);
+    void aquaDestroyClientCallInfo(int32_t);
+    void aquaDestroyClientReturnInfo(int32_t);
+    void aquaDestroyClientConnRequestInfo(int32_t);
 
-    struct ClientReturnInfo {
-        struct ConnectResponseQueue m_ResponseQueue;
-        struct DSPQueue m_Q;
-        struct ConnectResponseInformation m_ConnectResponseInformation;
+    void aquaSetClientConnRequestInfo(int32_t connRequestHandle, const char *returnQName, uint32_t returnQSize, const char *reqResponseQName, uint32_t responseQSize, enum QType qType);
 
-        int32_t (*m_ReturnFn)(void *);
-        int m_QType;
-    };
+    void aquaConnectV2(int32_t returnInfoHandle, int32_t connectInfoHandle, int32_t connReqInfoHandle);
 
-    struct ClientConnectRequestInformation {
-        char m_ReturnQName[256];
-        char m_RequestResponseQName[256];
+    void aquaDisconnectV2(int32_t connectInfoHandle, int32_t returnInfoHandle);
 
-        uint32_t m_ReturnQSize;
-        uint32_t m_ResponseQSize;
-        int m_QType;
-    };
+    void send(int32_t callInfoHandle, void *data);
 
-    struct ClientConnectInfo {
-        struct ConnectQueue m_ConnectQ;
-        struct DisconnectQueue m_DisconnectQ;
-        struct ConnectionInformation *m_Connections;
-        void *m_ConnectLock;
-        int32_t (*m_SendConnectRequest)(struct ClientReturnInfo *,
-                                        struct ClientConnectInfo *,
-                                        struct ClientConnectRequestInformation *);
-        int32_t (*m_SendDisconnectRequest)(struct ClientConnectInfo *);
-    };
-
-    void aquaConnect(struct ClientReturnInfo *p_ReturnInfo,
-                     struct ClientConnectInfo *p_ConnectInfo,
-                     struct ClientConnectRequestInformation *p_RequestInfo);
-
-    void aquaDisconnect(struct ClientConnectInfo *p_ConnectInfo, struct ConnectResponseInformation *p_requestResponseInfo);
-
-    void callFn(struct ClientCallInfo *p_CallInfo, void *p_CallData);
-
-    void returnFn(void *p_ReturnData, struct ClientReturnInfo *p_ReturnInfo);
-
-    void aquaInitConnection(struct ClientConnectInfo *p_ConnectInfo,
-                struct ClientCallInfo *p_CallInfo, const char *p_ServiceStrId);
+    void recv(void *data, int32_t returnInfoHandle);
 
     int32_t setCallData(int p_Type, void *p_CallInfo, uint8_t *p_Data, uint32_t p_Size);
+    int32_t setCallDataV2(int p_Type, void *p_CallInfo, uint8_t *p_Data, uint32_t p_Size, int32_t returnInfoHandle);
 
-    struct ConnectResponseInformation *getConnectResponse(struct ClientReturnInfo *p_ReturnInfo);
-",
-    "/root/aqua/build/lib/shared/libaqua.so"
-);
+    void aquaInitConnectionV2(int32_t connectInfoHandle, int32_t callInfoHandle, const char *serviceStrId);
+", "/root/aqua/build/lib/shared/libaqua.so");
 
-function aquaInitConnection($p_Ffi, $connectInfoPtr, $callInfoPtr, $serviceStrId)
+function aquaCreateClientConnectInfo(FFI $p_Ffi): int
 {
-    $p_Ffi->aquaInitConnection($connectInfoPtr, $callInfoPtr, $serviceStrId);
+    return $p_Ffi->aquaCreateClientConnectInfo();
 }
 
-function aquaConnect($p_Ffi, $returnInfoPtr, $connectInfoPtr, $requestInfoPtr)
+function aquaCreateClientCallInfo(FFI $p_Ffi): int
 {
-    $p_Ffi->aquaConnect($returnInfoPtr, $connectInfoPtr, $requestInfoPtr);
+    return $p_Ffi->aquaCreateClientCallInfo();
 }
 
-function setCallData($p_Ffi, $p_Type, $p_CallDataPtr, $p_DataBuffer, $p_Size)
+function aquaCreateClientReturnInfo(FFI $p_Ffi): int
 {
-    // echo "Prepare call information\n";
+    return $p_Ffi->aquaCreateClientReturnInfo();
+}
+
+function aquaCreateClientConnRequestInfo(FFI $p_Ffi): int
+{
+    return $p_Ffi->aquaCreateClientConnRequestInfo();
+}
+
+function aquaSetClientConnRequestInfo(FFI $p_Ffi, int $connRequestHandle, string $returnQName, int $returnQSize, string $reqResponseQName, int $responseQSize, int $qType)
+{
+    $p_Ffi->aquaSetClientConnRequestInfo($connRequestHandle, $returnQName, $returnQSize, $reqResponseQName, $responseQSize, $qType);
+}
+
+function aquaInitConnectionV2(FFI $p_Ffi, int $connectInfoHandle, int $callInfoHandle, string $serviceStrId)
+{
+    $p_Ffi->aquaInitConnectionV2($connectInfoHandle, $callInfoHandle, $serviceStrId);
+}
+
+function aquaConnectV2(FFI $p_Ffi, int $returnInfoHandle, int $connectInfoHandle, int $connReqInfoHandle)
+{
+    $p_Ffi->aquaConnectV2($returnInfoHandle, $connectInfoHandle, $connReqInfoHandle);
+}
+
+function setCallData(FFI $p_Ffi, int $p_Type, $p_CallDataPtr, $p_DataBuffer, int $p_Size)
+{
     return $p_Ffi->setCallData($p_Type, $p_CallDataPtr, $p_DataBuffer, $p_Size);
 }
 
-function callFn($p_Ffi, $p_CallInfoPtr, $p_CallDataPtr)
+function setCallDataV2(FFI $p_Ffi, int $p_Type, $p_CallDataPtr, $p_DataBuffer, int $p_Size, int $returnInfoHandle): int
 {
-    // echo "Send call request\n";
-    $p_Ffi->callFn($p_CallInfoPtr, $p_CallDataPtr);
+    return $p_Ffi->setCallDataV2($p_Type, $p_CallDataPtr, $p_DataBuffer, $p_Size, $returnInfoHandle);
 }
 
-function returnQMB($p_Ffi, $returnDataPtr, $returnInfoPtr)
+function send(FFI $p_Ffi, int $callInfoHandle, $dataPtr)
 {
-    // echo "Receive call request\n";
-    $p_Ffi->returnQMB($returnDataPtr, $returnInfoPtr);
+    $p_Ffi->send($callInfoHandle, $dataPtr);
 }
 
-function returnFn($p_Ffi, $p_ReturnDataPtr, $p_ReturnInfoPtr)
+function recv(FFI $p_Ffi, $dataPtr, int $returnInfoHandle)
 {
-    // echo "Returned data\n";
-    $p_Ffi->returnFn($p_ReturnDataPtr, $p_ReturnInfoPtr);
+    $p_Ffi->recv($dataPtr, $returnInfoHandle);
 }
 
-function aquaDisconnect($p_Ffi, $connectInfoPtr, $requestInfoPtr)
+function aquaDisconnectV2($p_Ffi, int $connectInfoHandle, int $returnInfoHandle)
 {
-    // echo "Send disconnect request\n";
-    $p_Ffi->aquaDisconnect($connectInfoPtr, $requestInfoPtr);
+    $p_Ffi->aquaDisconnectV2($connectInfoHandle, $returnInfoHandle);
 }
 
-function measureFnExec($p_Fn): float
+function measureFnExec(callable $p_Fn): float
 {
     $start = microtime(true);
 
@@ -231,7 +209,7 @@ function measureFnExec($p_Fn): float
     // return $utime + $stime; // CPU real microseconds
 }
 
-function getDataPtr($p_Ffi, $p_Type)
+function getDataPtr($p_Ffi, int $p_Type)
 {
     $data = null;
 
@@ -281,41 +259,53 @@ function getCallDataPtr($p_Ffi, $p_CallInfo)
 
 $benchmark = [];
 
-$connectInfo = $ffi->new("struct ClientConnectInfo");
-$connectInfoPtr = FFI::addr($connectInfo);
+$connectInfoHandle = aquaCreateClientConnectInfo($ffi);
+$callInfoHandle = aquaCreateClientCallInfo($ffi);
 
-$callInfo = $ffi->new("struct ClientCallInfo");
-$callInfoPtr = FFI::addr($callInfo);
+// $connectInfo = $ffi->new("struct ClientConnectInfo");
+// $connectInfoPtr = FFI::addr($connectInfo);
 
-aquaInitConnection($ffi, $connectInfoPtr, $callInfoPtr, "xslt-transformation");
+// $callInfo = $ffi->new("struct ClientCallInfo");
+// $callInfoPtr = FFI::addr($callInfo);
 
-$returnInfo = $ffi->new("struct ClientReturnInfo");
-$returnInfoPtr = FFI::addr($returnInfo);
+// aquaInitConnection($ffi, $connectInfoPtr, $callInfoPtr, "xslt-transformation");
+aquaInitConnectionV2($ffi, $connectInfoHandle, $callInfoHandle, "xslt-transformation");
 
-$requestInfo = $ffi->new("struct ClientConnectRequestInformation");
+// $returnInfo = $ffi->new("struct ClientReturnInfo");
+// $returnInfoPtr = FFI::addr($returnInfo);
+$returnInfoHandle = aquaCreateClientReturnInfo($ffi);
+
+// $requestInfo = $ffi->new("struct ClientConnectRequestInformation");
+$connReqInfoHandle = aquaCreateClientConnRequestInfo($ffi);
 
 $uniqueId = uniqid("", true);
 
 $returnQName = "return-q-" . $uniqueId;
-FFI::memset($requestInfo->m_ReturnQName, 0, 256);
-FFI::memcpy($requestInfo->m_ReturnQName, $returnQName, strlen($returnQName));
-$requestInfo->m_ReturnQSize = 1;
+// FFI::memset($requestInfo->m_ReturnQName, 0, 256);
+// FFI::memcpy($requestInfo->m_ReturnQName, $returnQName, strlen($returnQName));
+// $requestInfo->m_ReturnQSize = 1;
 
 $responseQName = "response-q-" . $uniqueId;
-FFI::memset($requestInfo->m_RequestResponseQName, 0, 256);
-FFI::memcpy($requestInfo->m_RequestResponseQName, $responseQName, strlen($responseQName));
-$requestInfo->m_ResponseQSize = 1;
-$requestInfo->m_QType = $qType;
+// FFI::memset($requestInfo->m_RequestResponseQName, 0, 256);
+// FFI::memcpy($requestInfo->m_RequestResponseQName, $responseQName, strlen($responseQName));
+// $requestInfo->m_ResponseQSize = 1;
 
-$requestInfoPtr = FFI::addr($requestInfo);
+// $requestInfo->m_QType = $qType;
 
-$benchmark["connect"] = measureFnExec(function () use ($ffi, $returnInfoPtr, $connectInfoPtr, $requestInfoPtr) {
-    aquaConnect($ffi, $returnInfoPtr, $connectInfoPtr, $requestInfoPtr);
+// $requestInfoPtr = FFI::addr($requestInfo);
+aquaSetClientConnRequestInfo($ffi, $connReqInfoHandle, $returnQName, 1, $responseQName, 1, $qType);
+
+// $benchmark["connect"] = measureFnExec(function () use ($ffi, $returnInfoPtr, $connectInfoPtr, $requestInfoPtr) {
+//     aquaConnect($ffi, $returnInfoPtr, $connectInfoPtr, $requestInfoPtr);
+// });
+$benchmark["connect"] = measureFnExec(function () use ($ffi, $returnInfoHandle, $connectInfoHandle, $connReqInfoHandle) {
+    aquaConnectV2($ffi, $returnInfoHandle, $connectInfoHandle, $connReqInfoHandle);
 });
 
-[$callData, $callDataPtr] = getCallDataPtr($ffi, $callInfo);
+// [$callData, $callDataPtr] = getCallDataPtr($ffi, $callInfo);
+[$callData, $callDataPtr] = getDataPtr($ffi, $qType);
 
-$callData->m_Metadata->m_ConnId = $returnInfo->m_ConnectResponseInformation->m_Id;
+// $callData->m_Metadata->m_ConnId = $returnInfo->m_ConnectResponseInformation->m_Id;
 
 $iiaData = '<?xml version="1.0" encoding="UTF-8"?>
 
@@ -326,29 +316,41 @@ for ($i = 0; $i < strlen($iiaData); ++$i) {
     $iiaDataBuffer[$i] = ord($iiaData[$i]);
 }
 
-setCallData($ffi, $qType, $callDataPtr, $iiaDataBuffer, strlen($iiaData));
+// setCallData($ffi, $qType, $callDataPtr, $iiaDataBuffer, strlen($iiaData));
+setCallDataV2($ffi, $qType, $callDataPtr, $iiaDataBuffer, strlen($iiaData), $returnInfoHandle);
 
-$benchmark["call"] = measureFnExec(function () use ($ffi, $callInfoPtr, $callDataPtr) {
-    callFn($ffi, $callInfoPtr, $callDataPtr);
+// $benchmark["call"] = measureFnExec(function () use ($ffi, $callInfoPtr, $callDataPtr) {
+//     callFn($ffi, $callInfoPtr, $callDataPtr);
+// });
+
+$benchmark["call"] = measureFnExec(function () use ($ffi, $callInfoHandle, $callDataPtr) {
+    send($ffi, $callInfoHandle, $callDataPtr);
 });
+
 
 [$returnData, $returnDataPtr] = getDataPtr($ffi, $qType);
 
-$benchmark["return"] = measureFnExec(function () use ($ffi, $returnDataPtr, $returnInfoPtr) {
-    returnFn($ffi, $returnDataPtr, $returnInfoPtr);
+// $benchmark["return"] = measureFnExec(function () use ($ffi, $returnDataPtr, $returnInfoPtr) {
+//     returnFn($ffi, $returnDataPtr, $returnInfoPtr);
+// });
+$benchmark["return"] = measureFnExec(function () use ($ffi, $returnDataPtr, $returnInfoHandle) {
+    recv($ffi, $returnDataPtr, $returnInfoHandle);
 });
 
-// $result = "";
-// for ($i = 0; $i < $returnData->m_Metadata->m_Size; ++$i) {
-//     $result = $result . chr($returnData->m_CallInfo[$i]);
-// }
+$result = "";
+for ($i = 0; $i < $returnData->m_Metadata->m_Size; ++$i) {
+    $result = $result . chr($returnData->m_CallInfo[$i]);
+}
 
-// echo $result . "\n";
+echo $result . "\n";
 
-$requestInfoPtr = FFI::addr($returnInfo->m_ConnectResponseInformation);
+// $requestInfoPtr = FFI::addr($returnInfo->m_ConnectResponseInformation);
 
-$benchmark["disconnect"] = measureFnExec(function () use ($ffi, $connectInfoPtr, $requestInfoPtr) {
-    aquaDisconnect($ffi, $connectInfoPtr, $requestInfoPtr);
+// $benchmark["disconnect"] = measureFnExec(function () use ($ffi, $connectInfoPtr, $requestInfoPtr) {
+//     aquaDisconnect($ffi, $connectInfoPtr, $requestInfoPtr);
+// });
+$benchmark["disconnect"] = measureFnExec(function () use ($ffi, $connectInfoHandle, $returnInfoHandle) {
+    aquaDisconnectV2($ffi, $connectInfoHandle, $returnInfoHandle);
 });
 
 print_r($benchmark);

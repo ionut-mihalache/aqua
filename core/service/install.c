@@ -6,7 +6,6 @@
 #include "aqua-sync.h"
 #include "aqua-types.h"
 #include "commons.h"
-#include "info.h"
 #include "install.h"
 #include "dsp-service.h"
 #include "dsp.h"
@@ -15,6 +14,7 @@
 #include "platform-types.h"
 #include "platform.h"
 #include "return.h"
+#include "service-info.h"
 #include "system-values.h"
 #include "utils.h"
 

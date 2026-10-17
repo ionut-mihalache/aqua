@@ -3,9 +3,9 @@
 #ifndef __AQUA_SYNC_H_
 #define __AQUA_SYNC_H_
 
-#include <stdalign.h>
-
 #include "aqua-types.h"
+
+#include <stdalign.h>
 
 enum : unsigned int {
     AQUA_CONN_MUTEX_TAG,
@@ -21,6 +21,7 @@ enum : unsigned int {
     AQUA_RETURN_MUTEX_TAG,
     AQUA_REQ_RESP_MUTEX_TAG,
     AQUA_SERVICE_INFO_MUTEX_TAG,
+    AQUA_CLIENT_INFO_MUTEX_TAG,
     AQUA_RET_FULL_COND_TAG,
     AQUA_RET_EMPTY_COND_TAG,
     AQUA_REQ_RESP_FULL_COND_TAG,

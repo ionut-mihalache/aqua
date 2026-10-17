@@ -21,10 +21,11 @@ set(CORE_SOURCES
         core/service/install.c
         core/service/call.c
         core/service/return.c
-        core/service/info.c
+        core/service/service-info.c
         core/client/dsp-client.c
         core/client/client-connect.c
         core/client/client-call.c
+        core/client/client-info.c
         utils/commons.c
 )
 

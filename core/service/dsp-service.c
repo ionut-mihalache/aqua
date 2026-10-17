@@ -2,21 +2,21 @@
 
 #include "dsp-service.h"
 
-#include <stdbool.h>
-#include <string.h>
-
 #include "aqua-sync.h"
 #include "aqua-types.h"
 #include "call.h"
 #include "commons.h"
 #include "dsp.h"
-#include "info.h"
 #include "install.h"
 #include "log.h"
 #include "platform-types.h"
 #include "platform.h"
+#include "service-info.h"
 #include "system-values.h"
 #include "utils.h"
+
+#include <stdbool.h>
+#include <string.h>
 
 static struct InstallSharedData *installShdata = NULL;
 
