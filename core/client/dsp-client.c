@@ -75,6 +75,119 @@ void send(int32_t callInfoHandle, void *data) {
     callInfo->m_CallFn(&info);
 }
 
+void sendV2(int32_t callInfoHandle, int32_t returnInfoHandle, void *data,
+            uint32_t size) {
+    struct CommunicationInfo info;
+    struct ClientCallInfo *callInfo = getClientCallInfo(callInfoHandle);
+    struct ClientReturnInfo *returnInfo = getClientReturnInfo(returnInfoHandle);
+
+    LOGF("Send queue type: %d\n", callInfo->m_Q.m_Type);
+    info.m_Q = &(callInfo->m_Q);
+
+    switch (callInfo->m_Q.m_Type) {
+    case SMBQ: {
+        struct SMBCall callData;
+        LOG("Copying data.\n");
+        memcpy(callData.m_CallInfo, data, size);
+        LOG("Copied data.\n");
+        callData.m_Metadata.m_Size = size;
+        callData.m_Metadata.m_ConnId =
+            returnInfo->m_ConnectResponseInformation.m_Id;
+        info.m_Data = &callData;
+
+        callInfo->m_CallFn(&info);
+
+        break;
+    }
+    case EMBQ: {
+        struct EMBCall callData;
+        memcpy(callData.m_CallInfo, data, size);
+        callData.m_Metadata.m_Size = size;
+        callData.m_Metadata.m_ConnId =
+            returnInfo->m_ConnectResponseInformation.m_Id;
+        info.m_Data = &callData;
+
+        callInfo->m_CallFn(&info);
+
+        break;
+    }
+    case QMBQ: {
+        struct QMBCall callData;
+        memcpy(callData.m_CallInfo, data, size);
+        callData.m_Metadata.m_Size = size;
+        callData.m_Metadata.m_ConnId =
+            returnInfo->m_ConnectResponseInformation.m_Id;
+        info.m_Data = &callData;
+
+        callInfo->m_CallFn(&info);
+
+        break;
+    }
+    case HMBQ: {
+        struct HMBCall callData;
+        memcpy(callData.m_CallInfo, data, size);
+        callData.m_Metadata.m_Size = size;
+        callData.m_Metadata.m_ConnId =
+            returnInfo->m_ConnectResponseInformation.m_Id;
+        info.m_Data = &callData;
+
+        callInfo->m_CallFn(&info);
+
+        break;
+    }
+    case MBQ: {
+        struct MBCall callData;
+        memcpy(callData.m_CallInfo, data, size);
+        callData.m_Metadata.m_Size = size;
+        callData.m_Metadata.m_ConnId =
+            returnInfo->m_ConnectResponseInformation.m_Id;
+        info.m_Data = &callData;
+
+        callInfo->m_CallFn(&info);
+
+        break;
+    }
+    case DMBQ: {
+        struct DMBCall callData;
+        memcpy(callData.m_CallInfo, data, size);
+        callData.m_Metadata.m_Size = size;
+        callData.m_Metadata.m_ConnId =
+            returnInfo->m_ConnectResponseInformation.m_Id;
+        info.m_Data = &callData;
+
+        callInfo->m_CallFn(&info);
+
+        break;
+    }
+    case HGBQ: {
+        struct HGBCall callData;
+        memcpy(callData.m_CallInfo, data, size);
+        callData.m_Metadata.m_Size = size;
+        callData.m_Metadata.m_ConnId =
+            returnInfo->m_ConnectResponseInformation.m_Id;
+        info.m_Data = &callData;
+
+        callInfo->m_CallFn(&info);
+
+        break;
+    }
+    case GBQ: {
+        struct GBCall callData;
+        memcpy(callData.m_CallInfo, data, size);
+        callData.m_Metadata.m_Size = size;
+        callData.m_Metadata.m_ConnId =
+            returnInfo->m_ConnectResponseInformation.m_Id;
+        info.m_Data = &callData;
+
+        callInfo->m_CallFn(&info);
+
+        break;
+    }
+    default:
+        DIE(true, "Type not recognized");
+    }
+}
+
 AQUA_API_EXPORT void returnFn(void *p_ReturnData,
                               struct ClientReturnInfo *p_ReturnInfo) {
     struct CommunicationInfo cInfo;

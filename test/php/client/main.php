@@ -118,6 +118,8 @@ $ffi = FFI::cdef("
 
     void send(int32_t callInfoHandle, void *data);
 
+    void sendV2(int32_t callInfoHandle, int32_t returnInfoHandle, void *data, uint32_t size);
+
     void recv(void *data, int32_t returnInfoHandle);
 
     int32_t setCallData(int p_Type, void *p_CallInfo, uint8_t *p_Data, uint32_t p_Size);
@@ -174,6 +176,11 @@ function setCallDataV2(FFI $p_Ffi, int $p_Type, $p_CallDataPtr, $p_DataBuffer, i
 function send(FFI $p_Ffi, int $callInfoHandle, $dataPtr)
 {
     $p_Ffi->send($callInfoHandle, $dataPtr);
+}
+
+function sendV2(FFI $p_Ffi, int $callInfoHandle, int $returnInfoHandle, $data, int $size)
+{
+    $p_Ffi->sendV2($callInfoHandle, $returnInfoHandle, $data, $size);
 }
 
 function recv(FFI $p_Ffi, $dataPtr, int $returnInfoHandle)
@@ -252,10 +259,10 @@ function getDataPtr($p_Ffi, int $p_Type)
     return [null, null];
 }
 
-function getCallDataPtr($p_Ffi, $p_CallInfo)
-{
-    return getDataPtr($p_Ffi, $p_CallInfo->m_Q->m_Type);
-}
+// function getCallDataPtr($p_Ffi, $p_CallInfo)
+// {
+//     return getDataPtr($p_Ffi, $p_CallInfo->m_Q->m_Type);
+// }
 
 $benchmark = [];
 
@@ -303,7 +310,7 @@ $benchmark["connect"] = measureFnExec(function () use ($ffi, $returnInfoHandle, 
 });
 
 // [$callData, $callDataPtr] = getCallDataPtr($ffi, $callInfo);
-[$callData, $callDataPtr] = getDataPtr($ffi, $qType);
+// [$callData, $callDataPtr] = getDataPtr($ffi, $qType);
 
 // $callData->m_Metadata->m_ConnId = $returnInfo->m_ConnectResponseInformation->m_Id;
 
@@ -311,20 +318,22 @@ $iiaData = '<?xml version="1.0" encoding="UTF-8"?>
 
 <iias-get-response xmlns="https://github.com/erasmus-without-paper/ewp-specs-api-iias/blob/stable-v7/endpoints/get-response.xsd" xmlns:c="https://github.com/erasmus-without-paper/ewp-specs-types-contact/tree/stable-v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="&#10;        https://github.com/erasmus-without-paper/ewp-specs-api-iias/blob/stable-v7/endpoints/get-response.xsd&#10;        https://raw.githubusercontent.com/erasmus-without-paper/ewp-specs-api-iias/stable-v7/endpoints/get-response.xsd&#10;    "><iia><partner><hei-id>upb.ro</hei-id><iia-id>9e01bc4f-f607-43c1-881a-8329c3e26062</iia-id></partner><partner><hei-id>brussels.uni-foundation.eu</hei-id><iia-id>9e01bc4f-f607-43c1-881a-8329c3e26063</iia-id><signing-contact><c:contact-name>Test contact</c:contact-name><c:email>test.contact@test.ro</c:email></signing-contact></partner><in-effect>false</in-effect><cooperation-conditions><student-studies-mobility-spec><sending-hei-id>brussels.uni-foundation.eu</sending-hei-id><sending-ounit-id>5</sending-ounit-id><receiving-hei-id>upb.ro</receiving-hei-id><receiving-ounit-id>ef711143-b1ab-4412-8493-3476d5ff962f</receiving-ounit-id><receiving-first-academic-year-id>2026/2027</receiving-first-academic-year-id><receiving-last-academic-year-id>2029/2030</receiving-last-academic-year-id><mobilities-per-year>2</mobilities-per-year><recommended-language-skill><language>is</language><cefr-level>B2</cefr-level><subject-area><isced-f-code>0007</isced-f-code><isced-clarification>Engineering, manufacturing and construction</isced-clarification></subject-area></recommended-language-skill><subject-area><isced-f-code>0819</isced-f-code><isced-clarification>Agriculture, not elsewhere classified</isced-clarification></subject-area><blended>false</blended></student-studies-mobility-spec></cooperation-conditions></iia></iias-get-response>';
 
-$iiaDataBuffer = FFI::new("uint8_t[" . (strlen($iiaData)) . "]");
-for ($i = 0; $i < strlen($iiaData); ++$i) {
-    $iiaDataBuffer[$i] = ord($iiaData[$i]);
-}
+// $iiaDataBuffer = FFI::new("uint8_t[" . (strlen($iiaData)) . "]");
+// for ($i = 0; $i < strlen($iiaData); ++$i) {
+//     $iiaDataBuffer[$i] = ord($iiaData[$i]);
+// }
 
 // setCallData($ffi, $qType, $callDataPtr, $iiaDataBuffer, strlen($iiaData));
-setCallDataV2($ffi, $qType, $callDataPtr, $iiaDataBuffer, strlen($iiaData), $returnInfoHandle);
+// setCallDataV2($ffi, $qType, $callDataPtr, $iiaDataBuffer, strlen($iiaData), $returnInfoHandle);
 
 // $benchmark["call"] = measureFnExec(function () use ($ffi, $callInfoPtr, $callDataPtr) {
 //     callFn($ffi, $callInfoPtr, $callDataPtr);
 // });
 
-$benchmark["call"] = measureFnExec(function () use ($ffi, $callInfoHandle, $callDataPtr) {
-    send($ffi, $callInfoHandle, $callDataPtr);
+$benchmark["call"] = measureFnExec(function () use ($ffi, $callInfoHandle, $returnInfoHandle, $iiaData) {
+    // send($ffi, $callInfoHandle, $callDataPtr);
+    echo "Sending for " . $callInfoHandle . ' ' . $returnInfoHandle . ' ' . strlen($iiaData) . "\n";
+    sendV2($ffi, $callInfoHandle, $returnInfoHandle, $iiaData, strlen($iiaData));
 });
 
 
