@@ -42,8 +42,9 @@ AQUA_API_EXPORT void aquaDisconnect(int32_t connectInfoHandle,
     aquaDestroyClientReturnInfo(returnInfoHandle);
 }
 
-AQUA_API_EXPORT void send(int32_t callInfoHandle, int32_t returnInfoHandle,
-                          void *data, uint32_t size) {
+AQUA_API_EXPORT void aquaClientSend(int32_t callInfoHandle,
+                                    int32_t returnInfoHandle, void *data,
+                                    uint32_t size) {
     struct ClientCommunicationInfo info;
     struct ClientCallInfo *callInfo = getClientCallInfo(callInfoHandle);
     struct ClientReturnInfo *returnInfo = getClientReturnInfo(returnInfoHandle);
@@ -55,7 +56,7 @@ AQUA_API_EXPORT void send(int32_t callInfoHandle, int32_t returnInfoHandle,
     callInfo->m_CallFn(&info);
 }
 
-AQUA_API_EXPORT void recv(void *data, int32_t returnInfoHandle) {
+AQUA_API_EXPORT void aquaClientRecv(void *data, int32_t returnInfoHandle) {
     struct CommunicationInfo info;
     struct ClientReturnInfo *returnInfo = getClientReturnInfo(returnInfoHandle);
 
@@ -95,9 +96,9 @@ static struct InstallInformation *sf_GetService(struct InstallInfo *info,
                                          sf_GetServiceOff(i));
 }
 
-AQUA_API_EXPORT void aquaInitConnection(int32_t connectInfoHandle,
-                                        int32_t callInfoHandle,
-                                        const char *serviceStrId) {
+AQUA_API_EXPORT void aquaInitClientConnection(int32_t connectInfoHandle,
+                                              int32_t callInfoHandle,
+                                              const char *serviceStrId) {
     int rc;
     aqua_file_handle_t installShmFd;
     aqua_err_t err;

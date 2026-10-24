@@ -39,11 +39,11 @@ $ffi = FFI::cdef("
 
     void aquaDisconnect(int32_t connectInfoHandle, int32_t returnInfoHandle);
 
-    void send(int32_t callInfoHandle, int32_t returnInfoHandle, void *data, uint32_t size);
+    void aquaClientSend(int32_t callInfoHandle, int32_t returnInfoHandle, void *data, uint32_t size);
 
-    void recv(void *data, int32_t returnInfoHandle);
+    void aquaClientRecv(void *data, int32_t returnInfoHandle);
 
-    void aquaInitConnection(int32_t connectInfoHandle, int32_t callInfoHandle, const char *serviceStrId);
+    void aquaInitClientConnection(int32_t connectInfoHandle, int32_t callInfoHandle, const char *serviceStrId);
 ", "/root/aqua/build/lib/shared/libaqua.so");
 
 function aquaCreateClientConnectInfo(FFI $p_Ffi): int
@@ -73,7 +73,7 @@ function aquaSetClientConnRequestInfo(FFI $p_Ffi, int $connRequestHandle, string
 
 function aquaInitConnection(FFI $p_Ffi, int $connectInfoHandle, int $callInfoHandle, string $serviceStrId)
 {
-    $p_Ffi->aquaInitConnection($connectInfoHandle, $callInfoHandle, $serviceStrId);
+    $p_Ffi->aquaInitClientConnection($connectInfoHandle, $callInfoHandle, $serviceStrId);
 }
 
 function aquaConnect(FFI $p_Ffi, int $returnInfoHandle, int $connectInfoHandle, int $connReqInfoHandle)
@@ -83,12 +83,12 @@ function aquaConnect(FFI $p_Ffi, int $returnInfoHandle, int $connectInfoHandle, 
 
 function send(FFI $p_Ffi, int $callInfoHandle, int $returnInfoHandle, $data, int $size)
 {
-    $p_Ffi->send($callInfoHandle, $returnInfoHandle, $data, $size);
+    $p_Ffi->aquaClientSend($callInfoHandle, $returnInfoHandle, $data, $size);
 }
 
 function recv(FFI $p_Ffi, $dataPtr, int $returnInfoHandle)
 {
-    $p_Ffi->recv($dataPtr, $returnInfoHandle);
+    $p_Ffi->aquaClientRecv($dataPtr, $returnInfoHandle);
 }
 
 function aquaDisconnect($p_Ffi, int $connectInfoHandle, int $returnInfoHandle)

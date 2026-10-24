@@ -4,8 +4,8 @@
 #define __DSP_SERVICE_H
 
 #include "aqua-sync.h"
-#include "platform-types.h"
 #include "dsp.h"
+#include "platform-types.h"
 
 #define INSTALL_SHD "/install-shared-data"
 
@@ -45,8 +45,8 @@ struct ServiceConnectInfo {
 
 void initService();
 
-AQUA_API_EXPORT int32_t aquaCreateConnectInfo();
-AQUA_API_EXPORT int32_t aquaCreateCallInfo();
+AQUA_API_EXPORT int32_t aquaCreateServerConnectInfo();
+AQUA_API_EXPORT int32_t aquaCreateServerCallInfo();
 
 AQUA_API_EXPORT void aquaDestroyConnectInfo(int32_t);
 AQUA_API_EXPORT void aquaDestroyCallInfo(int32_t);
@@ -63,9 +63,10 @@ AQUA_API_EXPORT void aquaInstallV2(int32_t connectInfoHandle,
 AQUA_API_EXPORT void receiveCall(void *, struct ServiceCallInfo *);
 AQUA_API_EXPORT void sendReturn(struct ServiceReturnInfo *, void *);
 AQUA_API_EXPORT void sendReturnV2(int32_t, void *);
+AQUA_API_EXPORT void aquaServerSend(int32_t, int32_t, void *, uint32_t);
 
 AQUA_API_EXPORT int32_t receiveConnectRequestV2(int32_t);
-AQUA_API_EXPORT void receiveCallV2(void *, int32_t);
+AQUA_API_EXPORT void aquaServerRecv(void *, int32_t);
 
 AQUA_API_EXPORT enum QType getReturnInfoQType(int32_t);
 

@@ -6,7 +6,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -20,17 +19,10 @@ import javax.xml.transform.stream.StreamSource;
 import org.w3c.dom.Document;
 
 import com.sun.jna.Library;
+import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 
-import calling.call_package.DMBCall;
-import calling.call_package.EMBCall;
-import calling.call_package.GBCall;
-import calling.call_package.HGBCall;
-import calling.call_package.SMBCall;
-import calling.call_package.QMBCall;
-import calling.call_package.HMBCall;
-import calling.call_package.MBCall;
 import calling.interfaces.Call;
 import calling.return_package.*;
 
@@ -39,13 +31,9 @@ import consts.Constants;
 interface LibDSP extends Library {
     LibDSP INSTANCE = (LibDSP) Native.load("aqua", LibDSP.class);
 
-    // void aquaInstall(ServiceConnectInfo p_ConnectInfo, ServiceCallInfo
-    // p_CallInfo, String p_StrId, String p_Version,
-    // int p_CallQType);
+    int aquaCreateServerConnectInfo();
 
-    int aquaCreateConnectInfo();
-
-    int aquaCreateCallInfo();
+    int aquaCreateServerCallInfo();
 
     void aquaInstallV2(
             int connectInfoHandle,
@@ -58,11 +46,11 @@ interface LibDSP extends Library {
             int p_ReturnInfoHandle,
             Pointer p_ReturnData);
 
+    void aquaServerSend(int callInfoHandle, int returnInfoHandle, Pointer data, int size);
+
     int receiveConnectRequestV2(int p_ConnectInfoHandle);
 
-    void receiveCallV2(
-            Pointer p_CallData,
-            int p_CallInfoHandle);
+    void aquaServerRecv(Pointer data, int callInfoHandle);
 
     int getReturnInfoQType(int p_ReturnInfoHandle);
 
@@ -70,12 +58,7 @@ interface LibDSP extends Library {
 }
 
 class DisconnectThread extends Thread {
-    // private final ServiceConnectInfo m_ConnectInfo;
     private final int m_ConnectInfoHandle;
-
-    // DisconnectThread(ServiceConnectInfo p_ConnectInfo) {
-    // m_ConnectInfo = p_ConnectInfo;
-    // }
 
     DisconnectThread(int p_ConnectInfoHandle) {
         m_ConnectInfoHandle = p_ConnectInfoHandle;
@@ -83,59 +66,29 @@ class DisconnectThread extends Thread {
 
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
-            // m_ConnectInfo.m_ReceiveDisconnectRequest.receiveDisconnectRequest(m_ConnectInfo);
             LibDSP.INSTANCE.receiveDisconnectRequest(m_ConnectInfoHandle);
         }
     }
 }
 
 class ProcessCallThread1 implements Runnable {
-    private final Call m_CallData;
-    // private final ServiceReturnInfo m_ServiceReturnInfo;
+    private final byte[] m_CallData;
     private final int m_ReturnInfoHandle;
 
-    // ProcessCallThread1(Call p_CallData, ServiceReturnInfo p_ServiceReturnInfo) {
-    // m_CallData = p_CallData;
-    // m_ServiceReturnInfo = p_ServiceReturnInfo;
-    // }
-    ProcessCallThread1(Call p_CallData, int p_ReturnInfoHandle) {
+    ProcessCallThread1(byte[] p_CallData, int p_ReturnInfoHandle) {
         m_CallData = p_CallData;
         m_ReturnInfoHandle = p_ReturnInfoHandle;
     }
 
     public void run() {
         try {
-            byte[] iiaData = Arrays.copyOfRange(m_CallData.getCallInfo(), 0, m_CallData.getMetadata().m_Size);
-
             Path xsltPath = Paths.get("transformations/transform_version_v7.xsl");
             byte[] xsltData = Files.readAllBytes(xsltPath);
 
-            String result = mf_GetXmlTransformed(iiaData, xsltData);
+            String result = mf_GetXmlTransformed(m_CallData, xsltData);
 
             byte[] resByteArr = result.getBytes(StandardCharsets.UTF_8);
 
-            // ServiceReturnInfo serviceReturnInfo =
-            // m_Connections.get(m_CallData.getMetadata().m_ConnId);
-
-            // long returnDataSegmentSize = (new SMBReturn()).size();
-            // Memory nativeMem = new Memory(returnDataSegmentSize);
-
-            // System.out.println("SMBReturn size: " + returnDataSegmentSize);
-
-            // Call returnData = switch (m_ServiceReturnInfo.m_Q.m_Type) {
-            // case Constants.SMBQ -> new SMBReturn();
-            // case Constants.EMBQ -> new EMBReturn();
-            // case Constants.QMBQ -> new QMBReturn();
-            // case Constants.HMBQ -> new HMBReturn();
-            // case Constants.MBQ -> new MBReturn();
-            // case Constants.DMBQ -> new DMBReturn();
-            // case Constants.HGBQ -> new HGBReturn();
-            // case Constants.GBQ -> new GBReturn();
-            // default -> {
-            // System.err.println("Return queue type not recognized!");
-            // yield null;
-            // }
-            // };
             Call returnData = switch (LibDSP.INSTANCE.getReturnInfoQType(m_ReturnInfoHandle)) {
                 case Constants.SMBQ -> new SMBReturn();
                 case Constants.EMBQ -> new EMBReturn();
@@ -159,18 +112,13 @@ class ProcessCallThread1 implements Runnable {
             System.arraycopy(resByteArr, 0, returnData.getCallInfo(), 0,
                     resByteArr.length);
             returnData.getMetadata().m_Size = resByteArr.length;
-            // System.arraycopy(iiaData, 0, returnData.getCallInfo(), 0,
-            // m_CallData.getMetadata().m_Size);
-            returnData.getMetadata().m_ConnId = m_CallData.getMetadata().m_ConnId;
+            // returnData.getMetadata().m_ConnId = m_CallData.getMetadata().m_ConnId;
 
             returnData.write();
-            // nativeMem.write(0, returnData.getPointer().getByteArray(0, (int)
-            // returnDataSegmentSize), 0,
-            // (int) returnDataSegmentSize);
-            // LibDSP.INSTANCE.sendReturn(m_ServiceReturnInfo, returnData.getPointer());
-            LibDSP.INSTANCE.sendReturnV2(m_ReturnInfoHandle, returnData.getPointer());
 
-            // m_ConnectInfo.m_ReceiveDisconnectRequest.receiveDisconnectRequest(m_ConnectInfo);
+            LibDSP.INSTANCE.sendReturnV2(m_ReturnInfoHandle, returnData.getPointer());
+            // LibDSP.INSTANCE.aquaServerSend(m_ReturnInfoHandle, m_ReturnInfoHandle, null,
+            // m_ReturnInfoHandle);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -265,19 +213,8 @@ public class Main {
 
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
-        // ServiceConnectInfo connectInfo = new ServiceConnectInfo();
-        // ServiceCallInfo callInfo = new ServiceCallInfo();
-        // ConcurrentHashMap<Integer, ServiceReturnInfo> connections = new
-        // ConcurrentHashMap<Integer, ServiceReturnInfo>();
-
-        // LibDSP.INSTANCE.aquaInstall(connectInfo, callInfo, "xslt-transformation",
-        // "v0.0.2", QTYPE);
-
-        // connectInfo.read();
-        // callInfo.read();
-
-        int connectInfoHandle = LibDSP.INSTANCE.aquaCreateConnectInfo();
-        int callInfoHandle = LibDSP.INSTANCE.aquaCreateCallInfo();
+        int connectInfoHandle = LibDSP.INSTANCE.aquaCreateServerConnectInfo();
+        int callInfoHandle = LibDSP.INSTANCE.aquaCreateServerCallInfo();
 
         LibDSP.INSTANCE.aquaInstallV2(connectInfoHandle, callInfoHandle, "xslt-transformation", "v0.0.2", QTYPE);
 
@@ -293,50 +230,16 @@ public class Main {
 
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                // ServiceReturnInfo returnInfo = new ServiceReturnInfo();
-
-                // connectInfo.m_ReceiveConnectRequest.receiveConnectRequest(returnInfo,
-                // connectInfo);
                 int returnInfoHandle = LibDSP.INSTANCE.receiveConnectRequestV2(connectInfoHandle);
 
-                // returnInfo.read();
+                Memory data = new Memory(65000);
+                LibDSP.INSTANCE.aquaServerRecv(data, callInfoHandle);
 
-                // Pointer nativePtr = returnInfo.m_ResponseQueue.m_Data;
-                // if (nativePtr == null) {
-                // System.err.println("ConnectThread: m_Data pointer is NULL");
-                // continue;
-                // }
+                int dataLen = data.getInt(0);
 
-                // int size = new ConnectResponseInformation().size();
+                byte[] received = data.getByteArray(4, dataLen);
 
-                // byte[] buf = nativePtr.getByteArray(0, size);
-
-                // ConnectResponseInformation responseInfo = new ConnectResponseInformation();
-                // responseInfo.getPointer().write(0, buf, 0, size);
-                // responseInfo.read();
-                // ConnectResponseInformation responseInfo = new ConnectResponseInformation(
-                // returnInfo.m_ResponseQueue.m_Data.share(0));
-
-                Call callData = switch (QTYPE) {
-                    case Constants.SMBQ -> new SMBCall();
-                    case Constants.EMBQ -> new EMBCall();
-                    case Constants.QMBQ -> new QMBCall();
-                    case Constants.HMBQ -> new HMBCall();
-                    case Constants.MBQ -> new MBCall();
-                    case Constants.DMBQ -> new DMBCall();
-                    case Constants.HGBQ -> new HGBCall();
-                    case Constants.GBQ -> new GBCall();
-                    default -> {
-                        System.err.println("Return queue type not recognized!");
-                        yield null;
-                    }
-                };
-
-                LibDSP.INSTANCE.receiveCallV2(callData.getPointer(), callInfoHandle);
-
-                callData.read();
-
-                executor.submit(new ProcessCallThread1(callData, returnInfoHandle));
+                executor.submit(new ProcessCallThread1(received, returnInfoHandle));
             } catch (Exception e) {
                 e.printStackTrace();
             }

@@ -18,7 +18,10 @@ static int32_t s_SMBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct SMBCall *qData = p_Q->m_Data;
 
-    memcpy(p_CI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct SMBCall));
+    *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_CI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }

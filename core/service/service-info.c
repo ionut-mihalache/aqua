@@ -4,6 +4,7 @@
 #include "commons.h"
 #include "dsp-service.h"
 #include "dsp.h"
+#include "platform-types.h"
 #include "platform.h"
 
 #include <inttypes.h>
@@ -40,7 +41,7 @@ void initServiceInfo(const char *p_StrId) {
                      SERVICE_INFO_MUTEX_HANDLE);
 }
 
-int32_t aquaCreateConnectInfo() {
+AQUA_API_EXPORT int32_t aquaCreateServerConnectInfo() {
     int32_t handle = -1;
     Sync.mutexLock(&s_ServiceInfo.mutex);
     for (int32_t i = 0; i < SERVICE_INFO_MAX; ++i) {
@@ -55,7 +56,7 @@ int32_t aquaCreateConnectInfo() {
     return handle;
 }
 
-int32_t aquaCreateCallInfo() {
+AQUA_API_EXPORT int32_t aquaCreateServerCallInfo() {
     int32_t handle = -1;
     Sync.mutexLock(&s_ServiceInfo.mutex);
     for (int32_t i = 0; i < SERVICE_INFO_MAX; ++i) {

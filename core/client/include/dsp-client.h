@@ -72,13 +72,14 @@ AQUA_API_EXPORT void aquaConnect(int32_t returnInfoHandle,
 AQUA_API_EXPORT void aquaDisconnect(int32_t connectInfoHandle,
                                     int32_t returnInfoHandle);
 
-AQUA_API_EXPORT void send(int32_t callInfoHandle, int32_t returnInfoHandle,
-                          void *data, uint32_t size);
+AQUA_API_EXPORT void aquaClientSend(int32_t callInfoHandle,
+                                    int32_t returnInfoHandle, void *data,
+                                    uint32_t size);
 
-AQUA_API_EXPORT void recv(void *data, int32_t returnInfoHandle);
+AQUA_API_EXPORT void aquaClientRecv(void *data, int32_t returnInfoHandle);
 
-AQUA_API_EXPORT void aquaInitConnection(int32_t connectInfoHandle,
-                                        int32_t callInfoHandle,
-                                        const char *serviceStrId);
+AQUA_API_EXPORT void aquaInitClientConnection(int32_t connectInfoHandle,
+                                              int32_t callInfoHandle,
+                                              const char *serviceStrId);
 
 #endif // __DSP_CLIENT_H

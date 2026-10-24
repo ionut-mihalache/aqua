@@ -343,23 +343,14 @@ spin_lock_unlock:
     configureServiceCallInformation(callInfo, installInfo);
 }
 
-void receiveCall(void *p_CallData, struct ServiceCallInfo *p_CallInfo) {
-    struct CommunicationInfo cInfo;
+AQUA_API_EXPORT void aquaServerRecv(void *data, int32_t callInfoHandle) {
+    struct CommunicationInfo info;
+    struct ServiceCallInfo *callInfo = getCallInfo(callInfoHandle);
 
-    cInfo.m_Q = &(p_CallInfo->m_Q);
-    cInfo.m_Data = p_CallData;
+    info.m_Q = &(callInfo->m_Q);
+    info.m_Data = data;
 
-    p_CallInfo->m_ReceiveCallFn(&cInfo);
-}
-
-void receiveCallV2(void *p_CallData, int32_t p_CallInfoHandle) {
-    struct CommunicationInfo cInfo;
-    struct ServiceCallInfo *callInfo = getCallInfo(p_CallInfoHandle);
-
-    cInfo.m_Q = &(callInfo->m_Q);
-    cInfo.m_Data = p_CallData;
-
-    callInfo->m_ReceiveCallFn(&cInfo);
+    callInfo->m_ReceiveCallFn(&info);
 }
 
 void sendReturn(struct ServiceReturnInfo *p_ReturnInfo, void *p_ReturnData) {
