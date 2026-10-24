@@ -3,11 +3,11 @@
 #ifndef __DSP_H_
 #define __DSP_H_
 
-#include <stdbool.h>
-
 #include "aqua-sync.h"
 #include "aqua-types.h"
 #include "platform-types.h"
+
+#include <stdbool.h>
 
 #define SHMEM_PATH "/shared_memory"
 #define CONNECT_REQS "/conn-reqs"

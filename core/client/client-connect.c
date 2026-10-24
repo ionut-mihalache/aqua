@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-#include <string.h>
-
 #include "client-connect.h"
+
 #include "aqua-types.h"
 #include "commons.h"
 #include "dsp.h"
@@ -12,11 +11,16 @@
 #include "system-values.h"
 #include "utils.h"
 
+#include <string.h>
+
 static int32_t s_ReturnFnSMBFn(void *p_RI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct SMBCall *qData = p_Q->m_Data;
 
-    memcpy(p_RI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct SMBCall));
+    *(uint32_t *)p_RI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_RI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }
@@ -25,7 +29,10 @@ static int32_t s_ReturnFnEMBFn(void *p_RI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct EMBCall *qData = p_Q->m_Data;
 
-    memcpy(p_RI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct EMBCall));
+    *(uint32_t *)p_RI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_RI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }
@@ -34,7 +41,10 @@ static int32_t s_ReturnFnQMBFn(void *p_RI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct QMBCall *qData = p_Q->m_Data;
 
-    memcpy(p_RI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct QMBCall));
+    *(uint32_t *)p_RI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_RI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }
@@ -43,7 +53,10 @@ static int32_t s_ReturnFnHMBFn(void *p_RI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct HMBCall *qData = p_Q->m_Data;
 
-    memcpy(p_RI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct HMBCall));
+    *(uint32_t *)p_RI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_RI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }
@@ -52,7 +65,10 @@ static int32_t s_ReturnFnMBFn(void *p_RI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct MBCall *qData = p_Q->m_Data;
 
-    memcpy(p_RI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct MBCall));
+    *(uint32_t *)p_RI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_RI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }
@@ -61,7 +77,10 @@ static int32_t s_ReturnFnDMBFn(void *p_RI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct DMBCall *qData = p_Q->m_Data;
 
-    memcpy(p_RI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct DMBCall));
+    *(uint32_t *)p_RI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_RI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }
@@ -70,7 +89,10 @@ static int32_t s_ReturnFnHGBFn(void *p_RI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct HGBCall *qData = p_Q->m_Data;
 
-    memcpy(p_RI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct HGBCall));
+    *(uint32_t *)p_RI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_RI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }
@@ -79,7 +101,10 @@ static int32_t s_ReturnFnGBFn(void *p_RI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct GBCall *qData = p_Q->m_Data;
 
-    memcpy(p_RI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct GBCall));
+    *(uint32_t *)p_RI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_RI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }

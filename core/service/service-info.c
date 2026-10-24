@@ -74,11 +74,6 @@ int32_t createReturnInfo() {
     int32_t handle = -1;
     Sync.mutexLock(&s_ServiceInfo.mutex);
 
-    // for (int32_t i = 0; i < (int32_t)OPENED_CONNECTIONS; ++i) {
-    //     LOGF("[%d] used=%u\n", i,
-    //     (unsigned)s_ServiceInfo.returnInfos[i].used);
-    // }
-
     for (int32_t i = 0; i < (int32_t)OPENED_CONNECTIONS; ++i) {
         if (!s_ServiceInfo.returnInfos[i].used) {
             handle = i;

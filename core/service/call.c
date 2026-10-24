@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-#include <inttypes.h>
-#include <string.h>
-
 #include "call.h"
+
 #include "aqua-sync.h"
 #include "aqua-types.h"
 #include "commons.h"
@@ -12,6 +10,9 @@
 #include "platform.h"
 #include "system-values.h"
 #include "utils.h"
+
+#include <inttypes.h>
+#include <string.h>
 
 static int32_t s_SMBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     int32_t rc = 0;

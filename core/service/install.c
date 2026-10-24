@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-#include <inttypes.h>
-#include <string.h>
+#include "install.h"
 
 #include "aqua-sync.h"
 #include "aqua-types.h"
 #include "commons.h"
-#include "install.h"
 #include "dsp-service.h"
 #include "dsp.h"
-#include "log.h"
 #include "macros.h"
 #include "platform-types.h"
 #include "platform.h"
@@ -17,6 +14,9 @@
 #include "service-info.h"
 #include "system-values.h"
 #include "utils.h"
+
+#include <inttypes.h>
+#include <string.h>
 
 int32_t initializeServiceConnections(struct InstallInformation *p_InI) {
     int32_t rc = 0;
@@ -355,8 +355,6 @@ enum QType getReturnInfoQType(int32_t p_ReturnInfoHandle) {
 void sendReturnV2(int32_t p_ReturnInfoHandle, void *p_ReturnData) {
     struct CommunicationInfo cInfo;
     struct ServiceReturnInfo *returnInfo = getReturnInfo(p_ReturnInfoHandle);
-
-    LOGF("Send return for handle: %d\n", p_ReturnInfoHandle);
 
     cInfo.m_Q = &(returnInfo->m_Q);
     cInfo.m_Data = p_ReturnData;

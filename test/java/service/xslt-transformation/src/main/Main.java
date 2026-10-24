@@ -298,7 +298,6 @@ public class Main {
                 // connectInfo.m_ReceiveConnectRequest.receiveConnectRequest(returnInfo,
                 // connectInfo);
                 int returnInfoHandle = LibDSP.INSTANCE.receiveConnectRequestV2(connectInfoHandle);
-                System.out.println("Got return handle " + returnInfoHandle);
 
                 // returnInfo.read();
 
