@@ -19,7 +19,7 @@ struct ClientReturnInfo {
 
 struct ClientCommunicationInfo {
     struct CommunicationInfo cInfo;
-    struct ClientReturnInfo *info;
+    // struct ClientReturnInfo *info;
     uint32_t dataSize;
 };
 
@@ -72,8 +72,7 @@ AQUA_API_EXPORT void aquaConnect(int32_t returnInfoHandle,
 AQUA_API_EXPORT void aquaDisconnect(int32_t connectInfoHandle,
                                     int32_t returnInfoHandle);
 
-AQUA_API_EXPORT void aquaClientSend(int32_t callInfoHandle,
-                                    int32_t returnInfoHandle, void *data,
+AQUA_API_EXPORT void aquaClientSend(int32_t callInfoHandle, void *data,
                                     uint32_t size);
 
 AQUA_API_EXPORT void aquaClientRecv(void *data, int32_t returnInfoHandle);

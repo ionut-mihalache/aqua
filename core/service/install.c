@@ -162,8 +162,6 @@ int32_t configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnI,
     err = SharedMemoryObject.close(disconnectQFd);
     DIE(err == AQUA_SHM_OBJ_CLOSE_FAILED, "Could not close disconnectQFd");
 
-    // p_ConnI->m_ReceiveConnectRequest = s_ReceiveConnectRequest;
-    // p_ConnI->m_ReceiveConnectRequestV2 = s_ReceiveConnectRequestV2;
     p_ConnI->m_ConnectQ.m_Data = connectQ;
     p_ConnI->m_ConnectQ.m_Metadata.m_PushIdxPtr = &p_InI->m_ConnectQPushIdx;
     p_ConnI->m_ConnectQ.m_Metadata.m_PopIdxPtr = &p_InI->m_ConnectQPopIdx;
@@ -237,20 +235,16 @@ int32_t configureServiceConnectInformation(struct ServiceConnectInfo *p_ConnI,
     return rc;
 }
 
-enum QType getReturnInfoQType(int32_t p_ReturnInfoHandle) {
-    struct ServiceReturnInfo *returnInfo = getReturnInfo(p_ReturnInfoHandle);
+AQUA_API_EXPORT void aquaServerSend(int32_t returnInfoHandle, void *data,
+                                    uint32_t size) {
+    struct ServerCommunicationInfo info;
+    struct ServiceReturnInfo *returnInfo = getReturnInfo(returnInfoHandle);
 
-    return returnInfo->m_Q.m_Type;
-}
+    info.cInfo.m_Q = &(returnInfo->m_Q);
+    info.cInfo.m_Data = data;
+    info.dataSize = size;
 
-void sendReturnV2(int32_t p_ReturnInfoHandle, void *p_ReturnData) {
-    struct CommunicationInfo cInfo;
-    struct ServiceReturnInfo *returnInfo = getReturnInfo(p_ReturnInfoHandle);
-
-    cInfo.m_Q = &(returnInfo->m_Q);
-    cInfo.m_Data = p_ReturnData;
-
-    returnInfo->m_SendReturnFn(&cInfo);
+    returnInfo->m_SendReturnFn(&info);
 }
 
 void receiveDisconnectRequest(int32_t p_ConnectInfoHandle) {
@@ -294,7 +288,7 @@ void receiveDisconnectRequest(int32_t p_ConnectInfoHandle) {
     Sync.mutexUnlock(connectInfo->m_ConnectLock);
 }
 
-int32_t receiveConnectRequestV2(int32_t p_ConnectInfoHandle) {
+AQUA_API_EXPORT int32_t receiveConnectRequest(int32_t p_ConnectInfoHandle) {
     int32_t rc = 0, returnHandle = -1;
 
     returnHandle = createReturnInfo();

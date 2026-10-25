@@ -42,17 +42,17 @@ AQUA_API_EXPORT void aquaDisconnect(int32_t connectInfoHandle,
     aquaDestroyClientReturnInfo(returnInfoHandle);
 }
 
-AQUA_API_EXPORT void aquaClientSend(int32_t callInfoHandle,
-                                    int32_t returnInfoHandle, void *data,
+AQUA_API_EXPORT void aquaClientSend(int32_t callInfoHandle, void *data,
                                     uint32_t size) {
     struct ClientCommunicationInfo info;
     struct ClientCallInfo *callInfo = getClientCallInfo(callInfoHandle);
-    struct ClientReturnInfo *returnInfo = getClientReturnInfo(returnInfoHandle);
+    // struct ClientReturnInfo *returnInfo =
+    // getClientReturnInfo(returnInfoHandle);
 
     info.cInfo.m_Q = &(callInfo->m_Q);
     info.cInfo.m_Data = data;
     info.dataSize = size;
-    info.info = returnInfo;
+    // info.info = returnInfo;
     callInfo->m_CallFn(&info);
 }
 

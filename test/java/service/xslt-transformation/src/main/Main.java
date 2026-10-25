@@ -23,9 +23,6 @@ import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 
-import calling.interfaces.Call;
-import calling.return_package.*;
-
 import consts.Constants;
 
 interface LibDSP extends Library {
@@ -35,24 +32,13 @@ interface LibDSP extends Library {
 
     int aquaCreateServerCallInfo();
 
-    void aquaInstallV2(
-            int connectInfoHandle,
-            int callInfoHandle,
-            String strId,
-            String version,
-            int callQType);
+    void aquaInstall(int connectInfoHandle, int callInfoHandle, String strId, String version, int callQType);
 
-    void sendReturnV2(
-            int p_ReturnInfoHandle,
-            Pointer p_ReturnData);
+    void aquaServerSend(int returnInfoHandle, Pointer data, int size);
 
-    void aquaServerSend(int callInfoHandle, int returnInfoHandle, Pointer data, int size);
-
-    int receiveConnectRequestV2(int p_ConnectInfoHandle);
+    int receiveConnectRequest(int p_ConnectInfoHandle);
 
     void aquaServerRecv(Pointer data, int callInfoHandle);
-
-    int getReturnInfoQType(int p_ReturnInfoHandle);
 
     void receiveDisconnectRequest(int p_ConnectInfoHandle);
 }
@@ -89,36 +75,13 @@ class ProcessCallThread1 implements Runnable {
 
             byte[] resByteArr = result.getBytes(StandardCharsets.UTF_8);
 
-            Call returnData = switch (LibDSP.INSTANCE.getReturnInfoQType(m_ReturnInfoHandle)) {
-                case Constants.SMBQ -> new SMBReturn();
-                case Constants.EMBQ -> new EMBReturn();
-                case Constants.QMBQ -> new QMBReturn();
-                case Constants.HMBQ -> new HMBReturn();
-                case Constants.MBQ -> new MBReturn();
-                case Constants.DMBQ -> new DMBReturn();
-                case Constants.HGBQ -> new HGBReturn();
-                case Constants.GBQ -> new GBReturn();
-                default -> {
-                    System.err.println("Return queue type not recognized!");
-                    yield null;
-                }
-            };
+            Memory data = new Memory(resByteArr.length);
+            data.write(0, resByteArr, 0, resByteArr.length);
 
-            if (returnData == null) {
-                System.err.println("Return data type not recognized!");
-                return;
-            }
+            // returnData.getMetadata().m_ConnId = m_CallData.getMetadata().m_ConnId; ???
 
-            System.arraycopy(resByteArr, 0, returnData.getCallInfo(), 0,
-                    resByteArr.length);
-            returnData.getMetadata().m_Size = resByteArr.length;
-            // returnData.getMetadata().m_ConnId = m_CallData.getMetadata().m_ConnId;
-
-            returnData.write();
-
-            LibDSP.INSTANCE.sendReturnV2(m_ReturnInfoHandle, returnData.getPointer());
-            // LibDSP.INSTANCE.aquaServerSend(m_ReturnInfoHandle, m_ReturnInfoHandle, null,
-            // m_ReturnInfoHandle);
+            LibDSP.INSTANCE.aquaServerSend(m_ReturnInfoHandle, data, resByteArr.length);
+            data.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -216,7 +179,7 @@ public class Main {
         int connectInfoHandle = LibDSP.INSTANCE.aquaCreateServerConnectInfo();
         int callInfoHandle = LibDSP.INSTANCE.aquaCreateServerCallInfo();
 
-        LibDSP.INSTANCE.aquaInstallV2(connectInfoHandle, callInfoHandle, "xslt-transformation", "v0.0.2", QTYPE);
+        LibDSP.INSTANCE.aquaInstall(connectInfoHandle, callInfoHandle, "xslt-transformation", "v0.0.2", QTYPE);
 
         // ConnectThread connectThread = new ConnectThread(connectInfo, connections);
         // DisconnectThread disconnectThread = new DisconnectThread(connectInfo);
@@ -230,7 +193,7 @@ public class Main {
 
         while (!Thread.currentThread().isInterrupted()) {
             try {
-                int returnInfoHandle = LibDSP.INSTANCE.receiveConnectRequestV2(connectInfoHandle);
+                int returnInfoHandle = LibDSP.INSTANCE.receiveConnectRequest(connectInfoHandle);
 
                 Memory data = new Memory(65000);
                 LibDSP.INSTANCE.aquaServerRecv(data, callInfoHandle);
@@ -239,6 +202,7 @@ public class Main {
 
                 byte[] received = data.getByteArray(4, dataLen);
 
+                data.close();
                 executor.submit(new ProcessCallThread1(received, returnInfoHandle));
             } catch (Exception e) {
                 e.printStackTrace();
