@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
@@ -16,17 +15,16 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import org.w3c.dom.Document;
 
+import org.w3c.dom.Document;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
-
 import consts.Constants;
 
 interface LibDSP extends Library {
-    LibDSP INSTANCE = (LibDSP) Native.load("aqua", LibDSP.class);
+    LibDSP INSTANCE = Native.load("aqua", LibDSP.class);
 
     int aquaCreateServerConnectInfo();
 
@@ -120,49 +118,31 @@ public class Main {
     public static int QTYPE;
 
     private static int sm_GetQType(String p_Arg) {
-        switch (p_Arg.toUpperCase()) {
-            case "SMB":
-                return Constants.SMBQ;
-            case "EMB":
-                return Constants.EMBQ;
-            case "QMB":
-                return Constants.QMBQ;
-            case "HMB":
-                return Constants.HMBQ;
-            case "MB":
-                return Constants.MBQ;
-            case "DMB":
-                return Constants.DMBQ;
-            case "HGB":
-                return Constants.HGBQ;
-            case "GB":
-                return Constants.GBQ;
-            default:
-                throw new IllegalArgumentException("Unknown queue type: " + p_Arg);
-        }
+        return switch (p_Arg.toUpperCase()) {
+            case "SMB" -> Constants.SMBQ;
+            case "EMB" -> Constants.EMBQ;
+            case "QMB" -> Constants.QMBQ;
+            case "HMB" -> Constants.HMBQ;
+            case "MB" -> Constants.MBQ;
+            case "DMB" -> Constants.DMBQ;
+            case "HGB" -> Constants.HGBQ;
+            case "GB" -> Constants.GBQ;
+            default -> throw new IllegalArgumentException("Unknown queue type: " + p_Arg);
+        };
     }
 
     private static int sm_GetPayloadSize(String p_Arg) {
-        switch (p_Arg.toUpperCase()) {
-            case "SMB":
-                return Constants.SMB;
-            case "EMB":
-                return Constants.EMB;
-            case "QMB":
-                return Constants.QMB;
-            case "HMB":
-                return Constants.HMB;
-            case "MB":
-                return Constants.MB;
-            case "DMB":
-                return Constants.DMB;
-            case "HGB":
-                return Constants.HGB;
-            case "GB":
-                return Constants.GB;
-            default:
-                throw new IllegalArgumentException("Unknown payload type: " + p_Arg);
-        }
+        return switch (p_Arg.toUpperCase()) {
+            case "SMB" -> Constants.SMB;
+            case "EMB" -> Constants.EMB;
+            case "QMB" -> Constants.QMB;
+            case "HMB" -> Constants.HMB;
+            case "MB" -> Constants.MB;
+            case "DMB" -> Constants.DMB;
+            case "HGB" -> Constants.HGB;
+            case "GB" -> Constants.GB;
+            default -> throw new IllegalArgumentException("Unknown payload type: " + p_Arg);
+        };
     }
 
     public static void main(String[] args) {
@@ -181,8 +161,8 @@ public class Main {
 
         LibDSP.INSTANCE.aquaInstall(connectInfoHandle, callInfoHandle, "xslt-transformation", "v0.0.2", QTYPE);
 
-        // ConnectThread connectThread = new ConnectThread(connectInfo, connections);
-        // DisconnectThread disconnectThread = new DisconnectThread(connectInfo);
+        // ConnectThread connectThread = new ConnectThread(connectInfo, connections); DisconnectThread disconnectThread = new DisconnectThread(connectInfo);
+
         DisconnectThread disconnectThread = new DisconnectThread(connectInfoHandle);
 
         // connectThread.setName("ConnectThread");

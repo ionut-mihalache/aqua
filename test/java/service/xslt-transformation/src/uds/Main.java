@@ -14,7 +14,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
@@ -37,8 +36,8 @@ class Constants {
 }
 
 class ProcessCallThread implements Runnable {
-    private SocketChannel m_Client;
-    private ByteBuffer m_Buf;
+    private final SocketChannel m_Client;
+    private final ByteBuffer m_Buf;
 
     ProcessCallThread(SocketChannel p_Client, ByteBuffer p_Buf) {
         m_Client = p_Client;
@@ -109,7 +108,7 @@ class ProcessCallThread implements Runnable {
 }
 
 class ProcessCallThread1 implements Runnable {
-    private SocketChannel m_Client;
+    private final SocketChannel m_Client;
 
     ProcessCallThread1(SocketChannel p_Client) {
         m_Client = p_Client;
@@ -187,29 +186,20 @@ public class Main {
     public static int PAYLOAD_SIZE;
 
     private static int sm_GetPayloadSize(String p_Arg) {
-        switch (p_Arg.toUpperCase()) {
-            case "SMB":
-                return Constants.SMB;
-            case "EMB":
-                return Constants.EMB;
-            case "QMB":
-                return Constants.QMB;
-            case "HMB":
-                return Constants.HMB;
-            case "MB":
-                return Constants.MB;
-            case "DMB":
-                return Constants.DMB;
-            case "HGB":
-                return Constants.HGB;
-            case "GB":
-                return Constants.GB;
-            default:
-                throw new IllegalArgumentException("Unknown payload size: " + p_Arg);
-        }
+        return switch (p_Arg.toUpperCase()) {
+            case "SMB" -> Constants.SMB;
+            case "EMB" -> Constants.EMB;
+            case "QMB" -> Constants.QMB;
+            case "HMB" -> Constants.HMB;
+            case "MB" -> Constants.MB;
+            case "DMB" -> Constants.DMB;
+            case "HGB" -> Constants.HGB;
+            case "GB" -> Constants.GB;
+            default -> throw new IllegalArgumentException("Unknown payload size: " + p_Arg);
+        };
     }
 
-    public static void main(String args[]) {
+    static void main(String[] args) {
         if (args.length == 0) {
             PAYLOAD_SIZE = Constants.SMB;
         } else {
@@ -251,7 +241,7 @@ public class Main {
             server.close();
         } catch (
 
-        Exception e) {
+                Exception e) {
             e.printStackTrace();
         }
     }
