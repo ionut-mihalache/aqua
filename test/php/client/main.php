@@ -12,6 +12,18 @@ enum QType: int
     case GBQ = 7;
 };
 
+class Constants
+{
+    public const int SMB = 1 << 16;
+    public const int EMB = 1 << 17;
+    public const int QMB = 1 << 18;
+    public const int HMB = 1 << 19;
+    public const int MB = 1 << 20;
+    public const int DMB = 1 << 21;
+    public const int HGB = 1 << 29;
+    public const int GB = 1 << 30;
+};
+
 $arg = $argv[3] ?? "SMB";
 $msgNr = $argv[4] ?? 1000;
 
@@ -24,6 +36,18 @@ $qType = match (strtoupper($arg)) {
     "DMB" => QType::DMBQ->value,
     "HGB" => QType::HGBQ->value,
     "GB"  => QType::GBQ->value,
+    default => throw new InvalidArgumentException("Unknown queue type: $arg"),
+};
+
+$payloadSize = match (strtoupper($arg)) {
+    "SMB" => Constants::SMB,
+    "EMB" => Constants::EMB,
+    "QMB" => Constants::QMB,
+    "HMB" => Constants::HMB,
+    "MB"  => Constants::MB,
+    "DMB" => Constants::DMB,
+    "HGB" => Constants::HGB,
+    "GB"  => Constants::GB,
     default => throw new InvalidArgumentException("Unknown queue type: $arg"),
 };
 
@@ -151,7 +175,7 @@ $benchmark["call"] = measureFnExec(function () use ($ffi, $callInfoHandle, $iiaD
 });
 
 
-$returnData = $ffi->new("uint8_t[65000]");
+$returnData = $ffi->new("uint8_t[{$payloadSize}]");
 
 $benchmark["return"] = measureFnExec(function () use ($ffi, $returnData, $returnInfoHandle) {
     recv($ffi, $returnData, $returnInfoHandle);

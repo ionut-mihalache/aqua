@@ -225,7 +225,7 @@ for ($j = 0; $j < $msgNr; ++$j) {
     $latencies[] = measureFnExec(function () use ($ffi, $callInfoHandle, $iiaData, $returnInfoHandle) {
         send($ffi, $callInfoHandle, $iiaData, strlen($iiaData));
 
-        $returnData = $ffi->new("uint8_t[65000]");
+        $returnData = $ffi->new("uint8_t[{$payloadSize}}]");
 
         recv($ffi, $returnData, $returnInfoHandle);
     });
@@ -247,12 +247,6 @@ echo "Throughput: $throughput messages/sec\n";
 $benchmark["disconnect"] = measureFnExec(function () use ($ffi, $connectInfoHandle, $returnInfoHandle) {
     aquaDisconnect($ffi, $connectInfoHandle, $returnInfoHandle);
 });
-
-// $requestInfoPtr = FFI::addr($returnInfo->m_ConnectResponseInformation);
-
-// $benchmark["disconnect"] = measureFnExec(function () use ($ffi, $connectInfoPtr, $requestInfoPtr) {
-//     aquaDisconnect($ffi, $connectInfoPtr, $requestInfoPtr);
-// });
 
 $writeToFile = false;
 

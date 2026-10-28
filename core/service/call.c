@@ -30,7 +30,10 @@ static int32_t s_EMBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct EMBCall *qData = p_Q->m_Data;
 
-    memcpy(p_CI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct EMBCall));
+    *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_CI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }
@@ -39,7 +42,10 @@ static int32_t s_QMBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct QMBCall *qData = p_Q->m_Data;
 
-    memcpy(p_CI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct QMBCall));
+    *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_CI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }
@@ -48,7 +54,10 @@ static int32_t s_HMBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct HMBCall *qData = p_Q->m_Data;
 
-    memcpy(p_CI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct HMBCall));
+    *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_CI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }
@@ -57,7 +66,10 @@ static int32_t s_MBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct MBCall *qData = p_Q->m_Data;
 
-    memcpy(p_CI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct MBCall));
+    *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_CI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }
@@ -66,7 +78,10 @@ static int32_t s_DMBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct DMBCall *qData = p_Q->m_Data;
 
-    memcpy(p_CI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct DMBCall));
+    *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_CI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }
@@ -75,7 +90,10 @@ static int32_t s_HGBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct HGBCall *qData = p_Q->m_Data;
 
-    memcpy(p_CI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct HGBCall));
+    *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_CI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }
@@ -84,7 +102,10 @@ static int32_t s_GBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     int32_t rc = 0;
     struct GBCall *qData = p_Q->m_Data;
 
-    memcpy(p_CI, &qData[*p_Q->m_Metadata.m_PopIdxPtr], sizeof(struct GBCall));
+    *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
+    memcpy(p_CI + sizeof(uint32_t),
+           &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
+           qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
     return rc;
 }

@@ -175,7 +175,7 @@ public class Main {
             try {
                 int returnInfoHandle = LibDSP.INSTANCE.receiveConnectRequest(connectInfoHandle);
 
-                Memory data = new Memory(65000);
+                Memory data = new Memory(Main.PAYLOAD_SIZE);
                 LibDSP.INSTANCE.aquaServerRecv(data, callInfoHandle);
 
                 int dataLen = data.getInt(0);

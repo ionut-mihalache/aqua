@@ -57,7 +57,7 @@ class ProcessCallThread3 implements Runnable {
     private final int m_ServiceReturnInfoHandle;
 
     ProcessCallThread3(int p_CallInfoHandle,
-                       int p_ServiceReturnInfoHandle) {
+            int p_ServiceReturnInfoHandle) {
         m_CallInfoHandle = p_CallInfoHandle;
         m_ServiceReturnInfoHandle = p_ServiceReturnInfoHandle;
     }
@@ -69,7 +69,7 @@ class ProcessCallThread3 implements Runnable {
             // break;
             // }
             try {
-                Memory data = new Memory(65000);
+                Memory data = new Memory(Main.PAYLOAD_SIZE);
                 LibDSP.INSTANCE.aquaServerRecv(data, m_CallInfoHandle);
 
                 int dataLen = data.getInt(0);
@@ -77,8 +77,6 @@ class ProcessCallThread3 implements Runnable {
                 byte[] received = data.getByteArray(4, dataLen);
 
                 data.close();
-
-                byte[] iiaData = Arrays.copyOfRange(received, 0, dataLen);
 
                 Memory returnData = new Memory(dataLen);
                 returnData.write(0, received, 0, dataLen);
@@ -170,7 +168,8 @@ public class Main {
             int connectInfoHandle = LibDSP.INSTANCE.aquaCreateServerConnectInfo();
             int callInfoHandle = LibDSP.INSTANCE.aquaCreateServerCallInfo();
 
-            // LibDSP.INSTANCE.aquaInstall(connectInfo, callInfo, "xslt-transformation", "v0.0.2", QTYPE);
+            // LibDSP.INSTANCE.aquaInstall(connectInfo, callInfo, "xslt-transformation",
+            // "v0.0.2", QTYPE);
             LibDSP.INSTANCE.aquaInstall(connectInfoHandle, callInfoHandle, "xslt-transformation", "v0.0.2", QTYPE);
 
             // ConnectThread connectThread = new ConnectThread(connectInfo, connections);
