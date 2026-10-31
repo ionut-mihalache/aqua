@@ -222,7 +222,7 @@ $latencies = [];
 $startTransfer = microtime(true);
 
 for ($j = 0; $j < $msgNr; ++$j) {
-    $latencies[] = measureFnExec(function () use ($ffi, $callInfoHandle, $iiaData, $returnInfoHandle) {
+    $latencies[] = measureFnExec(function () use ($ffi, $callInfoHandle, $iiaData, $returnInfoHandle, $payloadSize) {
         send($ffi, $callInfoHandle, $iiaData, strlen($iiaData));
 
         $returnData = $ffi->new("uint8_t[{$payloadSize}}]");
