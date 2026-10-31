@@ -8,7 +8,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
@@ -16,8 +15,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import org.w3c.dom.Document;
 
+import org.w3c.dom.Document;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -36,13 +35,11 @@ class Constants {
 class ProcessCallThread extends Thread {
     // private final byte[] m_Data;
     private final ZContext m_Context;
-    private final int m_ThreadIdx;
 
     ProcessCallThread(ZContext p_Context, int p_ThreadIdx) {
         // m_Data = p_Data;
         m_Context = p_Context;
-        m_ThreadIdx = p_ThreadIdx;
-        setName("CallThread" + m_ThreadIdx);
+        setName("CallThread" + p_ThreadIdx);
     }
 
     public void run() {
@@ -53,17 +50,17 @@ class ProcessCallThread extends Thread {
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] reply = socket.recv(0);
 
-                if (reply.length != Main.PAYLOAD_SIZE) {
-                    throw new RuntimeException("Unexpected size: " + reply.length);
-                }
+                // if (reply.length != Main.PAYLOAD_SIZE) {
+                // throw new RuntimeException("Unexpected size: " + reply.length);
+                // }
 
                 // Read the first four bytes as a 32-bit big-endian integer
-                ByteBuffer buf = ByteBuffer.wrap(reply).order(ByteOrder.BIG_ENDIAN);
-                int xmlLength = buf.getInt();
+                // ByteBuffer buf = ByteBuffer.wrap(reply).order(ByteOrder.BIG_ENDIAN);
+                // int xmlLength = buf.getInt();
 
                 // Extract the XML portion
-                byte[] xmlBytes = new byte[xmlLength];
-                buf.get(xmlBytes);
+                // byte[] xmlBytes = new byte[xmlLength];
+                // buf.get(xmlBytes);
 
                 // Path xsltPath = Paths.get("../../transformations/transform_version_v7.xsl");
                 // byte[] xsltData = Files.readAllBytes(xsltPath);
@@ -72,9 +69,11 @@ class ProcessCallThread extends Thread {
                 // String result = mf_GetXmlTransformed(xmlBytes, xsltData);
 
                 // response.putInt(result.length());
-                response.putInt(xmlLength);
+                // response.putInt(xmlLength);
                 // response.put(result.getBytes(StandardCharsets.UTF_8));
-                response.put(xmlBytes);
+                // response.put(xmlBytes);
+                // response.put(buf);
+                response.put(reply);
 
                 socket.send(response.array(), 0);
             }
@@ -114,29 +113,20 @@ public class Main {
     public static int PAYLOAD_SIZE;
 
     private static int sm_GetPayloadSize(String p_Arg) {
-        switch (p_Arg.toUpperCase()) {
-            case "SMB":
-                return Constants.SMB;
-            case "EMB":
-                return Constants.EMB;
-            case "QMB":
-                return Constants.QMB;
-            case "HMB":
-                return Constants.HMB;
-            case "MB":
-                return Constants.MB;
-            case "DMB":
-                return Constants.DMB;
-            case "HGB":
-                return Constants.HGB;
-            case "GB":
-                return Constants.GB;
-            default:
-                throw new IllegalArgumentException("Unknown payload size: " + p_Arg);
-        }
+        return switch (p_Arg.toUpperCase()) {
+            case "SMB" -> Constants.SMB;
+            case "EMB" -> Constants.EMB;
+            case "QMB" -> Constants.QMB;
+            case "HMB" -> Constants.HMB;
+            case "MB" -> Constants.MB;
+            case "DMB" -> Constants.DMB;
+            case "HGB" -> Constants.HGB;
+            case "GB" -> Constants.GB;
+            default -> throw new IllegalArgumentException("Unknown payload size: " + p_Arg);
+        };
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         if (args.length == 0) {
             PAYLOAD_SIZE = Constants.SMB;
         } else {

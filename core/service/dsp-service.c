@@ -2,9 +2,6 @@
 
 #include "dsp-service.h"
 
-#include <stdbool.h>
-#include <string.h>
-
 #include "aqua-sync.h"
 #include "aqua-types.h"
 #include "call.h"
@@ -14,8 +11,12 @@
 #include "log.h"
 #include "platform-types.h"
 #include "platform.h"
+#include "service-info.h"
 #include "system-values.h"
 #include "utils.h"
+
+#include <stdbool.h>
+#include <string.h>
 
 static struct InstallSharedData *installShdata = NULL;
 
@@ -77,13 +78,17 @@ static aqua_size_t sf_GetServiceOff(uint16_t i) {
     return alignedHeaderSize + i * alignedServiceSize;
 }
 
-void aquaInstall(struct ServiceConnectInfo *p_ConnectInfo,
-                 struct ServiceCallInfo *p_CallInfo, const char *p_StrId,
-                 const char *p_Version, int p_CallQType) {
+AQUA_API_EXPORT void aquaInstall(int32_t p_ConnectInfoHandle,
+                                 int32_t p_CallInfoHandle, const char *p_StrId,
+                                 const char *p_Version, int p_CallQType) {
+
     int rc;
     aqua_err_t err;
     aqua_file_handle_t installShmFd;
     uint8_t bytesnr = SERVICES_NUMBER >> 3;
+    struct ServiceConnectInfo *connectInfo =
+        getConnectInfo(p_ConnectInfoHandle);
+    struct ServiceCallInfo *callInfo = getCallInfo(p_CallInfoHandle);
 
     initService();
 
@@ -202,28 +207,16 @@ spin_lock_unlock:
     installInfo->m_CallQType = p_CallQType;
 
     initializeServiceConnections(installInfo);
-    configureServiceConnectInformation(p_ConnectInfo, installInfo);
-    configureServiceCallInformation(p_CallInfo, installInfo);
-
-    LOGF("Successfully installed new service: (%s, %s).\n", p_StrId, p_Version);
+    configureServiceConnectInformation(connectInfo, installInfo);
+    configureServiceCallInformation(callInfo, installInfo);
 }
 
-void receiveCall(void *p_CallData, struct ServiceCallInfo *p_CallInfo) {
-    struct CommunicationInfo cInfo;
+AQUA_API_EXPORT void aquaServerRecv(void *data, int32_t callInfoHandle) {
+    struct CommunicationInfo info;
+    struct ServiceCallInfo *callInfo = getCallInfo(callInfoHandle);
 
-    cInfo.m_Q = &(p_CallInfo->m_Q);
-    cInfo.m_Data = p_CallData;
+    info.m_Q = &(callInfo->m_Q);
+    info.m_Data = data;
 
-    p_CallInfo->m_ReceiveCallFn(&cInfo);
+    callInfo->m_ReceiveCallFn(&info);
 }
-
-void sendReturn(struct ServiceReturnInfo *p_ReturnInfo, void *p_ReturnData) {
-    struct CommunicationInfo cInfo;
-
-    cInfo.m_Q = &(p_ReturnInfo->m_Q);
-    cInfo.m_Data = p_ReturnData;
-
-    p_ReturnInfo->m_SendReturnFn(&cInfo);
-}
-
-void dspReturn() {}

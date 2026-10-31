@@ -25,6 +25,8 @@ enum {
     DISCONNECT_HANDLE,
     DISCONNECT_FULL_HANDLE,
     DISCONNECT_EMPTY_HANDLE,
+    SERVICE_INFO_MUTEX_HANDLE,
+    CLIENT_INFO_MUTEX_HANDLE,
     HANDLES_TOTAL // This needs to be always the last value
 };
 

@@ -4,8 +4,8 @@
 #define __DSP_SERVICE_H
 
 #include "aqua-sync.h"
-#include "platform-types.h"
 #include "dsp.h"
+#include "platform-types.h"
 
 #define INSTALL_SHD "/install-shared-data"
 
@@ -18,6 +18,12 @@ struct InstallSharedData {
     aqua_spinlock_t m_InstallMZoneLk;
 };
 
+struct ServerCommunicationInfo {
+    struct CommunicationInfo cInfo;
+    struct ServerReturnInfo *info;
+    uint32_t dataSize;
+};
+
 struct ServiceCallInfo {
     struct DSPQueue m_Q;
     int32_t (*m_ReceiveCallFn)(struct CommunicationInfo *);
@@ -28,7 +34,7 @@ struct ServiceReturnInfo {
     struct ConnectResponseInformation m_ConnectResponseInformation;
     struct DSPQueue m_Q;
 
-    int32_t (*m_SendReturnFn)(struct CommunicationInfo *);
+    int32_t (*m_SendReturnFn)(struct ServerCommunicationInfo *);
 };
 
 struct ServiceConnectInfo {
@@ -37,18 +43,26 @@ struct ServiceConnectInfo {
     struct ConnectionInformation *m_Connections;
     // pthread_spinlock_t *m_ConnectLock;
     aqua_mutex_t *m_ConnectLock;
-    int32_t (*m_ReceiveConnectRequest)(struct ServiceReturnInfo *,
-                                       struct ServiceConnectInfo *);
-    int32_t (*m_ReceiveDisconnectRequest)(struct ServiceConnectInfo *);
 };
 
 void initService();
 
-AQUA_API_EXPORT void aquaInstall(struct ServiceConnectInfo *p_ConnectInfo,
-                struct ServiceCallInfo *p_CallInfo, const char *p_StrId,
-                const char *p_Version, int p_CallQType);
+AQUA_API_EXPORT int32_t aquaCreateServerConnectInfo();
+AQUA_API_EXPORT int32_t aquaCreateServerCallInfo();
+
+AQUA_API_EXPORT void aquaDestroyConnectInfo(int32_t);
+AQUA_API_EXPORT void aquaDestroyCallInfo(int32_t);
+
+AQUA_API_EXPORT void aquaInstall(int32_t connectInfoHandle,
+                                 int32_t callInfoHandle, const char *strId,
+                                 const char *version, int callQType);
 
 AQUA_API_EXPORT void receiveCall(void *, struct ServiceCallInfo *);
-AQUA_API_EXPORT void sendReturn(struct ServiceReturnInfo *, void *);
+AQUA_API_EXPORT void aquaServerSend(int32_t, void *, uint32_t);
+
+AQUA_API_EXPORT int32_t receiveConnectRequest(int32_t);
+AQUA_API_EXPORT void aquaServerRecv(void *, int32_t);
+
+AQUA_API_EXPORT void receiveDisconnectRequest(int32_t p_ConnectInfoHandle);
 
 #endif // __DSP_SERVICE_H
