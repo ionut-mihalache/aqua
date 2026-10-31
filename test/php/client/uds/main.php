@@ -75,8 +75,8 @@ $len = strlen($iiaData);
 $lenBytes = pack('N', $len);
 
 $payload = $lenBytes . $iiaData;
-
-$payload = str_pad($payload, $payloadSize, "\0");
+$payloadSize = strlen($payload);
+// $payload = str_pad($payload, $payloadSize, "\0");
 
 $benchmark["call"] = measureFnExec(function () use ($fp, $payload, $payloadSize) {
     $written = 0;

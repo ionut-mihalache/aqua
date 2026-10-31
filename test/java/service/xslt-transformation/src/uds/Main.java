@@ -38,19 +38,21 @@ class Constants {
 class ProcessCallThread implements Runnable {
     private final SocketChannel m_Client;
     private final ByteBuffer m_Buf;
+    private final int m_Length;
 
-    ProcessCallThread(SocketChannel p_Client, ByteBuffer p_Buf) {
+    ProcessCallThread(SocketChannel p_Client, ByteBuffer p_Buf, int length) {
         m_Client = p_Client;
         m_Buf = p_Buf;
+        m_Length = length;
     }
 
     public void run() {
         try {
             m_Buf.flip();
 
-            int xmlLength = m_Buf.getInt();
-            byte[] xmlBytes = new byte[xmlLength];
-            m_Buf.get(xmlBytes);
+            // int xmlLength = m_Buf.getInt();
+            // byte[] xmlBytes = new byte[xmlLength];
+            // m_Buf.get(xmlBytes);
 
             // System.out.println("Received: " + new String(m_Buf.array(), 0,
             // m_Buf.limit()));
@@ -58,17 +60,20 @@ class ProcessCallThread implements Runnable {
             // Path xsltPath = Paths.get("../../transformations/transform_version_v7.xsl");
             // byte[] xsltData = Files.readAllBytes(xsltPath);
 
-            ByteBuffer response = ByteBuffer.allocateDirect(Main.PAYLOAD_SIZE);
+            ByteBuffer response = ByteBuffer.allocateDirect(m_Length + 4);
+
+            // ByteBuffer response = ByteBuffer.allocateDirect(Main.PAYLOAD_SIZE);
             // String result = mf_GetXmlTransformed(xmlBytes, xsltData);
 
             // response.putInt(result.length());
-            response.putInt(xmlLength);
+            // response.putInt(xmlLength);
+            response.putInt(m_Length);
             // response.put(result.getBytes(StandardCharsets.UTF_8));
-            response.put(xmlBytes);
+            response.put(m_Buf);
 
-            while (response.hasRemaining()) {
-                response.put((byte) 0);
-            }
+            // while (response.hasRemaining()) {
+            // response.put((byte) 0);
+            // }
 
             response.flip();
             while (response.hasRemaining()) {
@@ -225,13 +230,23 @@ public class Main {
             while (!Thread.currentThread().isInterrupted()) {
                 SocketChannel client = server.accept();
 
-                ByteBuffer buf = ByteBuffer.allocate(Main.PAYLOAD_SIZE);
+                ByteBuffer lenBuf = ByteBuffer.allocate(4);
 
+                lenBuf.clear();
+
+                while (lenBuf.hasRemaining()) {
+                    client.read(lenBuf);
+                }
+
+                lenBuf.flip();
+                int length = lenBuf.getInt();
+
+                ByteBuffer buf = ByteBuffer.allocate(length);
                 while (buf.hasRemaining()) {
                     client.read(buf);
                 }
 
-                executor.submit(new ProcessCallThread(client, buf));
+                executor.submit(new ProcessCallThread(client, buf, length));
                 // executor.submit(new ProcessCallThread1(client));
                 // ProcessCallThread processCallThread = new ProcessCallThread(client, buf);
                 // processCallThread.setName("CallThread-" + client.hashCode());
@@ -241,7 +256,7 @@ public class Main {
             server.close();
         } catch (
 
-                Exception e) {
+        Exception e) {
             e.printStackTrace();
         }
     }

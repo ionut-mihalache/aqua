@@ -53,17 +53,17 @@ class ProcessCallThread extends Thread {
             while (!Thread.currentThread().isInterrupted()) {
                 byte[] reply = socket.recv(0);
 
-                if (reply.length != Main.PAYLOAD_SIZE) {
-                    throw new RuntimeException("Unexpected size: " + reply.length);
-                }
+                // if (reply.length != Main.PAYLOAD_SIZE) {
+                // throw new RuntimeException("Unexpected size: " + reply.length);
+                // }
 
                 // Read the first four bytes as a 32-bit big-endian integer
-                ByteBuffer buf = ByteBuffer.wrap(reply).order(ByteOrder.BIG_ENDIAN);
-                int xmlLength = buf.getInt();
+                // ByteBuffer buf = ByteBuffer.wrap(reply).order(ByteOrder.BIG_ENDIAN);
+                // int xmlLength = buf.getInt();
 
                 // Extract the XML portion
-                byte[] xmlBytes = new byte[xmlLength];
-                buf.get(xmlBytes);
+                // byte[] xmlBytes = new byte[xmlLength];
+                // buf.get(xmlBytes);
 
                 // Path xsltPath = Paths.get("../../transformations/transform_version_v7.xsl");
                 // byte[] xsltData = Files.readAllBytes(xsltPath);
@@ -73,9 +73,11 @@ class ProcessCallThread extends Thread {
 
                 m_Response.clear();
                 // response.putInt(result.length());
-                m_Response.putInt(xmlLength);
+                // m_Response.putInt(xmlLength);
                 // response.put(result.getBytes(StandardCharsets.UTF_8));
-                m_Response.put(xmlBytes);
+                // m_Response.put(xmlBytes);
+                // m_Response.put(buf);
+                m_Response.put(reply);
 
                 socket.send(m_Response.array(), 0);
             }

@@ -60,7 +60,8 @@ class ProcessCallThread implements Runnable {
                 // Path xsltPath = Paths.get("../../transformations/transform_version_v7.xsl");
                 // byte[] xsltData = Files.readAllBytes(xsltPath);
 
-                ByteBuffer response = ByteBuffer.allocateDirect(Main.PAYLOAD_SIZE);
+                ByteBuffer response = ByteBuffer.allocateDirect(xmlLength + 4);
+                // ByteBuffer response = ByteBuffer.allocateDirect(Main.PAYLOAD_SIZE);
                 // String result = mf_GetXmlTransformed(xmlBytes, xsltData);
 
                 // response.putInt(result.length());
@@ -68,9 +69,9 @@ class ProcessCallThread implements Runnable {
                 // response.put(result.getBytes(StandardCharsets.UTF_8));
                 response.put(xmlBytes);
 
-                while (response.hasRemaining()) {
-                    response.put((byte) 0);
-                }
+                // while (response.hasRemaining()) {
+                // response.put((byte) 0);
+                // }
 
                 response.flip();
                 while (response.hasRemaining()) {
@@ -110,7 +111,8 @@ class ProcessCallThread implements Runnable {
 
 class ProcessCallThread1 implements Runnable {
     private SocketChannel m_Client;
-    private ByteBuffer buf = ByteBuffer.allocateDirect(Main.PAYLOAD_SIZE);
+    // private ByteBuffer buf = ByteBuffer.allocateDirect(Main.PAYLOAD_SIZE);
+    private ByteBuffer lenBuf = ByteBuffer.allocateDirect(4);
     private ByteBuffer response = ByteBuffer.allocateDirect(Main.PAYLOAD_SIZE);
 
     ProcessCallThread1(SocketChannel p_Client) {
@@ -121,7 +123,26 @@ class ProcessCallThread1 implements Runnable {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 // ByteBuffer buf = ByteBuffer.allocateDirect(Main.PAYLOAD_SIZE);
+                lenBuf.clear();
 
+                while (lenBuf.hasRemaining()) {
+                    int read = m_Client.read(lenBuf);
+
+                    if (read == -1) {
+                        System.err.println("Connection lost!");
+                        return;
+                    }
+
+                    if (read == 0) {
+                        Thread.onSpinWait();
+                        continue;
+                    }
+                }
+
+                lenBuf.flip();
+                int xmlLength = lenBuf.getInt();
+
+                ByteBuffer buf = ByteBuffer.allocateDirect(xmlLength);
                 buf.clear();
 
                 while (buf.hasRemaining()) {
@@ -137,12 +158,10 @@ class ProcessCallThread1 implements Runnable {
                         continue;
                     }
                 }
-
                 buf.flip();
-
-                int xmlLength = buf.getInt();
-                byte[] xmlBytes = new byte[xmlLength];
-                buf.get(xmlBytes);
+                // System.out.println("Received bytes: " + buf.toString());
+                // byte[] xmlBytes = new byte[xmlLength];
+                // buf.get(xmlBytes);
 
                 // System.out.println("Received: " + new String(m_Buf.array(), 0,
                 // m_Buf.limit()));
@@ -150,6 +169,7 @@ class ProcessCallThread1 implements Runnable {
                 // Path xsltPath = Paths.get("../../transformations/transform_version_v7.xsl");
                 // byte[] xsltData = Files.readAllBytes(xsltPath);
 
+                ByteBuffer response = ByteBuffer.allocateDirect(xmlLength + 4);
                 // ByteBuffer response = ByteBuffer.allocateDirect(Main.PAYLOAD_SIZE);
                 // String result = mf_GetXmlTransformed(xmlBytes, xsltData);
 
@@ -157,11 +177,12 @@ class ProcessCallThread1 implements Runnable {
                 // response.putInt(result.length());
                 response.putInt(xmlLength);
                 // response.put(result.getBytes(StandardCharsets.UTF_8));
-                response.put(xmlBytes);
+                // response.put(xmlBytes);
+                response.put(buf);
 
-                while (response.hasRemaining()) {
-                    response.put((byte) 0);
-                }
+                // while (response.hasRemaining()) {
+                // response.put((byte) 0);
+                // }
 
                 response.flip();
                 while (response.hasRemaining()) {
