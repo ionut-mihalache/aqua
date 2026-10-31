@@ -2,10 +2,13 @@ package main;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.xml.parsers.DocumentBuilder;
@@ -18,9 +21,7 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.w3c.dom.Document;
 import com.sun.jna.Library;
-import com.sun.jna.Memory;
 import com.sun.jna.Native;
-import com.sun.jna.Pointer;
 import consts.Constants;
 
 interface LibDSP extends Library {
@@ -32,11 +33,11 @@ interface LibDSP extends Library {
 
     void aquaInstall(int connectInfoHandle, int callInfoHandle, String strId, String version, int callQType);
 
-    void aquaServerSend(int returnInfoHandle, Pointer data, int size);
+    void aquaServerSend(int returnInfoHandle, byte[] data, int size);
 
     int receiveConnectRequest(int p_ConnectInfoHandle);
 
-    void aquaServerRecv(Pointer data, int callInfoHandle);
+    void aquaServerRecv(byte[] data, int callInfoHandle);
 
     void receiveDisconnectRequest(int p_ConnectInfoHandle);
 }
@@ -73,13 +74,13 @@ class ProcessCallThread1 implements Runnable {
 
             byte[] resByteArr = result.getBytes(StandardCharsets.UTF_8);
 
-            Memory data = new Memory(resByteArr.length);
-            data.write(0, resByteArr, 0, resByteArr.length);
+            // Memory data = new Memory(resByteArr.length);
+            // data.write(0, resByteArr, 0, resByteArr.length);
 
             // returnData.getMetadata().m_ConnId = m_CallData.getMetadata().m_ConnId; ???
 
-            LibDSP.INSTANCE.aquaServerSend(m_ReturnInfoHandle, data, resByteArr.length);
-            data.close();
+            LibDSP.INSTANCE.aquaServerSend(m_ReturnInfoHandle, resByteArr, resByteArr.length);
+            // data.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -153,6 +154,7 @@ public class Main {
             PAYLOAD_SIZE = sm_GetPayloadSize(args[0]);
             QTYPE = sm_GetQType(args[0]);
         }
+        byte[] data = new byte[Main.PAYLOAD_SIZE];
 
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
 
@@ -161,7 +163,8 @@ public class Main {
 
         LibDSP.INSTANCE.aquaInstall(connectInfoHandle, callInfoHandle, "xslt-transformation", "v0.0.2", QTYPE);
 
-        // ConnectThread connectThread = new ConnectThread(connectInfo, connections); DisconnectThread disconnectThread = new DisconnectThread(connectInfo);
+        // ConnectThread connectThread = new ConnectThread(connectInfo, connections);
+        // DisconnectThread disconnectThread = new DisconnectThread(connectInfo);
 
         DisconnectThread disconnectThread = new DisconnectThread(connectInfoHandle);
 
@@ -175,19 +178,21 @@ public class Main {
             try {
                 int returnInfoHandle = LibDSP.INSTANCE.receiveConnectRequest(connectInfoHandle);
 
-                Memory data = new Memory(Main.PAYLOAD_SIZE);
                 LibDSP.INSTANCE.aquaServerRecv(data, callInfoHandle);
 
-                int dataLen = data.getInt(0);
+                int dataLen = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).getInt();
 
-                byte[] received = data.getByteArray(4, dataLen);
+                // byte[] received = data.getByteArray(4, dataLen);
 
-                data.close();
-                executor.submit(new ProcessCallThread1(received, returnInfoHandle));
+                // data.clear();
+
+                executor.submit(new ProcessCallThread1(Arrays.copyOfRange(data, 4, 4 + dataLen), returnInfoHandle));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+
+        // data.close();
     }
 
     /**

@@ -2,6 +2,8 @@ package throughput;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -13,11 +15,9 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
-import com.sun.jna.Memory;
 import org.w3c.dom.Document;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
-import com.sun.jna.Pointer;
 import consts.Constants;
 
 interface LibDSP extends Library {
@@ -29,11 +29,11 @@ interface LibDSP extends Library {
 
     void aquaInstall(int connectInfoHandle, int callInfoHandle, String strId, String version, int callQType);
 
-    void aquaServerSend(int returnInfoHandle, Pointer data, int size);
+    void aquaServerSend(int returnInfoHandle, byte[] data, int size);
 
     int receiveConnectRequest(int p_ConnectInfoHandle);
 
-    void aquaServerRecv(Pointer data, int callInfoHandle);
+    void aquaServerRecv(byte[] data, int callInfoHandle);
 
     void receiveDisconnectRequest(int p_ConnectInfoHandle);
 }
@@ -55,6 +55,7 @@ class DisconnectThread extends Thread {
 class ProcessCallThread3 implements Runnable {
     private final int m_CallInfoHandle;
     private final int m_ServiceReturnInfoHandle;
+    private final byte[] data = new byte[Main.PAYLOAD_SIZE];
 
     ProcessCallThread3(int p_CallInfoHandle,
             int p_ServiceReturnInfoHandle) {
@@ -63,27 +64,31 @@ class ProcessCallThread3 implements Runnable {
     }
 
     public void run() {
-        int cnt = 0;
+        // int cnt = 0;
+        // Memory data = new Memory(Main.PAYLOAD_SIZE);
+
         while (!Thread.currentThread().isInterrupted()) {
             // if (cnt == Main.MSG_NUMBER) {
             // break;
             // }
             try {
-                Memory data = new Memory(Main.PAYLOAD_SIZE);
                 LibDSP.INSTANCE.aquaServerRecv(data, m_CallInfoHandle);
 
-                int dataLen = data.getInt(0);
+                // int dataLen = data.getInt(0);
 
-                byte[] received = data.getByteArray(4, dataLen);
+                int dataLen = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).getInt();
 
-                data.close();
+                // byte[] received = data.getByteArray(4, dataLen);
 
-                Memory returnData = new Memory(dataLen);
-                returnData.write(0, received, 0, dataLen);
-                LibDSP.INSTANCE.aquaServerSend(m_ServiceReturnInfoHandle, returnData, dataLen);
-                returnData.close();
+                // data.clear();
 
-                cnt++;
+                // Memory returnData = new Memory(dataLen);
+                // returnData.write(0, received, 0, dataLen);
+                LibDSP.INSTANCE.aquaServerSend(m_ServiceReturnInfoHandle, Arrays.copyOfRange(data, 4, 4 + dataLen),
+                        dataLen);
+                // returnData.close();
+
+                // cnt++;
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -163,7 +168,7 @@ public class Main {
             // MSG_NUMBER = Integer.parseInt(args[1]);
         }
 
-        try (ExecutorService executor = Executors.newFixedThreadPool(2 * THREAD_POOL_SIZE)) {
+        try (ExecutorService executor = Executors.newFixedThreadPool(THREAD_POOL_SIZE)) {
 
             int connectInfoHandle = LibDSP.INSTANCE.aquaCreateServerConnectInfo();
             int callInfoHandle = LibDSP.INSTANCE.aquaCreateServerCallInfo();
