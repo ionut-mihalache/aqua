@@ -113,9 +113,9 @@ static aqua_file_handle_t sf_Create(const char *p_Name,
     rc = ftruncate(shmFd, p_Size);
     DIE(rc != 0, "Could not truncate shared memory object");
 
+end:
     umask(oldMask);
 
-end:
     return shmFd;
 }
 
