@@ -95,7 +95,6 @@ static aqua_file_handle_t sf_Create(const char *p_Name,
         if (errno == EEXIST) {
             shouldTruncate = false;
             shmFd = shm_open(p_Name, flags, mode);
-            goto end;
         } else {
             goto end;
         }
