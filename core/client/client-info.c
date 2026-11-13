@@ -34,7 +34,10 @@ static struct ClientInfo {
         aqua_u8_t used;
     } connReqInfos[CLIENT_INFO_MAX];
 
-    aqua_mutex_t mutex;
+    aqua_mutex_t connectMutex;
+    aqua_mutex_t callMutex;
+    aqua_mutex_t returnMutex;
+    aqua_mutex_t connReqMutex;
 } s_ClientInfo;
 
 void initClientInfo(const char *p_StrId) {
@@ -42,14 +45,30 @@ void initClientInfo(const char *p_StrId) {
     uint64_t nameHash = hashString64(p_StrId);
 
     snprintf(mutexName, sizeof(mutexName), "__aqua_%016" PRIx64 "%u", nameHash,
-             AQUA_CLIENT_INFO_MUTEX_TAG);
-    Sync.createMutex(&s_ClientInfo.mutex, mutexName, CLIENT_INFO_MUTEX_HANDLE);
+             AQUA_CLIENT_INFO_CONNECT_MUTEX_TAG);
+    Sync.createMutex(&s_ClientInfo.connectMutex, mutexName,
+                     CLIENT_INFO_CONNECT_MUTEX_HANDLE);
+
+    snprintf(mutexName, sizeof(mutexName), "__aqua_%016" PRIx64 "%u", nameHash,
+             AQUA_CLIENT_INFO_CALL_MUTEX_TAG);
+    Sync.createMutex(&s_ClientInfo.callMutex, mutexName,
+                     CLIENT_INFO_CALL_MUTEX_HANDLE);
+
+    snprintf(mutexName, sizeof(mutexName), "__aqua_%016" PRIx64 "%u", nameHash,
+             AQUA_CLIENT_INFO_RETURN_MUTEX_TAG);
+    Sync.createMutex(&s_ClientInfo.returnMutex, mutexName,
+                     CLIENT_INFO_RETURN_MUTEX_HANDLE);
+
+    snprintf(mutexName, sizeof(mutexName), "__aqua_%016" PRIx64 "%u", nameHash,
+             AQUA_CLIENT_INFO_CONN_REQUEST_MUTEX_TAG);
+    Sync.createMutex(&s_ClientInfo.connReqMutex, mutexName,
+                     CLIENT_INFO_CONN_REQUEST_MUTEX_HANDLE);
 }
 
 int32_t aquaCreateClientConnectInfo() {
     int32_t handle = -1;
 
-    Sync.mutexLock(&s_ClientInfo.mutex);
+    Sync.mutexLock(&s_ClientInfo.connectMutex);
     for (int32_t i = 0; i < CLIENT_INFO_MAX; ++i) {
         if (!s_ClientInfo.connectInfos[i].used) {
             handle = i;
@@ -57,7 +76,7 @@ int32_t aquaCreateClientConnectInfo() {
             break;
         }
     }
-    Sync.mutexUnlock(&s_ClientInfo.mutex);
+    Sync.mutexUnlock(&s_ClientInfo.connectMutex);
 
     return handle;
 }
@@ -65,7 +84,7 @@ int32_t aquaCreateClientConnectInfo() {
 int32_t aquaCreateClientCallInfo() {
     int32_t handle = -1;
 
-    Sync.mutexLock(&s_ClientInfo.mutex);
+    Sync.mutexLock(&s_ClientInfo.callMutex);
     for (int32_t i = 0; i < CLIENT_INFO_MAX; ++i) {
         if (!s_ClientInfo.callInfos[i].used) {
             handle = i;
@@ -73,7 +92,7 @@ int32_t aquaCreateClientCallInfo() {
             break;
         }
     }
-    Sync.mutexUnlock(&s_ClientInfo.mutex);
+    Sync.mutexUnlock(&s_ClientInfo.callMutex);
 
     return handle;
 }
@@ -81,7 +100,7 @@ int32_t aquaCreateClientCallInfo() {
 int32_t aquaCreateClientReturnInfo() {
     int32_t handle = -1;
 
-    Sync.mutexLock(&s_ClientInfo.mutex);
+    Sync.mutexLock(&s_ClientInfo.returnMutex);
     for (int32_t i = 0; i < CLIENT_INFO_MAX; ++i) {
         if (!s_ClientInfo.returnInfos[i].used) {
             handle = i;
@@ -89,7 +108,7 @@ int32_t aquaCreateClientReturnInfo() {
             break;
         }
     }
-    Sync.mutexUnlock(&s_ClientInfo.mutex);
+    Sync.mutexUnlock(&s_ClientInfo.returnMutex);
 
     return handle;
 }
@@ -97,7 +116,7 @@ int32_t aquaCreateClientReturnInfo() {
 int32_t aquaCreateClientConnRequestInfo() {
     int32_t handle = -1;
 
-    Sync.mutexLock(&s_ClientInfo.mutex);
+    Sync.mutexLock(&s_ClientInfo.connReqMutex);
     for (int32_t i = 0; i < CLIENT_INFO_MAX; ++i) {
         if (!s_ClientInfo.connReqInfos[i].used) {
             handle = i;
@@ -105,33 +124,33 @@ int32_t aquaCreateClientConnRequestInfo() {
             break;
         }
     }
-    Sync.mutexUnlock(&s_ClientInfo.mutex);
+    Sync.mutexUnlock(&s_ClientInfo.connReqMutex);
 
     return handle;
 }
 
 void aquaDestroyClientConnectInfo(int32_t p_ConnectHandle) {
-    Sync.mutexLock(&s_ClientInfo.mutex);
+    Sync.mutexLock(&s_ClientInfo.connectMutex);
     s_ClientInfo.connectInfos[p_ConnectHandle].used = 0;
-    Sync.mutexUnlock(&s_ClientInfo.mutex);
+    Sync.mutexUnlock(&s_ClientInfo.connectMutex);
 }
 
 void aquaDestroyClientCallInfo(int32_t p_CallHandle) {
-    Sync.mutexLock(&s_ClientInfo.mutex);
+    Sync.mutexLock(&s_ClientInfo.callMutex);
     s_ClientInfo.callInfos[p_CallHandle].used = 0;
-    Sync.mutexUnlock(&s_ClientInfo.mutex);
+    Sync.mutexUnlock(&s_ClientInfo.callMutex);
 }
 
 void aquaDestroyClientReturnInfo(int32_t p_ReturnHandle) {
-    Sync.mutexLock(&s_ClientInfo.mutex);
+    Sync.mutexLock(&s_ClientInfo.returnMutex);
     s_ClientInfo.returnInfos[p_ReturnHandle].used = 0;
-    Sync.mutexUnlock(&s_ClientInfo.mutex);
+    Sync.mutexUnlock(&s_ClientInfo.returnMutex);
 }
 
 void aquaDestroyClientConnRequestInfo(int32_t p_ConnRequestHandle) {
-    Sync.mutexLock(&s_ClientInfo.mutex);
+    Sync.mutexLock(&s_ClientInfo.connReqMutex);
     s_ClientInfo.connReqInfos[p_ConnRequestHandle].used = 0;
-    Sync.mutexUnlock(&s_ClientInfo.mutex);
+    Sync.mutexUnlock(&s_ClientInfo.connReqMutex);
 }
 
 struct ClientConnectInfo *getClientConnectInfo(int32_t p_ConnectHandle) {
