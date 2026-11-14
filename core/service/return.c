@@ -1,18 +1,21 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-#include <string.h>
+#include "return.h"
 
 #include "aqua-types.h"
 #include "commons.h"
+#include "dsp-service.h"
 #include "dsp.h"
 #include "log.h"
 #include "macros.h"
 #include "platform.h"
 #include "system-values.h"
 #include "utils.h"
-#include "return.h"
 
-static int32_t s_SendReturnFnSMBFn(struct DSPQueue *p_Q, void *p_RI) {
+#include <string.h>
+
+static int32_t s_SendReturnFnSMBFn(struct DSPQueue *p_Q, void *p_RI,
+                                   uint32_t p_Size) {
     int32_t rc = 0;
     uint32_t idx;
     struct SMBCall *qData;
@@ -28,135 +31,183 @@ static int32_t s_SendReturnFnSMBFn(struct DSPQueue *p_Q, void *p_RI) {
 
     qData = p_Q->m_Data;
 
-    memcpy(&qData[idx], p_RI, sizeof(struct SMBCall));
+    qData[idx].m_Metadata.m_Size = p_Size;
+    memcpy(&qData[idx].m_CallInfo, p_RI, p_Size);
 
 end:
     return rc;
 }
 
-static int32_t s_SendReturnFnEMBFn(struct DSPQueue *p_Q, void *p_RI) {
+static int32_t s_SendReturnFnEMBFn(struct DSPQueue *p_Q, void *p_RI,
+                                   uint32_t p_Size) {
     int32_t rc = 0;
     struct EMBCall *qData = p_Q->m_Data;
 
-    memcpy(&qData[*p_Q->m_Metadata.m_PushIdxPtr], p_RI, sizeof(struct EMBCall));
+    qData[*p_Q->m_Metadata.m_PushIdxPtr].m_Metadata.m_Size = p_Size;
+    memcpy(&qData[*p_Q->m_Metadata.m_PushIdxPtr].m_CallInfo, p_RI, p_Size);
 
     return rc;
 }
 
-static int32_t s_SendReturnFnQMBFn(struct DSPQueue *p_Q, void *p_RI) {
+static int32_t s_SendReturnFnQMBFn(struct DSPQueue *p_Q, void *p_RI,
+                                   uint32_t p_Size) {
     int32_t rc = 0;
     struct QMBCall *qData = p_Q->m_Data;
 
-    memcpy(&qData[*p_Q->m_Metadata.m_PushIdxPtr], p_RI, sizeof(struct QMBCall));
+    qData[*p_Q->m_Metadata.m_PushIdxPtr].m_Metadata.m_Size = p_Size;
+    memcpy(&qData[*p_Q->m_Metadata.m_PushIdxPtr].m_CallInfo, p_RI, p_Size);
 
     return rc;
 }
 
-static int32_t s_SendReturnFnHMBFn(struct DSPQueue *p_Q, void *p_RI) {
+static int32_t s_SendReturnFnHMBFn(struct DSPQueue *p_Q, void *p_RI,
+                                   uint32_t p_Size) {
     int32_t rc = 0;
     struct HMBCall *qData = p_Q->m_Data;
 
-    memcpy(&qData[*p_Q->m_Metadata.m_PushIdxPtr], p_RI, sizeof(struct HMBCall));
+    qData[*p_Q->m_Metadata.m_PushIdxPtr].m_Metadata.m_Size = p_Size;
+    memcpy(&qData[*p_Q->m_Metadata.m_PushIdxPtr].m_CallInfo, p_RI, p_Size);
 
     return rc;
 }
 
-static int32_t s_SendReturnFnMBFn(struct DSPQueue *p_Q, void *p_RI) {
+static int32_t s_SendReturnFnMBFn(struct DSPQueue *p_Q, void *p_RI,
+                                  uint32_t p_Size) {
     int32_t rc = 0;
     struct MBCall *qData = p_Q->m_Data;
 
-    memcpy(&qData[*p_Q->m_Metadata.m_PushIdxPtr], p_RI, sizeof(struct MBCall));
+    qData[*p_Q->m_Metadata.m_PushIdxPtr].m_Metadata.m_Size = p_Size;
+    memcpy(&qData[*p_Q->m_Metadata.m_PushIdxPtr].m_CallInfo, p_RI, p_Size);
 
     return rc;
 }
 
-static int32_t s_SendReturnFnDMBFn(struct DSPQueue *p_Q, void *p_RI) {
+static int32_t s_SendReturnFnDMBFn(struct DSPQueue *p_Q, void *p_RI,
+                                   uint32_t p_Size) {
     int32_t rc = 0;
     struct DMBCall *qData = p_Q->m_Data;
 
-    memcpy(&qData[*p_Q->m_Metadata.m_PushIdxPtr], p_RI, sizeof(struct DMBCall));
+    qData[*p_Q->m_Metadata.m_PushIdxPtr].m_Metadata.m_Size = p_Size;
+    memcpy(&qData[*p_Q->m_Metadata.m_PushIdxPtr].m_CallInfo, p_RI, p_Size);
 
     return rc;
 }
 
-static int32_t s_SendReturnFnHGBFn(struct DSPQueue *p_Q, void *p_RI) {
+static int32_t s_SendReturnFnHGBFn(struct DSPQueue *p_Q, void *p_RI,
+                                   uint32_t p_Size) {
     int32_t rc = 0;
     struct HGBCall *qData = p_Q->m_Data;
 
-    memcpy(&qData[*p_Q->m_Metadata.m_PushIdxPtr], p_RI, sizeof(struct HGBCall));
+    qData[*p_Q->m_Metadata.m_PushIdxPtr].m_Metadata.m_Size = p_Size;
+    memcpy(&qData[*p_Q->m_Metadata.m_PushIdxPtr].m_CallInfo, p_RI, p_Size);
 
     return rc;
 }
 
-static int32_t s_SendReturnFnGBFn(struct DSPQueue *p_Q, void *p_RI) {
+static int32_t s_SendReturnFnGBFn(struct DSPQueue *p_Q, void *p_RI,
+                                  uint32_t p_Size) {
     int32_t rc = 0;
     struct GBCall *qData = p_Q->m_Data;
 
-    memcpy(&qData[*p_Q->m_Metadata.m_PushIdxPtr], p_RI, sizeof(struct GBCall));
+    qData[*p_Q->m_Metadata.m_PushIdxPtr].m_Metadata.m_Size = p_Size;
+    memcpy(&qData[*p_Q->m_Metadata.m_PushIdxPtr].m_CallInfo, p_RI, p_Size);
 
     return rc;
 }
 
 static int32_t s_SendReturnFnA(struct DSPQueue *p_Q, void *p_RI,
-                               uint32_t p_QMaxSize,
-                               int32_t (*p_Fn)(struct DSPQueue *, void *)) {
+                               uint32_t p_Size, uint32_t p_QMaxSize,
+                               int32_t (*p_Fn)(struct DSPQueue *, void *,
+                                               uint32_t)) {
     int32_t rc = 0;
 
-    QPUSH(p_Q, p_QMaxSize, do { rc = p_Fn(p_Q, p_RI); } while (0));
+    QPUSH(p_Q, p_QMaxSize, do { rc = p_Fn(p_Q, p_RI, p_Size); } while (0));
 
     return rc;
 }
 
-static int32_t s_SendReturnFnSMB(struct DSPQueue *p_Q, struct SMBCall *p_RI) {
-    return s_SendReturnFnA(p_Q, p_RI, RETURNQ_MAX_SIZE, s_SendReturnFnSMBFn);
+static int32_t s_SendReturnFnSMB(struct DSPQueue *p_Q, struct SMBCall *p_RI,
+                                 uint32_t p_Size) {
+    return s_SendReturnFnA(p_Q, p_RI, p_Size, RETURNQ_MAX_SIZE,
+                           s_SendReturnFnSMBFn);
 }
 
-static int32_t s_SendReturnFnEMB(struct DSPQueue *p_Q, struct EMBCall *p_RI) {
-    return s_SendReturnFnA(p_Q, p_RI, RETURNQ_MAX_SIZE, s_SendReturnFnEMBFn);
+static int32_t s_SendReturnFnEMB(struct DSPQueue *p_Q, struct EMBCall *p_RI,
+                                 uint32_t p_Size) {
+    return s_SendReturnFnA(p_Q, p_RI, p_Size, RETURNQ_MAX_SIZE,
+                           s_SendReturnFnEMBFn);
 }
 
-static int32_t s_SendReturnFnQMB(struct DSPQueue *p_Q, struct QMBCall *p_RI) {
-    return s_SendReturnFnA(p_Q, p_RI, RETURNQ_MAX_SIZE, s_SendReturnFnQMBFn);
+static int32_t s_SendReturnFnQMB(struct DSPQueue *p_Q, struct QMBCall *p_RI,
+                                 uint32_t p_Size) {
+    return s_SendReturnFnA(p_Q, p_RI, p_Size, RETURNQ_MAX_SIZE,
+                           s_SendReturnFnQMBFn);
 }
 
-static int32_t s_SendReturnFnHMB(struct DSPQueue *p_Q, struct HMBCall *p_RI) {
-    return s_SendReturnFnA(p_Q, p_RI, RETURNQ_MAX_SIZE, s_SendReturnFnHMBFn);
+static int32_t s_SendReturnFnHMB(struct DSPQueue *p_Q, struct HMBCall *p_RI,
+                                 uint32_t p_Size) {
+    return s_SendReturnFnA(p_Q, p_RI, p_Size, RETURNQ_MAX_SIZE,
+                           s_SendReturnFnHMBFn);
 }
 
-static int32_t s_SendReturnFnMB(struct DSPQueue *p_Q, struct MBCall *p_RI) {
-    return s_SendReturnFnA(p_Q, p_RI, RETURNQ_MAX_SIZE, s_SendReturnFnMBFn);
+static int32_t s_SendReturnFnMB(struct DSPQueue *p_Q, struct MBCall *p_RI,
+                                uint32_t p_Size) {
+    return s_SendReturnFnA(p_Q, p_RI, p_Size, RETURNQ_MAX_SIZE,
+                           s_SendReturnFnMBFn);
 }
 
-static int32_t s_SendReturnFnDMB(struct DSPQueue *p_Q, struct DMBCall *p_RI) {
-    return s_SendReturnFnA(p_Q, p_RI, RETURNQ_MAX_SIZE, s_SendReturnFnDMBFn);
+static int32_t s_SendReturnFnDMB(struct DSPQueue *p_Q, struct DMBCall *p_RI,
+                                 uint32_t p_Size) {
+    return s_SendReturnFnA(p_Q, p_RI, p_Size, RETURNQ_MAX_SIZE,
+                           s_SendReturnFnDMBFn);
 }
 
-static int32_t s_SendReturnFnHGB(struct DSPQueue *p_Q, struct HGBCall *p_RI) {
-    return s_SendReturnFnA(p_Q, p_RI, RETURNQ_MAX_SIZE, s_SendReturnFnHGBFn);
+static int32_t s_SendReturnFnHGB(struct DSPQueue *p_Q, struct HGBCall *p_RI,
+                                 uint32_t p_Size) {
+    return s_SendReturnFnA(p_Q, p_RI, p_Size, RETURNQ_MAX_SIZE,
+                           s_SendReturnFnHGBFn);
 }
 
-static int32_t s_SendReturnFnGB(struct DSPQueue *p_Q, struct GBCall *p_RI) {
-    return s_SendReturnFnA(p_Q, p_RI, RETURNQ_MAX_SIZE, s_SendReturnFnGBFn);
+static int32_t s_SendReturnFnGB(struct DSPQueue *p_Q, struct GBCall *p_RI,
+                                uint32_t p_Size) {
+    return s_SendReturnFnA(p_Q, p_RI, p_Size, RETURNQ_MAX_SIZE,
+                           s_SendReturnFnGBFn);
 }
 
-static int32_t s_SendReturnFn(struct CommunicationInfo *p_CmI) {
-    switch (p_CmI->m_Q->m_Type) {
+static int32_t s_SendReturnFn(struct ServerCommunicationInfo *p_CmI) {
+    switch (p_CmI->cInfo.m_Q->m_Type) {
     case SMBQ:
-        return s_SendReturnFnSMB(p_CmI->m_Q, (struct SMBCall *)p_CmI->m_Data);
+        return s_SendReturnFnSMB(p_CmI->cInfo.m_Q,
+                                 (struct SMBCall *)p_CmI->cInfo.m_Data,
+                                 p_CmI->dataSize);
     case EMBQ:
-        return s_SendReturnFnEMB(p_CmI->m_Q, (struct EMBCall *)p_CmI->m_Data);
+        return s_SendReturnFnEMB(p_CmI->cInfo.m_Q,
+                                 (struct EMBCall *)p_CmI->cInfo.m_Data,
+                                 p_CmI->dataSize);
     case QMBQ:
-        return s_SendReturnFnQMB(p_CmI->m_Q, (struct QMBCall *)p_CmI->m_Data);
+        return s_SendReturnFnQMB(p_CmI->cInfo.m_Q,
+                                 (struct QMBCall *)p_CmI->cInfo.m_Data,
+                                 p_CmI->dataSize);
     case HMBQ:
-        return s_SendReturnFnHMB(p_CmI->m_Q, (struct HMBCall *)p_CmI->m_Data);
+        return s_SendReturnFnHMB(p_CmI->cInfo.m_Q,
+                                 (struct HMBCall *)p_CmI->cInfo.m_Data,
+                                 p_CmI->dataSize);
     case MBQ:
-        return s_SendReturnFnMB(p_CmI->m_Q, (struct MBCall *)p_CmI->m_Data);
+        return s_SendReturnFnMB(p_CmI->cInfo.m_Q,
+                                (struct MBCall *)p_CmI->cInfo.m_Data,
+                                p_CmI->dataSize);
     case DMBQ:
-        return s_SendReturnFnDMB(p_CmI->m_Q, (struct DMBCall *)p_CmI->m_Data);
+        return s_SendReturnFnDMB(p_CmI->cInfo.m_Q,
+                                 (struct DMBCall *)p_CmI->cInfo.m_Data,
+                                 p_CmI->dataSize);
     case HGBQ:
-        return s_SendReturnFnHGB(p_CmI->m_Q, (struct HGBCall *)p_CmI->m_Data);
+        return s_SendReturnFnHGB(p_CmI->cInfo.m_Q,
+                                 (struct HGBCall *)p_CmI->cInfo.m_Data,
+                                 p_CmI->dataSize);
     case GBQ:
-        return s_SendReturnFnGB(p_CmI->m_Q, (struct GBCall *)p_CmI->m_Data);
+        return s_SendReturnFnGB(p_CmI->cInfo.m_Q,
+                                (struct GBCall *)p_CmI->cInfo.m_Data,
+                                p_CmI->dataSize);
     default:
         /**
          * TODO

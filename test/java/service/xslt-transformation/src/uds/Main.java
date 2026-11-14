@@ -14,7 +14,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
@@ -37,21 +36,23 @@ class Constants {
 }
 
 class ProcessCallThread implements Runnable {
-    private SocketChannel m_Client;
-    private ByteBuffer m_Buf;
+    private final SocketChannel m_Client;
+    private final ByteBuffer m_Buf;
+    private final int m_Length;
 
-    ProcessCallThread(SocketChannel p_Client, ByteBuffer p_Buf) {
+    ProcessCallThread(SocketChannel p_Client, ByteBuffer p_Buf, int length) {
         m_Client = p_Client;
         m_Buf = p_Buf;
+        m_Length = length;
     }
 
     public void run() {
         try {
             m_Buf.flip();
 
-            int xmlLength = m_Buf.getInt();
-            byte[] xmlBytes = new byte[xmlLength];
-            m_Buf.get(xmlBytes);
+            // int xmlLength = m_Buf.getInt();
+            // byte[] xmlBytes = new byte[xmlLength];
+            // m_Buf.get(xmlBytes);
 
             // System.out.println("Received: " + new String(m_Buf.array(), 0,
             // m_Buf.limit()));
@@ -59,17 +60,20 @@ class ProcessCallThread implements Runnable {
             // Path xsltPath = Paths.get("../../transformations/transform_version_v7.xsl");
             // byte[] xsltData = Files.readAllBytes(xsltPath);
 
-            ByteBuffer response = ByteBuffer.allocateDirect(Main.PAYLOAD_SIZE);
+            ByteBuffer response = ByteBuffer.allocateDirect(m_Length + 4);
+
+            // ByteBuffer response = ByteBuffer.allocateDirect(Main.PAYLOAD_SIZE);
             // String result = mf_GetXmlTransformed(xmlBytes, xsltData);
 
             // response.putInt(result.length());
-            response.putInt(xmlLength);
+            // response.putInt(xmlLength);
+            response.putInt(m_Length);
             // response.put(result.getBytes(StandardCharsets.UTF_8));
-            response.put(xmlBytes);
+            response.put(m_Buf);
 
-            while (response.hasRemaining()) {
-                response.put((byte) 0);
-            }
+            // while (response.hasRemaining()) {
+            // response.put((byte) 0);
+            // }
 
             response.flip();
             while (response.hasRemaining()) {
@@ -109,7 +113,7 @@ class ProcessCallThread implements Runnable {
 }
 
 class ProcessCallThread1 implements Runnable {
-    private SocketChannel m_Client;
+    private final SocketChannel m_Client;
 
     ProcessCallThread1(SocketChannel p_Client) {
         m_Client = p_Client;
@@ -187,29 +191,20 @@ public class Main {
     public static int PAYLOAD_SIZE;
 
     private static int sm_GetPayloadSize(String p_Arg) {
-        switch (p_Arg.toUpperCase()) {
-            case "SMB":
-                return Constants.SMB;
-            case "EMB":
-                return Constants.EMB;
-            case "QMB":
-                return Constants.QMB;
-            case "HMB":
-                return Constants.HMB;
-            case "MB":
-                return Constants.MB;
-            case "DMB":
-                return Constants.DMB;
-            case "HGB":
-                return Constants.HGB;
-            case "GB":
-                return Constants.GB;
-            default:
-                throw new IllegalArgumentException("Unknown payload size: " + p_Arg);
-        }
+        return switch (p_Arg.toUpperCase()) {
+            case "SMB" -> Constants.SMB;
+            case "EMB" -> Constants.EMB;
+            case "QMB" -> Constants.QMB;
+            case "HMB" -> Constants.HMB;
+            case "MB" -> Constants.MB;
+            case "DMB" -> Constants.DMB;
+            case "HGB" -> Constants.HGB;
+            case "GB" -> Constants.GB;
+            default -> throw new IllegalArgumentException("Unknown payload size: " + p_Arg);
+        };
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         if (args.length == 0) {
             PAYLOAD_SIZE = Constants.SMB;
         } else {
@@ -235,13 +230,23 @@ public class Main {
             while (!Thread.currentThread().isInterrupted()) {
                 SocketChannel client = server.accept();
 
-                ByteBuffer buf = ByteBuffer.allocate(Main.PAYLOAD_SIZE);
+                ByteBuffer lenBuf = ByteBuffer.allocate(4);
 
+                lenBuf.clear();
+
+                while (lenBuf.hasRemaining()) {
+                    client.read(lenBuf);
+                }
+
+                lenBuf.flip();
+                int length = lenBuf.getInt();
+
+                ByteBuffer buf = ByteBuffer.allocate(length);
                 while (buf.hasRemaining()) {
                     client.read(buf);
                 }
 
-                executor.submit(new ProcessCallThread(client, buf));
+                executor.submit(new ProcessCallThread(client, buf, length));
                 // executor.submit(new ProcessCallThread1(client));
                 // ProcessCallThread processCallThread = new ProcessCallThread(client, buf);
                 // processCallThread.setName("CallThread-" + client.hashCode());

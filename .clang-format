@@ -1,4 +1,5 @@
 BasedOnStyle: LLVM
 IndentWidth: 4
 AllowShortFunctionsOnASingleLine: Empty
-SortIncludes: false
+SortIncludes: true
+IncludeBlocks: Regroup

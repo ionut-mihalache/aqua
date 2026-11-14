@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.25.1)
 
 project(
         aqua
-        VERSION 0.0.3
+        VERSION 0.1
         LANGUAGES C
 )
 
@@ -21,9 +21,11 @@ set(CORE_SOURCES
         core/service/install.c
         core/service/call.c
         core/service/return.c
+        core/service/service-info.c
         core/client/dsp-client.c
         core/client/client-connect.c
         core/client/client-call.c
+        core/client/client-info.c
         utils/commons.c
 )
 

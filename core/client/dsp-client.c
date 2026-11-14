@@ -1,121 +1,69 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-#include <string.h>
+#include "dsp-client.h"
 
 #include "aqua-types.h"
-#include "dsp.h"
-
 #include "client-call.h"
 #include "client-connect.h"
+#include "client-info.h"
 #include "commons.h"
-#include "dsp-client.h"
+#include "dsp.h"
 #include "log.h"
 #include "platform-types.h"
 #include "platform.h"
 #include "system-values.h"
 #include "utils.h"
 
-AQUA_API_EXPORT void
-aquaConnect(struct ClientReturnInfo *p_ReturnInfo,
-            struct ClientConnectInfo *p_ConnectInfo,
-            struct ClientConnectRequestInformation *p_RequestInfo) {
-    p_ConnectInfo->m_SendConnectRequest(p_ReturnInfo, p_ConnectInfo,
-                                        p_RequestInfo);
+#include <string.h>
+
+AQUA_API_EXPORT void aquaConnect(int32_t returnInfoHandle,
+                                 int32_t connectInfoHandle,
+                                 int32_t connReqInfoHandle) {
+    struct ClientConnectInfo *connectInfo =
+        getClientConnectInfo(connectInfoHandle);
+    struct ClientReturnInfo *returnInfo = getClientReturnInfo(returnInfoHandle);
+    struct ClientConnectRequestInformation *requestInfo =
+        getClientConnRequestInfo(connReqInfoHandle);
+
+    connectInfo->m_SendConnectRequest(returnInfo, connectInfo, requestInfo);
 }
 
-AQUA_API_EXPORT void
-aquaDisconnect(struct ClientConnectInfo *p_ConnectInfo,
-               struct ConnectResponseInformation *p_requestResponseInfo) {
-    p_ConnectInfo->m_SendDisconnectRequest(p_ConnectInfo,
-                                           p_requestResponseInfo);
+AQUA_API_EXPORT void aquaDisconnect(int32_t connectInfoHandle,
+                                    int32_t returnInfoHandle) {
+    struct ClientConnectInfo *connectInfo =
+        getClientConnectInfo(connectInfoHandle);
+    struct ClientReturnInfo *returnInfo = getClientReturnInfo(returnInfoHandle);
+    struct ConnectResponseInformation *requestResponseInfo =
+        &(returnInfo->m_ConnectResponseInformation);
+
+    connectInfo->m_SendDisconnectRequest(connectInfo, requestResponseInfo);
+
+    aquaDestroyClientConnectInfo(connectInfoHandle);
+    aquaDestroyClientReturnInfo(returnInfoHandle);
 }
 
-AQUA_API_EXPORT void callFn(struct ClientCallInfo *p_CallInfo,
-                            void *p_CallData) {
-    struct CommunicationInfo cInfo;
+AQUA_API_EXPORT void aquaClientSend(int32_t callInfoHandle, void *data,
+                                    uint32_t size) {
+    struct ClientCommunicationInfo info;
+    struct ClientCallInfo *callInfo = getClientCallInfo(callInfoHandle);
+    // struct ClientReturnInfo *returnInfo =
+    // getClientReturnInfo(returnInfoHandle);
 
-    cInfo.m_Q = &(p_CallInfo->m_Q);
-    cInfo.m_Data = p_CallData;
-
-    p_CallInfo->m_CallFn(&cInfo);
-};
-
-AQUA_API_EXPORT void returnFn(void *p_ReturnData,
-                              struct ClientReturnInfo *p_ReturnInfo) {
-    struct CommunicationInfo cInfo;
-
-    cInfo.m_Q = &(p_ReturnInfo->m_Q);
-    cInfo.m_Data = p_ReturnData;
-
-    p_ReturnInfo->m_ReturnFn(&cInfo);
+    info.cInfo.m_Q = &(callInfo->m_Q);
+    info.cInfo.m_Data = data;
+    info.dataSize = size;
+    // info.info = returnInfo;
+    callInfo->m_CallFn(&info);
 }
 
-AQUA_API_EXPORT int32_t setCallData(int p_Type, void *p_CallInfo,
-                                    uint8_t *p_Data, uint32_t p_Size) {
-    int32_t rc = 0;
+AQUA_API_EXPORT void aquaClientRecv(void *data, int32_t returnInfoHandle) {
+    struct CommunicationInfo info;
+    struct ClientReturnInfo *returnInfo = getClientReturnInfo(returnInfoHandle);
 
-    switch (p_Type) {
-    case SMBQ: {
-        struct SMBCall *callInfo = p_CallInfo;
-        memcpy(callInfo->m_CallInfo, p_Data, p_Size);
-        callInfo->m_Metadata.m_Size = p_Size;
+    info.m_Q = &(returnInfo->m_Q);
+    info.m_Data = data;
 
-        break;
-    }
-    case EMBQ: {
-        struct EMBCall *callInfo = p_CallInfo;
-        memcpy(callInfo->m_CallInfo, p_Data, p_Size);
-        callInfo->m_Metadata.m_Size = p_Size;
-
-        break;
-    }
-    case QMBQ: {
-        struct QMBCall *callInfo = p_CallInfo;
-        memcpy(callInfo->m_CallInfo, p_Data, p_Size);
-        callInfo->m_Metadata.m_Size = p_Size;
-
-        break;
-    }
-    case HMBQ: {
-        struct HMBCall *callInfo = p_CallInfo;
-        memcpy(callInfo->m_CallInfo, p_Data, p_Size);
-        callInfo->m_Metadata.m_Size = p_Size;
-
-        break;
-    }
-    case MBQ: {
-        struct MBCall *callInfo = p_CallInfo;
-        memcpy(callInfo->m_CallInfo, p_Data, p_Size);
-        callInfo->m_Metadata.m_Size = p_Size;
-
-        break;
-    }
-    case DMBQ: {
-        struct DMBCall *callInfo = p_CallInfo;
-        memcpy(callInfo->m_CallInfo, p_Data, p_Size);
-        callInfo->m_Metadata.m_Size = p_Size;
-
-        break;
-    }
-    case HGBQ: {
-        struct HGBCall *callInfo = p_CallInfo;
-        memcpy(callInfo->m_CallInfo, p_Data, p_Size);
-        callInfo->m_Metadata.m_Size = p_Size;
-
-        break;
-    }
-    case GBQ: {
-        struct GBCall *callInfo = p_CallInfo;
-        memcpy(callInfo->m_CallInfo, p_Data, p_Size);
-        callInfo->m_Metadata.m_Size = p_Size;
-
-        break;
-    }
-    default:
-        DIE(true, "Type not recognized");
-    }
-
-    return rc;
+    returnInfo->m_ReturnFn(&info);
 }
 
 static aqua_size_t sf_GetInstallArenaSize() {
@@ -148,15 +96,18 @@ static struct InstallInformation *sf_GetService(struct InstallInfo *info,
                                          sf_GetServiceOff(i));
 }
 
-AQUA_API_EXPORT void aquaInitConnection(struct ClientConnectInfo *p_ConnectInfo,
-                                        struct ClientCallInfo *p_CallInfo,
-                                        const char *p_ServiceStrId) {
+AQUA_API_EXPORT void aquaInitClientConnection(int32_t connectInfoHandle,
+                                              int32_t callInfoHandle,
+                                              const char *serviceStrId) {
     int rc;
     aqua_file_handle_t installShmFd;
     aqua_err_t err;
     struct InstallInformation *installInfo;
     uint8_t connected = false;
     uint16_t i;
+    struct ClientConnectInfo *connectInfo =
+        getClientConnectInfo(connectInfoHandle);
+    struct ClientCallInfo *callInfo = getClientCallInfo(callInfoHandle);
 
     aqua_size_t installArenaSize = sf_GetInstallArenaSize();
 
@@ -184,7 +135,7 @@ AQUA_API_EXPORT void aquaInitConnection(struct ClientConnectInfo *p_ConnectInfo,
             continue;
         }
 
-        if (!strcmp(installInfo->m_StrId, p_ServiceStrId)) {
+        if (!strcmp(installInfo->m_StrId, serviceStrId)) {
             if (installInfo->m_Available) {
                 connected = true;
             }
@@ -210,21 +161,25 @@ AQUA_API_EXPORT void aquaInitConnection(struct ClientConnectInfo *p_ConnectInfo,
         sf_GetServiceOff(i));
     DIE(err == AQUA_MEM_MAP_FAILED, "Could not map service information");
 
-    configureClientConnectInformation(p_ConnectInfo, installInfo);
-    configureClientCallInformation(p_CallInfo, installInfo);
+    configureClientConnectInformation(connectInfo, installInfo);
+    configureClientCallInformation(callInfo, installInfo);
 }
 
-void retriveInitInformation(struct ClientConnectInfo *p_ConnectInfo,
-                            struct ClientCallInfo *p_CallInfo,
-                            const char *p_ServiceStrId) {
-    aquaInitConnection(p_ConnectInfo, p_CallInfo, p_ServiceStrId);
-}
+AQUA_API_EXPORT void
+aquaSetClientConnRequestInfo(int32_t connRequestHandle, const char *returnQName,
+                             uint32_t returnQSize, const char *reqResponseQName,
+                             uint32_t responseQSize, enum QType qType) {
+    struct ClientConnectRequestInformation *requestInfo =
+        getClientConnRequestInfo(connRequestHandle);
 
-struct ConnectResponseInformation *
-getConnectResponse(struct ClientReturnInfo *p_ReturnInfo) {
-    if (*p_ReturnInfo->m_ResponseQueue.m_Metadata.m_Size == 0) {
-        return &p_ReturnInfo->m_ResponseQueue.m_Data[0];
-    }
+    memset(requestInfo->m_ReturnQName, 0, RETURNQ_NAME_MAX_SIZE);
+    memcpy(requestInfo->m_ReturnQName, returnQName, strlen(returnQName));
+    requestInfo->m_ReturnQSize = returnQSize;
 
-    return NULL;
+    memset(requestInfo->m_RequestResponseQName, 0, RETURNQ_NAME_MAX_SIZE);
+    memcpy(requestInfo->m_RequestResponseQName, reqResponseQName,
+           strlen(reqResponseQName));
+    requestInfo->m_ResponseQSize = responseQSize;
+
+    requestInfo->m_QType = qType;
 }

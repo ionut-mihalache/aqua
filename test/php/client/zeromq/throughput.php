@@ -72,7 +72,8 @@ $lenBytes = pack('N', $len);
 
 $payload = $lenBytes . $iiaData;
 
-$payload = str_pad($payload, $payloadSize, "\0");
+// $payload = str_pad($payload, $payloadSize, "\0");
+$payloadSize = strlen($payload);
 
 $latencies = [];
 $startTransfer = microtime(true);
