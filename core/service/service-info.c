@@ -128,3 +128,8 @@ struct ServiceCallInfo *getCallInfo(int32_t p_CallInfoHandle) {
 struct ServiceReturnInfo *getReturnInfo(int32_t p_ReturnInfoHandle) {
     return &s_ServiceInfo.returnInfos[p_ReturnInfoHandle].returnInfo;
 }
+
+uint32_t getConnectionId(uint32_t p_ReturnHandle) {
+    return s_ServiceInfo.returnInfos[p_ReturnHandle]
+        .returnInfo.m_ConnectResponseInformation.m_Id;
+}

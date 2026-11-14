@@ -19,7 +19,9 @@ static int32_t s_SMBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     struct SMBCall *qData = p_Q->m_Data;
 
     *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
-    memcpy(p_CI + sizeof(uint32_t),
+    *(uint32_t *)((char *)p_CI + sizeof(uint32_t)) =
+        qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_ConnId;
+    memcpy((char *)p_CI + 2 * sizeof(uint32_t),
            &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
            qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
@@ -31,7 +33,9 @@ static int32_t s_EMBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     struct EMBCall *qData = p_Q->m_Data;
 
     *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
-    memcpy(p_CI + sizeof(uint32_t),
+    *(uint32_t *)((char *)p_CI + sizeof(uint32_t)) =
+        qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_ConnId;
+    memcpy((char *)p_CI + 2 * sizeof(uint32_t),
            &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
            qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
@@ -43,7 +47,9 @@ static int32_t s_QMBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     struct QMBCall *qData = p_Q->m_Data;
 
     *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
-    memcpy(p_CI + sizeof(uint32_t),
+    *(uint32_t *)((char *)p_CI + sizeof(uint32_t)) =
+        qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_ConnId;
+    memcpy((char *)p_CI + 2 * sizeof(uint32_t),
            &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
            qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
@@ -55,7 +61,9 @@ static int32_t s_HMBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     struct HMBCall *qData = p_Q->m_Data;
 
     *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
-    memcpy(p_CI + sizeof(uint32_t),
+    *(uint32_t *)((char *)p_CI + sizeof(uint32_t)) =
+        qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_ConnId;
+    memcpy((char *)p_CI + 2 * sizeof(uint32_t),
            &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
            qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
@@ -67,7 +75,9 @@ static int32_t s_MBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     struct MBCall *qData = p_Q->m_Data;
 
     *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
-    memcpy(p_CI + sizeof(uint32_t),
+    *(uint32_t *)((char *)p_CI + sizeof(uint32_t)) =
+        qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_ConnId;
+    memcpy((char *)p_CI + 2 * sizeof(uint32_t),
            &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
            qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
@@ -79,7 +89,9 @@ static int32_t s_DMBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     struct DMBCall *qData = p_Q->m_Data;
 
     *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
-    memcpy(p_CI + sizeof(uint32_t),
+    *(uint32_t *)((char *)p_CI + sizeof(uint32_t)) =
+        qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_ConnId;
+    memcpy((char *)p_CI + 2 * sizeof(uint32_t),
            &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
            qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
@@ -91,7 +103,9 @@ static int32_t s_HGBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     struct HGBCall *qData = p_Q->m_Data;
 
     *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
-    memcpy(p_CI + sizeof(uint32_t),
+    *(uint32_t *)((char *)p_CI + sizeof(uint32_t)) =
+        qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_ConnId;
+    memcpy((char *)p_CI + 2 * sizeof(uint32_t),
            &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
            qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 
@@ -103,7 +117,9 @@ static int32_t s_GBPopFn(void *p_CI, struct DSPQueue *p_Q) {
     struct GBCall *qData = p_Q->m_Data;
 
     *(uint32_t *)p_CI = qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size;
-    memcpy(p_CI + sizeof(uint32_t),
+    *(uint32_t *)((char *)p_CI + sizeof(uint32_t)) =
+        qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_ConnId;
+    memcpy((char *)p_CI + 2 * sizeof(uint32_t),
            &qData[*p_Q->m_Metadata.m_PopIdxPtr].m_CallInfo,
            qData[*p_Q->m_Metadata.m_PopIdxPtr].m_Metadata.m_Size);
 

@@ -58,11 +58,14 @@ AQUA_API_EXPORT void aquaInstall(int32_t connectInfoHandle,
                                  const char *version, int callQType);
 
 AQUA_API_EXPORT void receiveCall(void *, struct ServiceCallInfo *);
-AQUA_API_EXPORT void aquaServerSend(int32_t, void *, uint32_t);
+AQUA_API_EXPORT void aquaServerSend(int32_t returnInfoHandle, void *data,
+                                    uint32_t size);
 
 AQUA_API_EXPORT int32_t receiveConnectRequest(int32_t);
 AQUA_API_EXPORT void aquaServerRecv(void *, int32_t);
 
 AQUA_API_EXPORT void receiveDisconnectRequest(int32_t p_ConnectInfoHandle);
+
+AQUA_API_EXPORT uint32_t getConnectionId(uint32_t returnHandle);
 
 #endif // __DSP_SERVICE_H

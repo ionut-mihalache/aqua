@@ -7,7 +7,7 @@
 
 #include <stdalign.h>
 
-enum : unsigned int {
+enum {
     AQUA_CONN_MUTEX_TAG,
     AQUA_DISCONN_MUTEX_TAG,
     AQUA_CONN_LIST_MUTEX_TAG,
