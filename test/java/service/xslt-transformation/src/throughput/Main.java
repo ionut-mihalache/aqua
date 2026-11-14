@@ -76,7 +76,9 @@ class ProcessCallThread3 implements Runnable {
 
                 // int dataLen = data.getInt(0);
 
-                int dataLen = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).getInt();
+                ByteBuffer bufferData = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+                int dataLen = bufferData.getInt();
+                int connId = bufferData.getInt();
 
                 // byte[] received = data.getByteArray(4, dataLen);
 
@@ -84,7 +86,7 @@ class ProcessCallThread3 implements Runnable {
 
                 // Memory returnData = new Memory(dataLen);
                 // returnData.write(0, received, 0, dataLen);
-                LibDSP.INSTANCE.aquaServerSend(m_ServiceReturnInfoHandle, Arrays.copyOfRange(data, 4, 4 + dataLen),
+                LibDSP.INSTANCE.aquaServerSend(m_ServiceReturnInfoHandle, Arrays.copyOfRange(data, 8, 8 + dataLen),
                         dataLen);
                 // returnData.close();
 

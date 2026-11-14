@@ -180,13 +180,15 @@ public class Main {
 
                 LibDSP.INSTANCE.aquaServerRecv(data, callInfoHandle);
 
-                int dataLen = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).getInt();
+                ByteBuffer bufferData = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+                int dataLen = bufferData.getInt();
+                int connId = bufferData.getInt();
 
                 // byte[] received = data.getByteArray(4, dataLen);
 
                 // data.clear();
 
-                executor.submit(new ProcessCallThread1(Arrays.copyOfRange(data, 4, 4 + dataLen), returnInfoHandle));
+                executor.submit(new ProcessCallThread1(Arrays.copyOfRange(data, 8, 8 + dataLen), returnInfoHandle));
             } catch (Exception e) {
                 e.printStackTrace();
             }
