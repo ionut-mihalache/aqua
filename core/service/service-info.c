@@ -48,9 +48,9 @@ void initServiceInfo(const char *p_StrId) {
                      SERVICE_INFO_CALL_MUTEX_HANDLE);
 
     snprintf(mutexName, sizeof(mutexName), "__aqua_%016" PRIx64 "%u", nameHash,
-             AQUA_SERVICE_INFO_CALL_MUTEX_TAG);
-    Sync.createMutex(&s_ServiceInfo.callMutex, mutexName,
-                     SERVICE_INFO_CALL_MUTEX_HANDLE);
+             AQUA_SERVICE_INFO_RETURN_MUTEX_TAG);
+    Sync.createMutex(&s_ServiceInfo.returnMutex, mutexName,
+                     SERVICE_INFO_RETURN_MUTEX_HANDLE);
 }
 
 AQUA_API_EXPORT int32_t aquaCreateServerConnectInfo() {
