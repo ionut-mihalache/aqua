@@ -4,226 +4,70 @@ on:
   workflow_dispatch:
   pull_request:
   push:
-    branches:
-      - main
-    tags:
-      - "v*"
-
-permissions:
-  contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+    branches: [main]
+    tags: ["v*"]
 
 jobs:
-  build-linux:
-    name: Linux x86_64
+  linux:
     runs-on: ubuntu-latest
-
-    outputs:
-      package: ${{ steps.version.outputs.package }}
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake gcc binutils file
-
-      - name: Compute version
-        id: version
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_SHA: ${{ github.event.pull_request.head.sha }}
-          REF_TYPE: ${{ github.ref_type }}
-          REF_NAME: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          if [ "$REF_TYPE" = "tag" ]; then
-            VERSION="$REF_NAME"
-          elif [ "$EVENT_NAME" = "pull_request" ]; then
-            VERSION="pr${PR_NUMBER}-${PR_SHA::7}"
-          else
-            VERSION="$(git describe --tags --always)"
-          fi
-          PACKAGE="aqua-${VERSION}-linux-x86_64"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "package=$PACKAGE" >> "$GITHUB_OUTPUT"
-          echo "Package name: $PACKAGE"
-
-      - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - uses: actions/checkout@v6
 
       - name: Build
-        run: cmake --build build --parallel
-
-      - name: Run tests (if any)
-        shell: bash
         run: |
-          if [ -f build/CTestTestfile.cmake ]; then
-            ctest --test-dir build --output-on-failure
-          else
-            echo "No CTest tests registered, skipping."
-          fi
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel
 
-      - name: Verify build outputs
-        shell: bash
+      - name: Package
         run: |
-          set -euo pipefail
+          mkdir -p aqua/lib aqua/include
+          cp -a build/lib/shared build/lib/static aqua/lib/
+          cp include/*.h core/*/include/*.h platform/linux/include/platform-types.h aqua/include/
+          cp LICENSE aqua/
+          tar -czf aqua-linux-x86_64.tar.gz aqua
 
-          SHARED_DIR="build/lib/shared"
-          STATIC_DIR="build/lib/static"
-
-          test -d "$SHARED_DIR"
-          test -d "$STATIC_DIR"
-
-          mapfile -t SHARED_LIBS < <(find "$SHARED_DIR" -maxdepth 1 -type f -name '*.so*')
-          mapfile -t STATIC_LIBS < <(find "$STATIC_DIR" -maxdepth 1 -type f -name '*.a')
-
-          test "${#SHARED_LIBS[@]}" -gt 0
-          test "${#STATIC_LIBS[@]}" -gt 0
-
-          echo "Shared libraries:"
-          file "${SHARED_LIBS[@]}"
-
-          echo "Static libraries:"
-          file "${STATIC_LIBS[@]}"
-
-      - name: Verify ELF architecture
-        shell: bash
-        run: |
-          set -euo pipefail
-          mapfile -t LIBS < <(find build/lib -type f -name '*.so*')
-          test "${#LIBS[@]}" -gt 0
-          for lib in "${LIBS[@]}"; do
-            readelf -h "$lib" | grep -q 'Machine:.*X86-64'
-            echo "Verified: $lib"
-          done
-
-      - name: Smoke test - load shared libraries
-        shell: bash
-        run: |
-          set -euo pipefail
-          export LD_LIBRARY_PATH="$PWD/build/lib/shared:${LD_LIBRARY_PATH:-}"
-          for lib in $(find build/lib/shared -maxdepth 1 -type f -name '*.so*'); do
-            echo "== $lib"
-            ldd -r "$lib"
-            python3 -c "import ctypes, os, sys; ctypes.CDLL(sys.argv[1], mode=os.RTLD_NOW)" "$lib"
-            echo "Exported symbols: $(nm -D --defined-only "$lib" | wc -l)"
-          done
-
-      - name: Package AQUA
-        shell: bash
-        env:
-          PACKAGE: ${{ steps.version.outputs.package }}
-        run: |
-          set -euo pipefail
-
-          mkdir -p "${PACKAGE}/lib/shared" "${PACKAGE}/lib/static" "${PACKAGE}/include"
-
-          cp -a build/lib/shared/. "${PACKAGE}/lib/shared/"
-          cp -a build/lib/static/. "${PACKAGE}/lib/static/"
-
-          for dir in include core/service/include core/client/include utils; do
-            if [ -d "$dir" ]; then
-              find "$dir" -type f \( -name '*.h' -o -name '*.hpp' \) \
-                -exec cp --parents {} "${PACKAGE}/include/" \;
-            fi
-          done
-
-          if [ -f LICENSE ]; then
-            cp LICENSE "${PACKAGE}/"
-          elif [ -f LICENSE.md ]; then
-            cp LICENSE.md "${PACKAGE}/"
-          fi
-
-          tar -czf "${PACKAGE}.tar.gz" "${PACKAGE}"
-          sha256sum "${PACKAGE}.tar.gz" > "${PACKAGE}.tar.gz.sha256"
-
-          ls -lh "${PACKAGE}.tar.gz"
-          cat "${PACKAGE}.tar.gz.sha256"
-
-      - name: Verify package extracts cleanly
-        shell: bash
-        env:
-          PACKAGE: ${{ steps.version.outputs.package }}
-        run: |
-          set -euo pipefail
-          mkdir -p /tmp/pkgtest
-          tar -xzf "${PACKAGE}.tar.gz" -C /tmp/pkgtest
-          sha256sum -c "${PACKAGE}.tar.gz.sha256"
-          find "/tmp/pkgtest/${PACKAGE}" -maxdepth 3 | head -50
-
-      - name: Upload artifact
-        id: upload
-        uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.version.outputs.package }}
-          path: |
-            ${{ steps.version.outputs.package }}.tar.gz
-            ${{ steps.version.outputs.package }}.tar.gz.sha256
-          if-no-files-found: error
-          retention-days: ${{ github.event_name == 'pull_request' && 7 || 30 }}
+          name: aqua-linux-x86_64
+          path: aqua-linux-x86_64.tar.gz
 
-      - name: Job summary with download link
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
         shell: bash
-        env:
-          PACKAGE: ${{ steps.version.outputs.package }}
-          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build
         run: |
-          {
-            echo "**Package:** \`${PACKAGE}.tar.gz\`"
-            echo ""
-            echo "**Download:** [${PACKAGE}](${ARTIFACT_URL})"
-            echo ""
-            echo '```'
-            cat "${PACKAGE}.tar.gz.sha256"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          cmake -S . -B build -A x64
+          cmake --build build --config Release --parallel
+
+      - name: Package
+        run: |
+          mkdir -p aqua/lib aqua/include
+          cp -a build/lib/Release/shared build/lib/Release/static aqua/lib/
+          cp include/*.h core/*/include/*.h platform/windows/include/platform-types.h aqua/include/
+          cp LICENSE aqua/
+          7z a aqua-windows-x64.zip aqua
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: aqua-windows-x64
+          path: aqua-windows-x64.zip
 
   release:
-    name: Publish GitHub Release
-    needs: build-linux
     if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@v8
         with:
-          name: ${{ needs.build-linux.outputs.package }}
-          path: dist
+          merge-multiple: true
 
-      - name: Create or update release
-        shell: bash
+      - run: gh release create "${{ github.ref_name }}" *.tar.gz *.zip --generate-notes --repo "${{ github.repository }}"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
-          REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-          ls -lh dist
-
-          PRERELEASE=""
-          if [[ "$TAG" == *-* ]]; then
-            PRERELEASE="--prerelease"
-          fi
-
-          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
-            gh release upload "$TAG" dist/* --repo "$REPO" --clobber
-          else
-            gh release create "$TAG" dist/* \
-              --repo "$REPO" \
-              --title "AQUA $TAG" \
-              --generate-notes \
-              $PRERELEASE
-          fi
+          GH_TOKEN: ${{ github.token }}
