@@ -1,0 +1,122 @@
+name: AQUA Build
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-linux:
+    name: Linux x86_64
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            gcc \
+            binutils \
+            file
+
+      - name: Configure
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          cmake --build build --parallel
+
+      - name: Verify build outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SHARED_DIR="build/lib/shared"
+          STATIC_DIR="build/lib/static"
+
+          test -d "$SHARED_DIR"
+          test -d "$STATIC_DIR"
+
+          mapfile -t SHARED_LIBS < <(
+            find "$SHARED_DIR" -maxdepth 1 -type f -name '*.so*'
+          )
+
+          mapfile -t STATIC_LIBS < <(
+            find "$STATIC_DIR" -maxdepth 1 -type f -name '*.a'
+          )
+
+          test "${#SHARED_LIBS[@]}" -gt 0
+          test "${#STATIC_LIBS[@]}" -gt 0
+
+          echo "Shared libraries:"
+          file "${SHARED_LIBS[@]}"
+
+          echo "Static libraries:"
+          file "${STATIC_LIBS[@]}"
+
+      - name: Verify ELF architecture
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t LIBS < <(
+            find build/lib -type f -name '*.so*'
+          )
+
+          test "${#LIBS[@]}" -gt 0
+
+          for lib in "${LIBS[@]}"; do
+            readelf -h "$lib" | grep -q 'Machine:.*X86-64'
+            echo "Verified: $lib"
+          done
+
+      - name: Package AQUA
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="$(git describe --tags --always)"
+          PACKAGE="aqua-${VERSION}-linux-x86_64"
+
+          mkdir -p "${PACKAGE}/lib/shared"
+          mkdir -p "${PACKAGE}/lib/static"
+          mkdir -p "${PACKAGE}/include"
+
+          # Shared libraries
+          cp -a build/lib/shared/. "${PACKAGE}/lib/shared/"
+
+          # Static libraries
+          cp -a build/lib/static/. "${PACKAGE}/lib/static/"
+
+          # Public headers
+          for dir in include core/service/include core/client/include utils; do
+            if [ -d "$dir" ]; then
+              find "$dir" -type f \
+                \( -name '*.h' -o -name '*.hpp' \) \
+                -exec cp --parents {} "${PACKAGE}/include/" \;
+            fi
+          done
+
+          # License
+          if [ -f LICENSE ]; then
+            cp LICENSE "${PACKAGE}/"
+          elif [ -f LICENSE.md ]; then
+            cp LICENSE.md "${PACKAGE}/"
+          fi
+
+          # Create archive
+          tar -czf "${PACKAGE}.tar.gz" "${PACKAGE}"
+
+          echo "Package created:"
+          ls -lh "${PACKAGE}.tar.gz"
