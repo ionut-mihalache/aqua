@@ -22,14 +22,14 @@ jobs:
         run: |
           mkdir -p aqua/lib aqua/include
           cp -a build/lib/shared build/lib/static aqua/lib/
-          cp include/*.h core/*/include/*.h platform/linux/include/platform-types.h aqua/include/
+          cp include/dsp.h include/aqua-sync.h include/aqua-types.h core/client/include/dsp-client.h core/service/include/dsp-service.h platform/linux/include/platform-types.h aqua/include/
           cp LICENSE aqua/
           tar -czf aqua-linux-x86_64.tar.gz aqua
 
       - uses: actions/upload-artifact@v7
         with:
-          name: aqua-linux-x86_64
           path: aqua-linux-x86_64.tar.gz
+          archive: false
 
   windows:
     runs-on: windows-latest
@@ -48,14 +48,16 @@ jobs:
         run: |
           mkdir -p aqua/lib aqua/include
           cp -a build/lib/Release/shared build/lib/Release/static aqua/lib/
-          cp include/*.h core/*/include/*.h platform/windows/include/platform-types.h aqua/include/
+          cp include/dsp.h include/aqua-sync.h include/aqua-types.h core/client/include/dsp-client.h core/service/include/dsp-service.h platform/windows/include/platform-types.h aqua/include/
           cp LICENSE aqua/
-          7z a aqua-windows-x64.zip aqua
+          ls -R aqua
+          test -f aqua/lib/shared/aqua.dll
+          7z a -tzip aqua-windows-x64.zip aqua
 
       - uses: actions/upload-artifact@v7
         with:
-          name: aqua-windows-x64
           path: aqua-windows-x64.zip
+          archive: false
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
